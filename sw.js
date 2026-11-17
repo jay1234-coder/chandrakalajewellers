@@ -1,7 +1,7 @@
 /* ChandraKala PWA — offline pages + persistent image cache */
-const PAGE_CACHE = 'cj-pages-v11';
-const ASSET_CACHE = 'cj-assets-v11';
-const IMAGE_CACHE = 'cj-images-v11';
+const PAGE_CACHE = 'cj-pages-v12';
+const ASSET_CACHE = 'cj-assets-v12';
+const IMAGE_CACHE = 'cj-images-v12';
 const ALL_CACHES = [PAGE_CACHE, ASSET_CACHE, IMAGE_CACHE];
 
 const PRECACHE_PAGES = [
@@ -67,13 +67,13 @@ self.addEventListener('message', (event) => {
             const parsed = new URL(raw, self.location.origin);
             const isSameOrigin = (parsed.origin === self.location.origin);
             const req = new Request(parsed.href, {
-              mode: isSameOrigin ? 'same-origin' : 'cors',
+              mode: isSameOrigin ? 'same-origin' : 'no-cors',
               credentials: isSameOrigin ? 'same-origin' : 'omit'
             });
             const hit = await cache.match(req);
             if (hit) continue;
             const res = await fetch(req);
-            if (res && res.ok) await cache.put(req, res.clone());
+            if (res && (res.ok || res.type === 'opaque')) await cache.put(req, res.clone());
           } catch (e) {}
         }
         if (event.source && event.source.postMessage) {

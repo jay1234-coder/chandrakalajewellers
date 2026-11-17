@@ -30,9 +30,7 @@ $messageType = '';
 
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $sessionToken = (string)($_SESSION['csrf_token'] ?? '');
-    $postedToken = (string)($_POST['csrf_token'] ?? '');
-    if ($sessionToken === '' || !hash_equals($sessionToken, $postedToken)) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         die('CSRF token validation failed.');
     }
 

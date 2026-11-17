@@ -16,7 +16,7 @@ cj_require_role(['admin', 'superadmin'], 'admin');
 $embed = !empty($_GET['embed']) || !empty($_POST['embed']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals((string) $_SESSION['csrf_token'], (string) $_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         die('CSRF validation failed.');
     }
     $id = (int) ($_POST['order_id'] ?? 0);

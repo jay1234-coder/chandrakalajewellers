@@ -37,14 +37,17 @@ if (!function_exists('cj_remember_cookie_name')) {
 if (!function_exists('cj_remember_cookie_options')) {
     /**
      * HttpOnly Secure(SameSite=Lax) cookie options matching session cookie policy.
-     * @return array{expires:int,path:string,secure:bool,httponly:bool,samesite:string}
+     * @return array{expires:int,path:string,domain:string,secure:bool,httponly:bool,samesite:string}
      */
     function cj_remember_cookie_options(int $expires): array
     {
+        $params = function_exists('cj_session_cookie_params') ? cj_session_cookie_params() : [];
+        $domain = $params['domain'] ?? '';
         $secure = function_exists('cj_is_https') ? cj_is_https() : false;
         return [
             'expires' => $expires,
             'path' => '/',
+            'domain' => $domain,
             'secure' => $secure,
             'httponly' => true,
             'samesite' => 'Lax',

@@ -59,7 +59,7 @@ if (!in_array($tab, $allowedTabs, true)) {
 
 $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
-    if (!isset($_SESSION['csrf_token']) || !hash_equals((string) $_SESSION['csrf_token'], (string) $_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         die('CSRF');
     }
     if (isset($_POST['save_integrations']) || isset($_POST['test_razorpay']) || isset($_POST['clear_razorpay'])) {
@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
     }
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_message'])) {
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         die('CSRF');
     }
     $to = (string)($_POST['to_role'] ?? 'admin');

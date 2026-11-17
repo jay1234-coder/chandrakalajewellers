@@ -7,6 +7,8 @@
  * so PHP header() is the reliable path for securityheaders.com grades.
  */
 
+require_once __DIR__ . '/../config/env.php';
+
 if (!function_exists('cj_security_csp')) {
     function cj_security_csp(): string
     {
@@ -64,12 +66,19 @@ if (!function_exists('cj_is_https')) {
 }
 
 if (!function_exists('cj_session_cookie_params')) {
-    /** @return array{lifetime:int,path:string,secure:bool,httponly:bool,samesite:string} */
+    /** @return array{lifetime:int,path:string,domain:string,secure:bool,httponly:bool,samesite:string} */
     function cj_session_cookie_params(): array
     {
+        $domain = '';
+        $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        $host = preg_replace('/:\d+$/', '', $host) ?: $host;
+        if (strpos($host, 'chandrakalajewellers.in') !== false) {
+            $domain = '.chandrakalajewellers.in';
+        }
         return [
             'lifetime' => 0,
             'path' => '/',
+            'domain' => $domain,
             'secure' => cj_is_https(),
             'httponly' => true,
             'samesite' => 'Lax',
@@ -114,6 +123,7 @@ if (!function_exists('cj_persist_session_cookie')) {
         $options = [
             'expires' => $params['lifetime'] > 0 ? time() + $params['lifetime'] : 0,
             'path' => $params['path'],
+            'domain' => $params['domain'],
             'secure' => $params['secure'],
             'httponly' => $params['httponly'],
             'samesite' => $params['samesite'],
@@ -162,7 +172,10 @@ if (!function_exists('cj_admin_noindex_headers')) {
 if (!function_exists('cj_auth_secret_key')) {
     function cj_auth_secret_key(): string
     {
-        $pass = function_exists('cj_env') ? (string)(cj_env('SESSION_SECRET') ?? cj_env('CJ_DB_PASS') ?? '') : '';
+        require_once __DIR__ . '/../config/env.php';
+        $pass = function_exists('cj_env')
+            ? (string) (cj_env('SESSION_SECRET') ?? cj_env('CJ_DB_PASS') ?? getenv('CJ_DB_PASS') ?? '')
+            : '';
         return hash('sha256', 'cj_signed_auth_token_key_' . $pass);
     }
 }
@@ -177,32 +190,46 @@ if (!function_exists('cj_issue_auth_cookie')) {
         if (headers_sent()) {
             return;
         }
+        $params = cj_session_cookie_params();
+        $csrf = (string) ($_SESSION['csrf_token'] ?? '');
+        if ($csrf === '' && !empty($_COOKIE['cj_csrf'])) {
+            $csrf = (string) $_COOKIE['cj_csrf'];
+        }
+        if ($csrf === '') {
+            $csrf = bin2hex(random_bytes(32));
+            $_SESSION['csrf_token'] = $csrf;
+        }
+
         $payload = [
             'user_id' => (int) ($user['id'] ?? $user['user_id'] ?? 0),
             'username' => (string) ($user['username'] ?? ''),
             'role' => (string) ($user['role'] ?? 'admin'),
             'display_name' => (string) ($user['display_name'] ?? $user['username'] ?? 'Admin'),
+            'csrf_token' => $csrf,
             'exp' => time() + $lifetime,
         ];
         $b64 = base64_encode(json_encode($payload));
         $sig = hash_hmac('sha256', $b64, cj_auth_secret_key());
         $val = $b64 . '.' . $sig;
 
-        $params = cj_session_cookie_params();
         $options = [
             'expires' => time() + $lifetime,
             'path' => '/',
+            'domain' => $params['domain'],
             'secure' => $params['secure'],
             'httponly' => true,
             'samesite' => 'Lax',
         ];
         setcookie('cj_admin_jwt', $val, $options);
         $_COOKIE['cj_admin_jwt'] = $val;
+
+        setcookie('cj_csrf', $csrf, $options);
+        $_COOKIE['cj_csrf'] = $csrf;
     }
 }
 
 if (!function_exists('cj_clear_auth_cookie')) {
-    /** Clears the signed authentication cookie on signout. */
+    /** Clears the signed authentication cookie and csrf token cookie on signout. */
     function cj_clear_auth_cookie(): void
     {
         if (headers_sent()) {
@@ -212,12 +239,14 @@ if (!function_exists('cj_clear_auth_cookie')) {
         $options = [
             'expires' => time() - 3600,
             'path' => '/',
+            'domain' => $params['domain'],
             'secure' => $params['secure'],
             'httponly' => true,
             'samesite' => 'Lax',
         ];
         setcookie('cj_admin_jwt', '', $options);
-        unset($_COOKIE['cj_admin_jwt']);
+        setcookie('cj_csrf', '', $options);
+        unset($_COOKIE['cj_admin_jwt'], $_COOKIE['cj_csrf']);
     }
 }
 
@@ -248,10 +277,34 @@ if (!function_exists('cj_restore_auth_from_cookie')) {
         $_SESSION['username'] = (string) ($data['username'] ?? 'admin');
         $_SESSION['role'] = (string) ($data['role'] ?? 'admin');
         $_SESSION['display_name'] = (string) ($data['display_name'] ?? 'Admin');
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (!empty($data['csrf_token'])) {
+            $_SESSION['csrf_token'] = (string) $data['csrf_token'];
+        } elseif (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = !empty($_COOKIE['cj_csrf']) ? (string) $_COOKIE['cj_csrf'] : bin2hex(random_bytes(32));
         }
         return true;
+    }
+}
+
+if (!function_exists('cj_validate_csrf')) {
+    /**
+     * Validates a submitted CSRF token against either $_SESSION['csrf_token'] or
+     * the signed cookie / fallback $_COOKIE['cj_csrf']. Restores session token on match.
+     */
+    function cj_validate_csrf(?string $token = null): bool
+    {
+        $token = $token ?? (string) ($_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '');
+        if ($token === '') {
+            return false;
+        }
+        if (!empty($_SESSION['csrf_token']) && hash_equals((string) $_SESSION['csrf_token'], $token)) {
+            return true;
+        }
+        if (!empty($_COOKIE['cj_csrf']) && hash_equals((string) $_COOKIE['cj_csrf'], $token)) {
+            $_SESSION['csrf_token'] = (string) $_COOKIE['cj_csrf'];
+            return true;
+        }
+        return false;
     }
 }
 

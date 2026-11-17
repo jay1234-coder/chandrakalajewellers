@@ -1,12 +1,16 @@
 <?php
-require_once __DIR__ . '/../includes/security.php';
 require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/../includes/security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    if (!empty($_COOKIE['cj_csrf'])) {
+        $_SESSION['csrf_token'] = (string) $_COOKIE['cj_csrf'];
+    } else {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
 }
 
 $isLocal = function_exists('cj_is_local_host') && cj_is_local_host();

@@ -183,7 +183,7 @@ cj_ensure_rates_schema($conn);
 
 // Handle Rate Update before any page rendering / fragile queries
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (($_POST['rate_action'] ?? '') === 'update_rates'))) {
-    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals((string)$_SESSION['csrf_token'], (string)$_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try updating rates again.';
         header('Location: ' . $cj_admin_home . '#ratesSection');
         exit();
@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates']) || (($_POST['rate_action'] ?? '') === 'update_manual_rates'))) {
-    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals((string)$_SESSION['csrf_token'], (string)$_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try updating rates again.';
         header('Location: ' . $cj_admin_home . '#ratesSection');
         exit();
@@ -288,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates'
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rate_formula']) || (($_POST['rate_action'] ?? '') === 'update_rate_formula'))) {
-    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals((string)$_SESSION['csrf_token'], (string)$_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try saving the rate formula again.';
         header('Location: ' . $cj_admin_home . '#rateFormulaSection');
         exit();
@@ -347,7 +347,7 @@ $manual_rates = ($manual_rate_query instanceof mysqli_result) ? ($manual_rate_qu
 // Handle Item Add (for jewellery_items table)
 if (isset($_POST['add_item'])) {
     // Validate CSRF token
-    if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || !hash_equals((string)$_SESSION['csrf_token'], (string)$_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
         header('Location: ' . $cj_admin_home);
         exit();
@@ -408,7 +408,7 @@ if (isset($_POST['add_item'])) {
 // Handle Item Update (for jewellery_items table)
 if (isset($_POST['update_item'])) {
     // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
         header('Location: ' . $cj_admin_home);
         exit();
@@ -493,7 +493,7 @@ if (isset($_POST['update_item'])) {
 // Handle Delete (for jewellery_items table)
 if (isset($_GET['delete'])) {
     // Validate CSRF token
-    if (!isset($_GET['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_GET['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
         header('Location: ' . $cj_admin_home);
         exit();
@@ -523,7 +523,7 @@ if (isset($_GET['delete'])) {
 // Handle Toggle Favourite (for jewellery_items table)
 if (isset($_GET['toggle_fav'])) {
     // Validate CSRF token
-    if (!isset($_GET['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_GET['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
         header('Location: ' . $cj_admin_home);
         exit();
@@ -566,7 +566,7 @@ if (isset($_GET['toggle_sold'])) {
         $redirectUrl .= (str_contains($redirectUrl, '?') ? '&' : '?') . 'page=' . intval($_GET['page']);
     }
     
-    if (!isset($_GET['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_GET['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
         header('Location: ' . $redirectUrl);
         exit();
@@ -592,7 +592,7 @@ if (isset($_GET['toggle_sold'])) {
 // --- Handle Catalogue Bulk Upload (for products table) ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_images'])) {
     // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         die("CSRF validation failed. Action aborted.");
     }
     $uploadDir = './catalogue/';
