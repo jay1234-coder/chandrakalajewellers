@@ -12,6 +12,10 @@ if (!function_exists('cj_auth_bootstrap')) {
         cj_ensure_pwa_schema($conn);
         cj_ensure_activity_log_schema($conn);
         cj_ensure_login_rate_limit_schema($conn);
+        if (function_exists('cj_ensure_settings_schema')) cj_ensure_settings_schema($conn);
+        if (function_exists('cj_ensure_catalog_schema')) cj_ensure_catalog_schema($conn);
+        if (function_exists('cj_ensure_customers_schema')) cj_ensure_customers_schema($conn);
+        if (function_exists('cj_ensure_rates_schema')) cj_ensure_rates_schema($conn);
     }
 }
 

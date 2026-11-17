@@ -289,3 +289,78 @@ if (!function_exists('calculate_item_price_from_rates')) {
         return cj_calculate_price((string) $metal_type, $weight, is_array($rates) ? $rates : []);
     }
 }
+
+if (!function_exists('cj_get_standard_rates')) {
+    /** @return array<string,mixed> */
+    function cj_get_standard_rates(mysqli $conn): array
+    {
+        static $memoryCache = null;
+        if ($memoryCache !== null) {
+            return $memoryCache;
+        }
+        $cacheFile = sys_get_temp_dir() . '/cj_rates_standard.json';
+        if (is_file($cacheFile) && (time() - (int)@filemtime($cacheFile)) < 30) {
+            $data = @json_decode((string)@file_get_contents($cacheFile), true);
+            if (is_array($data) && !empty($data)) {
+                $memoryCache = $data;
+                return $data;
+            }
+        }
+        $res = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
+        $rate = $res ? $res->fetch_assoc() : [];
+        $out = [
+            'gold_rate' => (float)($rate['gold_rate'] ?? 0),
+            'silver_rate' => (float)($rate['silver_rate'] ?? 0),
+            'silver_925_rate' => (float)($rate['silver_925_rate'] ?? 0),
+            'copper_rate' => (float)($rate['copper_rate'] ?? 0),
+            'making_charges' => (float)($rate['making_charges_percent'] ?? 0),
+            'making_charges_percent' => (float)($rate['making_charges_percent'] ?? 0),
+            'apply_making_to_silver' => !empty($rate['apply_making_to_silver']) ? 1 : 0
+        ];
+        $memoryCache = $out;
+        @file_put_contents($cacheFile, json_encode($out));
+        return $out;
+    }
+}
+
+if (!function_exists('cj_get_manual_rates')) {
+    /** @return array<string,mixed> */
+    function cj_get_manual_rates(mysqli $conn): array
+    {
+        static $memoryCache = null;
+        if ($memoryCache !== null) {
+            return $memoryCache;
+        }
+        $cacheFile = sys_get_temp_dir() . '/cj_rates_manual.json';
+        if (is_file($cacheFile) && (time() - (int)@filemtime($cacheFile)) < 30) {
+            $data = @json_decode((string)@file_get_contents($cacheFile), true);
+            if (is_array($data) && !empty($data)) {
+                $memoryCache = $data;
+                return $data;
+            }
+        }
+        $res = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1");
+        $rate = $res ? $res->fetch_assoc() : [];
+        $out = [
+            'gold_rate' => (float)($rate['gold_rate'] ?? 0),
+            'silver_rate' => (float)($rate['silver_rate'] ?? 0),
+            'silver_925_rate' => (float)($rate['silver_925_rate'] ?? 0),
+            'copper_rate' => (float)($rate['copper_rate'] ?? 0),
+            'making_charges' => (float)($rate['manual_making_charges_percent'] ?? 0),
+            'manual_making_charges_percent' => (float)($rate['manual_making_charges_percent'] ?? 0),
+            'apply_making_to_silver' => !empty($rate['manual_apply_making_to_silver']) ? 1 : 0,
+            'manual_apply_making_to_silver' => !empty($rate['manual_apply_making_to_silver']) ? 1 : 0
+        ];
+        $memoryCache = $out;
+        @file_put_contents($cacheFile, json_encode($out));
+        return $out;
+    }
+}
+
+if (!function_exists('cj_invalidate_rates_cache')) {
+    function cj_invalidate_rates_cache(): void
+    {
+        @unlink(sys_get_temp_dir() . '/cj_rates_standard.json');
+        @unlink(sys_get_temp_dir() . '/cj_rates_manual.json');
+    }
+}

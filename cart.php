@@ -18,12 +18,11 @@ if ($conn->connect_error) {
 
 // Fetch latest rates for price calculation if needed (though cart items should already have final prices)
 // For robustness, let's keep it, but it might not be strictly necessary if get_cart_items.php handles all pricing.
-$rate_query = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-$rate = $rate_query->fetch_assoc() ?? [];
+$rate = cj_get_standard_rates($conn);
 $gold_rate = $rate['gold_rate'] ?? 0;
 $silver_rate = $rate['silver_rate'] ?? 0;
 $silver_925_rate = $rate['silver_925_rate'] ?? 0;
-$making_charges = $rate['making_charges_percent'] ?? 0;
+$making_charges = $rate['making_charges'] ?? 0;
 
 // Metal Name Map for Display
 function get_metal_name($metal) {

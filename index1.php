@@ -16,37 +16,20 @@ if ($conn->connect_error) {
     die("Database Connection Failed: " . $conn->connect_error);
 }
 
-$rate_result = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-$rate = $rate_result->fetch_assoc();
-$standard_rates = [
-    'gold_rate' => $rate['gold_rate'] ?? 0,
-    'silver_rate' => $rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-    'copper_rate' => $rate['copper_rate'] ?? 0,
-    'making_charges' => $rate['making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0
-];
-
-$manual_rate_result = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1");
-$manual_rate = $manual_rate_result->fetch_assoc();
-$manual_rates = [
-    'gold_rate' => $manual_rate['gold_rate'] ?? 0,
-    'silver_rate' => $manual_rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $manual_rate['silver_925_rate'] ?? 0,
-    'copper_rate' => $manual_rate['copper_rate'] ?? 0,
-    'making_charges' => $manual_rate['manual_making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $manual_rate['manual_apply_making_to_silver'] ?? 0
-];
+$standard_rates = cj_get_standard_rates($conn);
+$manual_rates = cj_get_manual_rates($conn);
 
 $items = $conn->query("SELECT * FROM jewellery_items WHERE is_favourite = 1 ORDER BY id DESC LIMIT 3");
 
-function get_metal_name($metal) {
-    $map = [
-        'gold' => 'Gold',
-        'silver' => 'Silver',
-        'silver_925' => '925 Silver'
-    ];
-    return $map[$metal] ?? 'Unknown';
+if (!function_exists('get_metal_name')) {
+    function get_metal_name($metal) {
+        $map = [
+            'gold' => 'Gold',
+            'silver' => 'Silver',
+            'silver_925' => '925 Silver'
+        ];
+        return $map[$metal] ?? 'Unknown';
+    }
 }
 
 $activePage = 'home';

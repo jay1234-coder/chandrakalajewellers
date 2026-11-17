@@ -36,36 +36,15 @@ if (!function_exists('cj_rates_bundle')) {
     /** @return array{standard:array,manual:array} */
     function cj_rates_bundle(mysqli $conn): array
     {
-        $rate = [];
-        $rq = $conn->query('SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1');
-        if ($rq) {
-            $rate = $rq->fetch_assoc() ?: [];
-        }
-        $manual = [];
-        $mq = $conn->query('SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1');
-        if ($mq) {
-            $manual = $mq->fetch_assoc() ?: [];
-        }
+        require_once __DIR__ . '/pricing.php';
         $formula = function_exists('cj_rate_formula_map') ? cj_rate_formula_map() : [];
+        $std = cj_get_standard_rates($conn);
+        $std['rate_formula'] = $formula;
+        $man = cj_get_manual_rates($conn);
+        $man['rate_formula'] = $formula;
         return [
-            'standard' => [
-                'gold_rate' => $rate['gold_rate'] ?? 0,
-                'silver_rate' => $rate['silver_rate'] ?? 0,
-                'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-                'copper_rate' => $rate['copper_rate'] ?? 0,
-                'making_charges' => $rate['making_charges_percent'] ?? 0,
-                'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0,
-                'rate_formula' => $formula,
-            ],
-            'manual' => [
-                'gold_rate' => $manual['gold_rate'] ?? 0,
-                'silver_rate' => $manual['silver_rate'] ?? 0,
-                'silver_925_rate' => $manual['silver_925_rate'] ?? 0,
-                'copper_rate' => $manual['copper_rate'] ?? 0,
-                'making_charges' => $manual['manual_making_charges_percent'] ?? 0,
-                'apply_making_to_silver' => $manual['manual_apply_making_to_silver'] ?? 0,
-                'rate_formula' => $formula,
-            ],
+            'standard' => $std,
+            'manual' => $man,
         ];
     }
 }

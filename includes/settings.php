@@ -138,6 +138,7 @@ if (!function_exists('cj_setting_write')) {
         $stmt->execute();
         $stmt->close();
         unset($GLOBALS['cj_settings_cache']);
+        @unlink(sys_get_temp_dir() . '/cj_settings.json');
     }
 }
 
@@ -148,6 +149,17 @@ if (!function_exists('cj_settings_all')) {
         if (isset($GLOBALS['cj_settings_cache']) && is_array($GLOBALS['cj_settings_cache'])) {
             return $GLOBALS['cj_settings_cache'];
         }
+
+        $tmpDir = sys_get_temp_dir();
+        $cacheFile = $tmpDir . '/cj_settings.json';
+        if (is_file($cacheFile) && (time() - (int)@filemtime($cacheFile)) < 60) {
+            $cached = @json_decode((string)@file_get_contents($cacheFile), true);
+            if (is_array($cached) && !empty($cached)) {
+                $GLOBALS['cj_settings_cache'] = $cached;
+                return $cached;
+            }
+        }
+
         $out = cj_settings_defaults();
         $file = @include __DIR__ . '/../config/seo-config.php';
         if (is_array($file)) {
@@ -163,18 +175,20 @@ if (!function_exists('cj_settings_all')) {
 
         $conn = $conn ?: (isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof mysqli ? $GLOBALS['conn'] : null);
         if ($conn) {
-            cj_ensure_settings_schema($conn);
-            $res = $conn->query('SELECT setting_key, setting_value FROM site_settings');
-            if ($res) {
-                while ($row = $res->fetch_assoc()) {
-                    $k = (string) ($row['setting_key'] ?? '');
-                    if ($k !== '' && array_key_exists($k, $out)) {
-                        $out[$k] = (string) ($row['setting_value'] ?? '');
+            try {
+                $res = $conn->query('SELECT setting_key, setting_value FROM site_settings');
+                if ($res) {
+                    while ($row = $res->fetch_assoc()) {
+                        $k = (string) ($row['setting_key'] ?? '');
+                        if ($k !== '' && array_key_exists($k, $out)) {
+                            $out[$k] = (string) ($row['setting_value'] ?? '');
+                        }
                     }
                 }
-            }
+            } catch (Throwable $ignore) {}
         }
         $GLOBALS['cj_settings_cache'] = $out;
+        @file_put_contents($cacheFile, json_encode($out));
         return $out;
     }
 }

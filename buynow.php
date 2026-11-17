@@ -19,27 +19,8 @@ if ($id <= 0) {
     die("Invalid product ID.");
 }
 
-// Fetch latest standard rates from the 'rates' table
-$rate_result = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-$rate = $rate_result->fetch_assoc();
-$standard_rates = [
-    'gold_rate' => $rate['gold_rate'] ?? 0,
-    'silver_rate' => $rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-    'making_charges' => $rate['making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0
-];
-
-// Fetch latest manual rates from the 'manual_rates' table
-$manual_rate_result = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1");
-$manual_rate = $manual_rate_result->fetch_assoc();
-$manual_rates = [
-    'gold_rate' => $manual_rate['gold_rate'] ?? 0,
-    'silver_rate' => $manual_rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $manual_rate['silver_925_rate'] ?? 0,
-    'making_charges' => $manual_rate['manual_making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $manual_rate['manual_apply_making_to_silver'] ?? 0
-];
+$standard_rates = cj_get_standard_rates($conn);
+$manual_rates = cj_get_manual_rates($conn);
 
 // Fetch product
 $productQuery = $conn->query("SELECT * FROM jewellery_items WHERE id = $id");

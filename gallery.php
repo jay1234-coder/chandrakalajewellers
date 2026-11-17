@@ -15,23 +15,8 @@ if (function_exists('cj_is_local_host') && cj_is_local_host()) {
 error_reporting(E_ALL);
 ini_set('log_errors', '1');
 
-$rate = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1")->fetch_assoc();
-$standard_rates = [
-    'gold_rate' => $rate['gold_rate'] ?? 0,
-    'silver_rate' => $rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-    'making_charges' => $rate['making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0
-];
-
-$manual_rate = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1")->fetch_assoc();
-$manual_rates = [
-    'gold_rate' => $manual_rate['gold_rate'] ?? 0,
-    'silver_rate' => $manual_rate['silver_rate'] ?? 0,
-    'silver_925_rate' => $manual_rate['silver_925_rate'] ?? 0,
-    'making_charges' => $manual_rate['manual_making_charges_percent'] ?? 0,
-    'apply_making_to_silver' => $manual_rate['manual_apply_making_to_silver'] ?? 0
-];
+$standard_rates = cj_get_standard_rates($conn);
+$manual_rates = cj_get_manual_rates($conn);
 
 $filter_metal = $_GET['metal_type'] ?? 'all';
 $allowed_filters = ['all', 'gold', 'silver', 'silver_925'];

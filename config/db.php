@@ -107,7 +107,11 @@ require_once __DIR__ . '/../includes/settings.php';
 require_once __DIR__ . '/../includes/catalog.php';
 require_once __DIR__ . '/../includes/customers.php';
 require_once __DIR__ . '/../includes/rates-schema.php';
-cj_ensure_settings_schema($conn);
-cj_ensure_catalog_schema($conn);
-cj_ensure_customers_schema($conn);
-cj_ensure_rates_schema($conn);
+
+// Run schema initialization only on local development or explicit setup request
+if ($isLocal || !empty($_GET['cj_schema_setup'])) {
+    cj_ensure_settings_schema($conn);
+    cj_ensure_catalog_schema($conn);
+    cj_ensure_customers_schema($conn);
+    cj_ensure_rates_schema($conn);
+}

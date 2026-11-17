@@ -130,6 +130,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_rates'])) {
         die("Error inserting new manual rates: " . $conn->error);
     } 
 
+    if (function_exists('cj_invalidate_rates_cache')) {
+        cj_invalidate_rates_cache();
+    } 
+
     $_SESSION['success_message'] = "Rates updated successfully!";
     header("Location: manual_rate_update");
     exit();

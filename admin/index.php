@@ -384,6 +384,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (
         $stmt->close();
         $conn->commit();
         cj_refresh_all_cached_prices($conn);
+        if (function_exists('cj_invalidate_rates_cache')) {
+            cj_invalidate_rates_cache();
+        }
     } catch (Throwable $e) {
         $conn->rollback();
         $_SESSION['error_message'] = $e->getMessage();
@@ -429,6 +432,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates'
         $stmt->close();
         $conn->commit();
         cj_refresh_all_cached_prices($conn);
+        if (function_exists('cj_invalidate_rates_cache')) {
+            cj_invalidate_rates_cache();
+        }
     } catch (Throwable $e) {
         $conn->rollback();
         $_SESSION['error_message'] = $e->getMessage();

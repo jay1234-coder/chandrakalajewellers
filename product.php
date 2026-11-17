@@ -47,30 +47,10 @@ $reviewFlash = (string) ($_SESSION['review_flash'] ?? '');
 unset($_SESSION['review_flash']);
 $cjCustomer = cj_customer_session();
 
-// Fetch latest rates
-$rate_result = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-$rate = $rate_result->fetch_assoc();
-
-// Fetch latest manual rates
-$manual_rate_result = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1");
-$manual_rate = $manual_rate_result->fetch_assoc();
-
-// Determine which set of rates to use based on the 'use_manual_rates' flag
-$rates_to_use = $product['use_manual_rates'] ?
-    [
-        'gold_rate' => $manual_rate['gold_rate'] ?? 0,
-        'silver_rate' => $manual_rate['silver_rate'] ?? 0,
-        'silver_925_rate' => $manual_rate['silver_925_rate'] ?? 0,
-        'making_charges' => $manual_rate['manual_making_charges_percent'] ?? 0,
-        'apply_making_to_silver' => $manual_rate['manual_apply_making_to_silver'] ?? 0
-    ] :
-    [
-        'gold_rate' => $rate['gold_rate'] ?? 0,
-        'silver_rate' => $rate['silver_rate'] ?? 0,
-        'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-        'making_charges' => $rate['making_charges_percent'] ?? 0,
-        'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0
-    ];
+// Fetch latest rates (cached)
+$standard_rates = cj_get_standard_rates($conn);
+$manual_rates = cj_get_manual_rates($conn);
+$rates_to_use = $product['use_manual_rates'] ? $manual_rates : $standard_rates;
 
 // Assign readable metal name
 $metal_display = '';
