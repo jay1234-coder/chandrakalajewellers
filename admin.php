@@ -981,6 +981,7 @@ if ($just_logged_in) {
         <div class="flex items-center gap-2 sm:gap-4 shrink-0">
             <?php include __DIR__ . '/includes/admin-theme-toggle.php'; ?>
             <a href="admin-orders" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Orders</a>
+            <a href="admin-customers" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
             <a href="notifications" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
             <span class="text-sm font-semibold text-gray-500 hidden md:inline">Welcome, <?= htmlspecialchars($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Admin') ?></span>
             <a href="?logout" class="logout-btn bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-4 sm:px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">Log Out</a>
@@ -1016,6 +1017,7 @@ if ($just_logged_in) {
 
         <nav class="admin-mobile-jump" aria-label="Quick sections">
             <a href="admin-orders">Orders</a>
+            <a href="admin-customers">Customers</a>
             <a href="#ratesSection">Rates</a>
             <a href="#addItemSection">Add item</a>
             <a href="#stockList">Stock</a>

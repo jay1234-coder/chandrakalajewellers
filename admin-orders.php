@@ -104,7 +104,10 @@ if ($cq) {
         <h1 class="text-lg font-bold font-serif">Orders</h1>
         <p class="text-xs text-amber-700 font-semibold uppercase tracking-wider">Reservations &amp; stock lock</p>
     </div>
-    <a href="admin" class="text-sm font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">&larr; Admin</a>
+    <div class="flex items-center gap-2">
+        <a href="admin-customers" class="text-xs sm:text-sm font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 sm:px-4 py-2 rounded-xl transition-colors">Customers</a>
+        <a href="admin" class="text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-900 bg-gray-50 border border-gray-200 px-3 sm:px-4 py-2 rounded-xl transition-colors">&larr; Admin</a>
+    </div>
 </header>
 <?php endif; ?>
 
@@ -146,7 +149,7 @@ if ($cq) {
                     </div>
                     <p class="font-extrabold text-amber-700">₹<?= number_format(function_exists('cj_order_payable_rupees') ? cj_order_payable_rupees($o) : (float) $o['subtotal'], 0) ?></p>
                 </div>
-                <p class="text-sm text-gray-800"><strong><?= htmlspecialchars($o['customer_name']) ?></strong> · <?= htmlspecialchars($o['customer_phone']) ?></p>
+                <p class="text-sm text-gray-800"><a href="admin-customers.php?search=<?= urlencode((string)$o['customer_phone']) ?>" class="hover:underline text-amber-700 font-bold" title="View Customer Profile"><?= htmlspecialchars($o['customer_name']) ?></a> · <a href="tel:<?= htmlspecialchars($o['customer_phone']) ?>" class="hover:underline"><?= htmlspecialchars($o['customer_phone']) ?></a></p>
                 <?php if ($o['customer_address'] !== ''): ?>
                     <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($o['customer_address']) ?><?php if (!empty($o['customer_pincode'])): ?> · PIN <?= htmlspecialchars((string) $o['customer_pincode']) ?><?php endif; ?></p>
                 <?php endif; ?>

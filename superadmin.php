@@ -169,6 +169,7 @@ if (!in_array($dataTab, $dataAllowed, true)) {
 $stats = [
     'products' => (int)(($conn->query('SELECT COUNT(*) c FROM jewellery_items')->fetch_assoc()['c']) ?? 0),
     'catalogue' => (int)(($conn->query('SELECT COUNT(*) c FROM products')->fetch_assoc()['c']) ?? 0),
+    'customers' => (int)(($conn->query('SELECT COUNT(*) c FROM customers')->fetch_assoc()['c']) ?? 0),
     'sessions_today' => (int)(($conn->query("SELECT COUNT(*) c FROM visitor_sessions WHERE started_at >= CURDATE()")->fetch_assoc()['c']) ?? 0),
     'push_devices' => (int)(($conn->query('SELECT COUNT(*) c FROM push_subscriptions')->fetch_assoc()['c']) ?? 0),
     'unread_admin' => (int)(($conn->query("SELECT COUNT(*) c FROM internal_messages WHERE to_role IN ('admin','all') AND is_read = 0")->fetch_assoc()['c']) ?? 0),
@@ -213,6 +214,7 @@ if ($tab === 'data') {
 $nav = [
     'overview' => 'Overview',
     'store' => 'Store Admin',
+    'customers' => 'Customers',
     'integrations' => 'Integrations',
     'controls' => 'Site controls',
     'data' => 'All data',
@@ -233,7 +235,7 @@ $nav = [
     <?php include __DIR__ . '/includes/admin-head-theme.php'; ?>
     <link rel="manifest" href="manifest.webmanifest">
 </head>
-<body class="admin-body sa-body<?= $tab === 'store' || $tab === 'notifications' ? ' sa-embed-mode' : '' ?>">
+<body class="admin-body sa-body<?= in_array($tab, ['store', 'notifications', 'customers'], true) ? ' sa-embed-mode' : '' ?>">
 <header class="sa-header sticky top-0 z-40 px-4 sm:px-6 py-3 flex flex-wrap gap-3 justify-between items-center">
     <div class="flex items-center gap-3 min-w-0">
         <img src="images/logo.png" alt="" class="h-10 w-10 rounded-full border border-amber-200 bg-white object-contain p-0.5 shrink-0">
@@ -268,6 +270,8 @@ $nav = [
     <iframe class="sa-iframe" title="Store Admin" src="<?= htmlspecialchars($storeSrc) ?>"></iframe>
 <?php elseif ($tab === 'notifications'): ?>
     <iframe class="sa-iframe" title="Notifications" src="notifications.php?embed=1"></iframe>
+<?php elseif ($tab === 'customers'): ?>
+    <iframe class="sa-iframe" title="Customers" src="admin-customers.php?embed=1"></iframe>
 <?php else: ?>
 <main class="admin-main max-w-7xl mx-auto p-4 sm:p-6">
     <?php if ($msg): ?>
@@ -275,10 +279,11 @@ $nav = [
     <?php endif; ?>
 
     <?php if ($tab === 'overview'): ?>
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
             <?php
             $cards = [
                 ['Products', $stats['products'], '?tab=store'],
+                ['Customers', $stats['customers'], '?tab=customers'],
                 ['Catalogue', $stats['catalogue'], '?tab=data&data_tab=catalogue'],
                 ['Visitors today', $stats['sessions_today'], '?tab=data&data_tab=visitors'],
                 ['Push devices', $stats['push_devices'], '?tab=notifications'],

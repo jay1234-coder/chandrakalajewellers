@@ -83,7 +83,6 @@ Disallow: /get_cart_items.php
 Disallow: /config/
 Disallow: /indexnow.php
 Disallow: /welcome
-Disallow: /splash.html
 Disallow: /cron/
 
 TXT;
