@@ -104,6 +104,9 @@ if (!function_exists('cj_configure_session')) {
         ini_set('session.cookie_secure', $secure ? '1' : '0');
         // Avoid session ID in URLs if cookies are blocked; prefer cookie-only auth.
         ini_set('session.cookie_path', '/');
+        if (!empty($params['domain'])) {
+            ini_set('session.cookie_domain', $params['domain']);
+        }
 
         session_set_cookie_params($params);
     }

@@ -34,16 +34,6 @@ register_shutdown_function(function () {
     }
 });
 
-// Canonical host normalization: redirect www.chandrakalajewellers.in -> chandrakalajewellers.in
-$reqHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
-$reqHost = preg_replace('/:\d+$/', '', $reqHost) ?: $reqHost;
-if ($reqHost === 'www.chandrakalajewellers.in') {
-    $redirectUrl = 'https://chandrakalajewellers.in' . ($_SERVER['REQUEST_URI'] ?? '/');
-    $status = (isset($_SERVER['REQUEST_METHOD']) && in_array(strtoupper($_SERVER['REQUEST_METHOD']), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) ? 308 : 301;
-    header('Location: ' . $redirectUrl, true, $status);
-    exit;
-}
-
 $rawUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($rawUri, PHP_URL_PATH);
 $path = trim($path, '/');
