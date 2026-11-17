@@ -3,7 +3,7 @@ require_once 'config/db.php';
 require_once 'includes/seo.php';
 require_once 'includes/img-helper.php';
 
-$per_page = 8;
+$per_page = 24;
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $is_ajax = isset($_GET['ajax']) && (string) $_GET['ajax'] === '1';
 
@@ -153,6 +153,14 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             </div>
             <p id="catalogueLazyStatus" class="text-center text-xs text-gray-400 mt-4" hidden>Loading more designs…</p>
             <div id="catalogueLazySentinel" class="shop-lazy-sentinel" aria-hidden="true"></div>
+            <?php if ($total_pages > 1): ?>
+            <div class="text-center mt-8 mb-4" id="catalogueLoadMoreWrap">
+                <button type="button" id="catalogueLoadMoreBtn" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-full shadow-sm transition-all hover:scale-105 cursor-pointer">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    Load More Designs (<?= $total_items ?> Total)
+                </button>
+            </div>
+            <?php endif; ?>
         <?php endif; ?>
     </main>
 

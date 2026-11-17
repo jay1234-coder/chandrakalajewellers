@@ -7,6 +7,8 @@
     var grid = document.getElementById('catalogueGrid');
     var sentinel = document.getElementById('catalogueLazySentinel');
     var statusEl = document.getElementById('catalogueLazyStatus');
+    var loadMoreBtn = document.getElementById('catalogueLoadMoreBtn');
+    var loadMoreWrap = document.getElementById('catalogueLoadMoreWrap');
     if (!grid) return;
 
     var state = {
@@ -76,10 +78,21 @@
             state.totalPages = data.total_pages || state.totalPages;
             grid.setAttribute('data-page', String(state.page));
             delete state.prefetch[next];
+            if (state.page >= state.totalPages && loadMoreWrap) {
+                loadMoreWrap.hidden = true;
+            }
         }).catch(function () { /* keep current */ }).finally(function () {
             state.loading = false;
             setStatus(false);
+            if (loadMoreBtn) loadMoreBtn.disabled = false;
             idlePrefetch();
+        });
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function () {
+            loadMoreBtn.disabled = true;
+            loadMore();
         });
     }
 

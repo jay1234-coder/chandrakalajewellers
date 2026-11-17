@@ -715,7 +715,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_image
 
 
 // Pagination setup
-$limit = 10;
+$limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? max(10, min(200, (int)$_GET['limit'])) : 50;
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
@@ -1370,7 +1370,10 @@ if ($just_logged_in) {
 
         <!-- Jewellery Items Stock List -->
         <div id="stockList" class="admin-stock-section admin-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 scroll-mt-24">
-            <h2 class="text-lg font-bold text-gray-900 p-6 font-serif border-b border-gray-100"><i class="fas fa-list text-amber-500 mr-1"></i> Jewellery Items Stock List</h2>
+            <h2 class="text-lg font-bold text-gray-900 p-6 font-serif border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                <span><i class="fas fa-list text-amber-500 mr-1"></i> Jewellery Items Stock List</span>
+                <span class="text-xs font-sans font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full"><?= (int)$total_items ?> Total Products Uploaded</span>
+            </h2>
 
             <?php
             $csrf_tok = urlencode($_SESSION['csrf_token']);

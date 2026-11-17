@@ -56,7 +56,7 @@ if ($search_q !== '') {
     }
 }
 
-$per_page = 12;
+$per_page = 24;
 $page = max(1, intval($_GET['page'] ?? 1));
 $is_ajax = isset($_GET['ajax']) && (string)$_GET['ajax'] === '1';
 
@@ -157,6 +157,9 @@ if ($count_q) {
         $metal_counts['all'] += (int)$cr['c'];
     }
 }
+$raw_silver = (int)($metal_counts['silver'] ?? 0);
+$raw_925 = (int)($metal_counts['silver_925'] ?? 0);
+$metal_counts['silver'] = $raw_silver + $raw_925;
 
 $needs_php_search = ($search_q !== '');
 $page_items = [];
@@ -164,7 +167,9 @@ $total_items = 0;
 
 if ($needs_php_search) {
     $where_sql = '';
-    if ($filter_metal !== 'all') {
+    if ($filter_metal === 'silver') {
+        $where_sql = " WHERE metal_type IN ('silver', 'silver_925')";
+    } elseif ($filter_metal !== 'all') {
         $filter_metal_safe = $conn->real_escape_string($filter_metal);
         $where_sql = " WHERE metal_type = '{$filter_metal_safe}'";
     }
@@ -195,7 +200,9 @@ if ($needs_php_search) {
     $where = ['1=1'];
     $types = '';
     $params = [];
-    if ($filter_metal !== 'all') {
+    if ($filter_metal === 'silver') {
+        $where[] = "metal_type IN ('silver', 'silver_925')";
+    } elseif ($filter_metal !== 'all') {
         $where[] = 'metal_type = ?';
         $types .= 's';
         $params[] = $filter_metal;
@@ -273,7 +280,7 @@ if ($is_ajax) {
 
 $activePage = 'shop';
 require_once 'includes/seo.php';
-$filterLabel = $filter_metal === 'all' ? 'Gold & Silver' : get_metal_name($filter_metal);
+$filterLabel = $filter_metal === 'all' ? 'Gold & Silver' : ($filter_metal === 'silver' ? 'Silver' : get_metal_name($filter_metal));
 $seoTitleQ = $search_q !== '' ? ('Search: ' . $search_q . ' | ') : '';
 $seo = cj_merge_seo([
     'title' => $seoTitleQ . ($filter_metal === 'all'
@@ -380,8 +387,8 @@ $sort_labels = [
                             $metals = [
                                 'all' => 'All collection',
                                 'gold' => 'Gold',
-                                'silver' => 'Silver',
-                                'silver_925' => '925 Silver',
+                                'silver' => 'All Silver',
+                                'silver_925' => '925 Sterling Silver',
                             ];
                             foreach ($metals as $key => $label):
                             ?>

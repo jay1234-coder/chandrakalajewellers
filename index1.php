@@ -19,7 +19,7 @@ if ($conn->connect_error) {
 $standard_rates = cj_get_standard_rates($conn);
 $manual_rates = cj_get_manual_rates($conn);
 
-$items = $conn->query("SELECT * FROM jewellery_items WHERE is_favourite = 1 ORDER BY id DESC LIMIT 3");
+$items = $conn->query("SELECT * FROM jewellery_items ORDER BY is_favourite DESC, id DESC LIMIT 6");
 
 if (!function_exists('get_metal_name')) {
     function get_metal_name($metal) {
@@ -173,7 +173,7 @@ $seo = cj_merge_seo([
     ?>
     </div>
     <div class="back-btn-container">
-        <a href="gallery" class="btn btn-secondary">View Full Collection</a>
+        <a href="gallery" class="btn btn-secondary">View Full Collection (60+ Designs) &rarr;</a>
     </div>
 </section>
 
