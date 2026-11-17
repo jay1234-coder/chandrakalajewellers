@@ -6,10 +6,13 @@
       "includeFiles": "{*.php,admin/**,config/**,includes/**}"
     }
   },
-  "rewrites": [
-    {
-      "source": "/((?!api/|css/|js/|images/|uploads/|catalogue/|favicon|sw\\.js|manifest|robots\\.txt|sitemap\\.xml).*)",
-      "destination": "/api/index.php"
-    }
+  "routes": [
+    { "src": "^/(css|js|images|icons|fonts)/(.*)", "dest": "/$1/$2" },
+    { "src": "^/favicon\\.(ico|png|svg)$", "dest": "/favicon.$1" },
+    { "src": "^/manifest\\.webmanifest$", "dest": "/manifest.webmanifest" },
+    { "src": "^/robots\\.txt$", "dest": "/robots.txt" },
+    { "src": "^/sitemap\\.xml$", "dest": "/sitemap.xml" },
+    { "src": "^/api/ping(\\.php)?$", "dest": "/api/ping.php" },
+    { "src": "^/(.*)$", "dest": "/api/index.php" }
   ]
 }
