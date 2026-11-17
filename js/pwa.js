@@ -426,7 +426,12 @@
       } catch (e) {}
       // Also warm browser HTTP cache
       urls.slice(0, 40).forEach(function (u) {
-        fetch(u, { credentials: 'same-origin', cache: 'force-cache' }).catch(function () {});
+        try {
+          var isSame = (new URL(u, location.href).origin === location.origin);
+          fetch(u, { credentials: isSame ? 'same-origin' : 'omit', cache: 'force-cache' }).catch(function () {});
+        } catch (e) {
+          fetch(u, { cache: 'force-cache' }).catch(function () {});
+        }
       });
     }
 

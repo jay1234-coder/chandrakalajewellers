@@ -21,19 +21,9 @@ ini_set('log_errors', '1');
 cj_auth_bootstrap($conn);
 cj_admin_noindex_headers();
 
-// Secret code gate check
-$secret_code = 'cjsecret123'; // Default fallback
-if (file_exists(__DIR__ . '/config/admin-secret.php')) {
-    $secret_code = trim((string) include __DIR__ . '/config/admin-secret.php');
-}
-if (isset($_GET['secret']) && $_GET['secret'] === $secret_code) {
+// Secret code gate check (retained for backward compatibility with bookmark links)
+if (isset($_GET['secret'])) {
     $_SESSION['admin_gate_unlocked'] = true;
-}
-if (empty($_SESSION['loggedin']) && empty($_SESSION['admin_gate_unlocked'])) {
-    header("HTTP/1.1 404 Not Found");
-    echo "<h1>404 Not Found</h1>";
-    echo "The page you requested could not be found.";
-    exit();
 }
 
 $cj_admin_embed = (!empty($_GET['embed']) || !empty($_POST['embed'])

@@ -1,7 +1,7 @@
 /* ChandraKala PWA — offline pages + persistent image cache */
-const PAGE_CACHE = 'cj-pages-v10';
-const ASSET_CACHE = 'cj-assets-v10';
-const IMAGE_CACHE = 'cj-images-v10';
+const PAGE_CACHE = 'cj-pages-v11';
+const ASSET_CACHE = 'cj-assets-v11';
+const IMAGE_CACHE = 'cj-images-v11';
 const ALL_CACHES = [PAGE_CACHE, ASSET_CACHE, IMAGE_CACHE];
 
 const PRECACHE_PAGES = [
@@ -64,7 +64,12 @@ self.addEventListener('message', (event) => {
         const unique = [...new Set(data.urls.filter(Boolean))].slice(0, 120);
         for (const raw of unique) {
           try {
-            const req = new Request(raw, { mode: 'same-origin', credentials: 'same-origin' });
+            const parsed = new URL(raw, self.location.origin);
+            const isSameOrigin = (parsed.origin === self.location.origin);
+            const req = new Request(parsed.href, {
+              mode: isSameOrigin ? 'same-origin' : 'cors',
+              credentials: isSameOrigin ? 'same-origin' : 'omit'
+            });
             const hit = await cache.match(req);
             if (hit) continue;
             const res = await fetch(req);
@@ -87,14 +92,19 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+  const isCloudinary = url.hostname.includes('cloudinary.com');
+  const isSameOrigin = (url.origin === self.location.origin);
 
   if (url.pathname.includes('/api/') || url.pathname.includes('admin') || url.pathname.includes('superadmin') || url.pathname.includes('/cron/')) {
     return;
   }
 
+  if (!isSameOrigin && !isCloudinary) {
+    return;
+  }
+
   // Images: cache-first (stay offline; no re-fetch when cached)
-  if (isImageRequest(url)) {
+  if (isImageRequest(url) || isCloudinary) {
     event.respondWith(
       caches.open(IMAGE_CACHE).then(async (cache) => {
         const cached = await cache.match(req);
@@ -106,7 +116,7 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         } catch (e) {
-          return cached || new Response('', { status: 503, statusText: 'Offline image' });
+          return cached || new Response('', { status: 204, statusText: 'No Content' });
         }
       })
     );
@@ -141,7 +151,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   const isNavigation = req.mode === 'navigate' || url.pathname.endsWith('.php') || !url.pathname.includes('.');
-  if (isNavigation) {
+  if (isNavigation && isSameOrigin) {
     event.respondWith(
       fetch(req)
         .then((res) => {
@@ -154,7 +164,7 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           const cached = await caches.match(req);
           if (cached) return cached;
-          const home = await caches.match('./index1');
+          const home = (await caches.match('./index1')) || (await caches.match('./'));
           if (home) return home;
           return new Response(`<!DOCTYPE html>
 <html lang="en">
