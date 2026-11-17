@@ -1,5 +1,5 @@
 <?php
-require '../config/db.php'; // Database connection + security bootstrap
+require dirname(__DIR__) . '/config/db.php'; // Database connection + security bootstrap
 require_once dirname(__DIR__) . '/includes/auth.php';
 
 cj_auth_bootstrap($conn);

@@ -1,5 +1,5 @@
 <?php
-require '../config/db.php';
+require dirname(__DIR__) . '/config/db.php';
 if (function_exists('cj_is_local_host') && cj_is_local_host()) {
     ini_set('display_errors', '1');
     ini_set('display_startup_errors', '1');

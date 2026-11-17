@@ -1,7 +1,7 @@
 <?php
 // delete_c.php
 
-require_once '../config/db.php';
+require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 
 cj_auth_bootstrap($conn);

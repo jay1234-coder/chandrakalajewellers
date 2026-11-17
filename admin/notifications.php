@@ -2,10 +2,10 @@
 /**
  * Admin Notification Manager
  */
-require_once '../config/db.php';
-require_once '../includes/auth.php';
-require_once '../includes/push.php';
-require_once '../includes/activity-log.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/push.php';
+require_once dirname(__DIR__) . '/includes/activity-log.php';
 
 cj_auth_bootstrap($conn);
 cj_admin_noindex_headers();

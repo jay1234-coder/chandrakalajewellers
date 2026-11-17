@@ -3,8 +3,8 @@
  * Legacy URL — redirects into Super Admin data browser.
  * Superadmin only.
  */
-require_once '../config/db.php';
-require_once '../includes/auth.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
 
 cj_auth_bootstrap($conn);
 if (empty($_SESSION['loggedin']) || ($_SESSION['role'] ?? '') !== 'superadmin') {

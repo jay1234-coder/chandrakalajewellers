@@ -1,5 +1,5 @@
 <?php
-require_once '../config/db.php'; // Database connection
+require_once dirname(__DIR__) . '/config/db.php'; // Database connection
 if (function_exists('cj_is_local_host') && cj_is_local_host()) {
     ini_set('display_errors', '1');
     ini_set('display_startup_errors', '1');

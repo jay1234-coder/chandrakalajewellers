@@ -3,13 +3,13 @@
  * Super Admin Control Center — superadmin role only.
  * Includes store admin (embedded), messaging, data, notifications, activity log.
  */
-require_once '../config/db.php';
-require_once '../includes/auth.php';
-require_once '../includes/push.php';
-require_once '../includes/visitor-analytics-schema.php';
-require_once '../includes/activity-log.php';
-require_once '../includes/payments.php';
-require_once '../includes/catalog.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/push.php';
+require_once dirname(__DIR__) . '/includes/visitor-analytics-schema.php';
+require_once dirname(__DIR__) . '/includes/activity-log.php';
+require_once dirname(__DIR__) . '/includes/payments.php';
+require_once dirname(__DIR__) . '/includes/catalog.php';
 
 cj_auth_bootstrap($conn);
 cj_admin_noindex_headers();

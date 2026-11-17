@@ -1,5 +1,5 @@
 <?php
-require_once '../config/db.php'; // Database connection (includes session start, CSRF & security headers)
+require_once dirname(__DIR__) . '/config/db.php'; // Database connection (includes session start, CSRF & security headers)
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/activity-log.php';
 require_once dirname(__DIR__) . '/includes/rates-schema.php';

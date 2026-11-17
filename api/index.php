@@ -89,30 +89,36 @@ if ($path !== '') {
 header('Content-Type: text/html; charset=UTF-8');
 header('Content-Disposition: inline');
 
-// 1. Root / Homepage
-if ($path === '' || $path === 'index' || $path === 'index.php') {
-    require $rootDir . '/index.php';
+// Helper to safely execute a target PHP script with its own directory as working directory
+function cj_dispatch_script(string $file): void {
+    chdir(dirname($file));
+    require $file;
     exit;
 }
 
-// 2. Admin sub-directory routes (e.g. /admin/orders.php)
+// 1. Root / Homepage
+if ($path === '' || $path === 'index' || $path === 'index.php') {
+    cj_dispatch_script($rootDir . '/index.php');
+}
+
+// 2. Admin sub-directory routes (e.g. /admin/orders.php, /admin/index.php)
 if (strpos($path, 'admin/') === 0) {
     $sub = substr($path, 6);
+    if ($sub === '' || $sub === 'index' || $sub === 'index.php') {
+        cj_dispatch_script($rootDir . '/admin/index.php');
+    }
     $target = $rootDir . '/admin/' . $sub;
     if (is_file($target)) {
-        require $target;
-        exit;
+        cj_dispatch_script($target);
     }
     if (is_file($target . '.php')) {
-        require $target . '.php';
-        exit;
+        cj_dispatch_script($target . '.php');
     }
 }
 
 // 3. Admin root (/admin)
 if ($path === 'admin') {
-    require $rootDir . '/admin.php';
-    exit;
+    cj_dispatch_script($rootDir . '/admin.php');
 }
 
 // 4. API endpoints inside api/
@@ -120,30 +126,25 @@ if (strpos($path, 'api/') === 0) {
     $sub = substr($path, 4);
     $target = __DIR__ . '/' . $sub;
     if (is_file($target) && realpath($target) !== __FILE__) {
-        require $target;
-        exit;
+        cj_dispatch_script($target);
     }
     if (is_file($target . '.php')) {
-        require $target . '.php';
-        exit;
+        cj_dispatch_script($target . '.php');
     }
 }
 
 // 5. Direct PHP files in root (e.g. gallery, product, cart, checkout)
 $directFile = $rootDir . '/' . $path;
 if (is_file($directFile)) {
-    require $directFile;
-    exit;
+    cj_dispatch_script($directFile);
 }
 if (is_file($directFile . '.php')) {
-    require $directFile . '.php';
-    exit;
+    cj_dispatch_script($directFile . '.php');
 }
 
 // 6. Case-insensitive aliases (e.g., /catalogue -> Catalogue.php)
 if (strtolower($path) === 'catalogue') {
-    require $rootDir . '/Catalogue.php';
-    exit;
+    cj_dispatch_script($rootDir . '/Catalogue.php');
 }
 
 // 7. Not found
