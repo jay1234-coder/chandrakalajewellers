@@ -36,10 +36,12 @@ if (empty($_SESSION['loggedin'])) {
 $role = (string)($_SESSION['role'] ?? '');
 $loggedIn = !empty($_SESSION['loggedin']);
 
-if (!$loggedIn || $role !== 'superadmin') {
-    header("HTTP/1.1 404 Not Found");
-    echo "<h1>404 Not Found</h1>";
-    echo "The page you requested could not be found.";
+if (!$loggedIn) {
+    header('Location: /secret');
+    exit();
+}
+if ($role !== 'superadmin') {
+    header('Location: /admin/index.php');
     exit();
 }
 

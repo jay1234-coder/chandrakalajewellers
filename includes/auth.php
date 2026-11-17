@@ -285,10 +285,7 @@ if (!function_exists('cj_require_role')) {
     function cj_require_role(array $roles, string $redirect = 'admin'): void
     {
         if (empty($_SESSION['loggedin'])) {
-            if ($redirect === '' || $redirect === 'admin' || $redirect === 'superadmin') {
-                $redirect = cj_admin_home_href($redirect === 'superadmin' ? 'superadmin' : 'admin');
-            }
-            header('Location: ' . $redirect);
+            header('Location: /secret');
             exit;
         }
         $role = $_SESSION['role'] ?? 'admin';
@@ -298,7 +295,7 @@ if (!function_exists('cj_require_role')) {
             $_SESSION['role'] = 'admin';
         }
         if (!in_array($role, $roles, true)) {
-            header('Location: ' . cj_admin_home_href($role));
+            header('Location: /secret');
             exit;
         }
     }

@@ -101,6 +101,17 @@ function cj_dispatch_script(string $file): void {
     exit;
 }
 
+// Secret login gate (/secret, /secret.php)
+if ($path === 'secret' || $path === 'secret.php') {
+    cj_dispatch_script($rootDir . '/secret.php');
+}
+
+// Redirect any /admin/admin directly to /secret
+if ($path === 'admin/admin' || strpos($path, 'admin/admin') === 0) {
+    header('Location: /secret', true, 302);
+    exit;
+}
+
 // 1. Root / Homepage
 if ($path === '' || $path === 'index' || $path === 'index.php') {
     cj_dispatch_script($rootDir . '/index.php');

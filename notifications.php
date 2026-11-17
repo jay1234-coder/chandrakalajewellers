@@ -10,7 +10,7 @@ require_once 'includes/activity-log.php';
 cj_auth_bootstrap($conn);
 cj_admin_noindex_headers();
 if (empty($_SESSION['loggedin'])) {
-    header('Location: admin.php');
+    header('Location: /secret');
     exit;
 }
 cj_require_role(['admin', 'superadmin'], 'admin');

@@ -12,9 +12,9 @@ cj_admin_noindex_headers();
 if (!empty($_SESSION['loggedin'])) {
     $role = $_SESSION['role'] ?? 'admin';
     if ($role === 'superadmin') {
-        header('Location: admin/superadmin.php');
+        header('Location: /admin/superadmin.php');
     } else {
-        header('Location: admin/index.php');
+        header('Location: /admin/index.php');
     }
     exit();
 }
@@ -67,9 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) |
             // Redirect role-wise
             $role = $_SESSION['role'] ?? 'admin';
             if ($role === 'superadmin') {
-                header('Location: admin/superadmin.php');
+                header('Location: /admin/superadmin.php');
             } else {
-                header('Location: admin/index.php');
+                header('Location: /admin/index.php');
             }
             exit();
         } else {
@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) |
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="secret.php" class="space-y-5" autocomplete="on">
+        <form method="POST" action="" class="space-y-5" autocomplete="on">
             <input type="hidden" name="password_submit" value="1">
             <div>
                 <label for="admin_username" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Username</label>

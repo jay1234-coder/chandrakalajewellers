@@ -40,13 +40,19 @@ if (isset($_GET['logout'])) {
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_destroy();
     }
-    header('Location: ../secret');
+    header('Location: /secret');
     exit();
 }
 
 // Restore session from remember-me cookie when PHP session expired.
 if (empty($_SESSION['loggedin'])) {
     cj_try_remember_login($conn, ['admin', 'superadmin']);
+}
+
+// Redirect to secret login gate if not authenticated
+if (empty($_SESSION['loggedin'])) {
+    header('Location: /secret');
+    exit();
 }
 
 // Store admin panel: logged-in superadmin may use embed only; otherwise send them to Super Admin.
@@ -164,173 +170,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_GET['action']) && $_GET['act
     exit;
 }
 // --- END NEW LOGIC ---
-
-// Handle login attempt (rate-limited)
-// Supports admin_users username+password OR legacy password-only → role admin (Hasmukh)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) || isset($_POST['admin_password']))) {
-    require_once dirname(__DIR__) . '/includes/auth.php';
-    cj_auth_bootstrap($conn);
-
-    $rateStatus = cj_login_rate_limit_status($conn, 'admin');
-    unset($_SESSION['login_attempts'], $_SESSION['login_first_attempt']);
-
-    if (!$rateStatus['ok']) {
-        $_SESSION['error_message'] = cj_login_rate_limit_message((int) $rateStatus['wait']);
-        $_SESSION['login_shake'] = true;
-    } else {
-        $username = trim((string) ($_POST['admin_username'] ?? ''));
-        $entered_password = trim((string) ($_POST['admin_password'] ?? ''));
-        $ok = false;
-        $portalRejected = false;
-
-        // Username + password (admin / deven / superadmin).
-        if ($username !== '' && $entered_password !== '') {
-            $ok = cj_try_user_login($conn, $username, $entered_password);
-            if ($ok) {
-                $role = $_SESSION['role'] ?? 'admin';
-                if ($role === 'superadmin') {
-                    cj_login_rate_limit_clear($conn, 'admin');
-                    unset($_SESSION['login_attempts'], $_SESSION['login_first_attempt'], $_SESSION['error_message'], $_SESSION['login_shake']);
-                    $rememberMe = !empty($_POST['remember_me']);
-                    if ($rememberMe) {
-                        cj_issue_remember_token($conn, (int) ($_SESSION['user_id'] ?? 0));
-                    } else {
-                        cj_invalidate_remember_tokens($conn, 0);
-                    }
-                    if (function_exists('cj_persist_session_cookie')) {
-                        cj_persist_session_cookie();
-                    }
-                    session_write_close();
-                    header('Location: superadmin.php');
-                    exit();
-                }
-            }
-        } elseif ($entered_password !== '') {
-            // Legacy password-only → Hasmukh (username admin, role admin)
-            $stmt = $conn->prepare("SELECT id, username, password_hash, role, display_name FROM admin_users WHERE username = 'admin' AND role = 'admin' LIMIT 1");
-            if ($stmt) {
-                $stmt->execute();
-                $adminUser = $stmt->get_result()->fetch_assoc();
-                $stmt->close();
-                if ($adminUser && password_verify($entered_password, $adminUser['password_hash'])) {
-                    $adminUser['role'] = 'admin';
-                    cj_finish_login_session($adminUser);
-                    $ok = true;
-                    cj_log_activity($conn, 'login', 'Password-only login as admin');
-                }
-            }
-        }
-
-        if ($ok) {
-            cj_login_rate_limit_clear($conn, 'admin');
-            unset($_SESSION['login_attempts'], $_SESSION['login_first_attempt'], $_SESSION['error_message'], $_SESSION['login_shake']);
-            $rememberMe = !empty($_POST['remember_me']);
-            if ($rememberMe) {
-                cj_issue_remember_token($conn, (int) ($_SESSION['user_id'] ?? 0));
-            } else {
-                // Fresh password login without remember — drop this browser's persistent cookie only
-                cj_invalidate_remember_tokens($conn, 0);
-            }
-            // Persist session before redirect so the following GET still has the cookie
-            if (function_exists('cj_persist_session_cookie')) {
-                cj_persist_session_cookie();
-            }
-            session_write_close();
-            header('Location: ' . $cj_admin_home);
-            exit();
-        }
-
-        if (!$portalRejected) {
-            cj_login_rate_limit_hit($conn, 'admin');
-            $_SESSION['error_message'] = 'Incorrect login. Please try again.';
-            $_SESSION['login_shake'] = true;
-        }
-    }
-}
-
-if (empty($_SESSION['loggedin'])) {
-    // If not logged in, display the login form and exit
-    ?>
-    <?php $login_shake = !empty($_SESSION['login_shake']); unset($_SESSION['login_shake']); ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <?php
-        $cj_login_page_title = 'Store Admin — ChandraKala Jewellers';
-        $cj_login_page_description = 'Private store admin portal for ChandraKala Jewellers, Khedbrahma. Not a customer, Google, bank, or email login.';
-        include dirname(__DIR__) . '/includes/admin-login-meta.php';
-        ?>
-        <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../css/admin.css">
-        <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
-        <style>
-            body {
-                font-family: 'Poppins', sans-serif;
-                background-color: var(--admin-bg, #faf9f6);
-            }
-            .glass-card {
-                background: rgba(255, 255, 255, 0.85);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                border: 1px solid rgba(212, 175, 55, 0.25);
-            }
-        </style>
-    </head>
-    <body class="admin-body flex items-center justify-center min-h-screen relative p-4 sm:p-6 bg-gray-50/50">
-        <div class="absolute top-4 right-4 z-20"><?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?></div>
-        <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#d4af37 1px, transparent 1px); background-size: 24px 24px;"></div>        <div class="glass-card admin-login-card<?= $login_shake ? ' shake' : '' ?> p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md z-10">
-            <?php
-            if (isset($_SESSION['error_message'])) {
-                echo '<div class="admin-alert bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-6 text-sm flex gap-2 items-start" role="alert">
-                        <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <div>
-                            ' . htmlspecialchars($_SESSION['error_message']) . '
-                        </div>
-                    </div>';
-                unset($_SESSION['error_message']);
-            }
-            ?>
-
-            <form method="POST" action="admin" class="space-y-5" id="adminLoginForm" autocomplete="on">
-                <input type="hidden" name="password_submit" value="1">
-                <div>
-                    <label for="admin_username" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Username</label>
-                    <input type="text" id="admin_username" name="admin_username" autocomplete="username" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none text-base">
-                </div>
-                <div>
-                    <label for="admin_password" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Password</label>
-                    <input type="password" id="admin_password" name="admin_password" autocomplete="current-password" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all duration-200 text-base" required>
-                </div>
-
-                <label for="remember_me" class="flex items-center gap-2.5 cursor-pointer select-none group">
-                    <input type="checkbox" id="remember_me" name="remember_me" value="1" class="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500/40 focus:ring-offset-0 accent-amber-600">
-                    <span class="text-sm text-gray-600 group-hover:text-gray-800">Remember me</span>
-                </label>
-                
-                <button type="submit" id="loginSubmitBtn" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow text-sm tracking-wide active:scale-[0.98]">
-                    <span class="login-btn-label">Sign In</span>
-                    </span>
-                </button>
-            </form>
-        </div>
-        <script>
-            document.getElementById('adminLoginForm').addEventListener('submit', function () {
-                var btn = document.getElementById('loginSubmitBtn');
-                btn.querySelector('.login-btn-label').classList.add('hidden');
-                var loading = btn.querySelector('.login-btn-loading');
-                loading.classList.remove('hidden');
-                loading.classList.add('inline-flex');
-                btn.setAttribute('aria-busy', 'true');
-            });
-        </script>
-    </body>
-    </html>
-    <?php
-    exit(); // Stop further execution of the admin panel if not logged in
-}
 
 cj_ensure_rates_schema($conn);
 
