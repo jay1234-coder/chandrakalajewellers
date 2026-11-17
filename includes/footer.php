@@ -70,6 +70,6 @@ $cjShopFlags = [
 ?>
 <script>window.CJ_SHOP = <?= json_encode($cjShopFlags) ?>;</script>
 <script src="js/lazy.js" defer></script>
-<script src="js/main.js?v=9" defer></script>
-<script src="js/visitor-analytics.js?v=9" defer></script>
-<script src="js/pwa.js?v=9" defer></script>
+<script src="js/main.js?v=10" defer></script>
+<script src="js/visitor-analytics.js?v=10" defer></script>
+<script src="js/pwa.js?v=10" defer></script>

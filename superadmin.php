@@ -439,7 +439,7 @@ $nav = [
 </main>
 <?php endif; ?>
 
-<script src="js/pwa.js" defer></script>
+<script src="js/pwa.js?v=10" defer></script>
 <script>
 setTimeout(function(){
   if (window.CJPwa) window.CJPwa.subscribe(<?= json_encode(($_SESSION['role'] ?? '') === 'superadmin' ? 'superadmin' : 'admin') ?>);

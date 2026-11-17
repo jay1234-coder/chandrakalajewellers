@@ -3894,11 +3894,6 @@ body.low-connectivity * {
     animation: none !important;
 }
 
-body.low-connectivity img:not([src*="logo"]):not([src*="icon"]) {
-    filter: grayscale(80%) contrast(90%);
-    opacity: 0.75;
-}
-
 /* Dark mode — full-surface coverage + shining gold */
 html[data-theme="dark"] body {
     background-color: var(--bg-light) !important;

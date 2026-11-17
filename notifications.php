@@ -275,7 +275,7 @@ $home = (($_SESSION['role'] ?? '') === 'superadmin') ? 'superadmin' : 'admin';
         </p>
     </section>
 </main>
-<script src="js/pwa.js" defer></script>
+<script src="js/pwa.js?v=10" defer></script>
 <script>
 document.getElementById('enablePushBtn')?.addEventListener('click', function () {
     var role = <?= json_encode($_SESSION['role'] ?? 'admin') ?>;

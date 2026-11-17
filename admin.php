@@ -1983,7 +1983,7 @@ if ($just_logged_in) {
         }
     })();
     </script>
-    <script src="js/pwa.js" defer></script>
+    <script src="js/pwa.js?v=10" defer></script>
     <script>
         setTimeout(function () {
             if (window.CJPwa) window.CJPwa.subscribe('admin');

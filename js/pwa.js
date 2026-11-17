@@ -739,20 +739,10 @@
     }
 
     function checkConnection() {
-      if (!navigator.onLine) {
+      if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
         showStatus('Offline Mode — Viewing cached version of the site.', 'offline');
         document.body.classList.add('low-connectivity');
         return;
-      }
-
-      var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (conn) {
-        var isSlow = conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.saveData;
-        if (isSlow) {
-          showStatus('Slow Connection Detected — Loaded minimal layout for speed.', 'slow');
-          document.body.classList.add('low-connectivity');
-          return;
-        }
       }
 
       hideStatus();
