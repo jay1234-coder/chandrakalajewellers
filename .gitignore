@@ -32,6 +32,10 @@ download.zip
 scratch/
 _recovered/
 backup_ui_pre_opt/
+htdocs/
+.cpanel/
+.softaculous/
+.override
 
 # Node.js dependencies and build outputs
 node_modules/
