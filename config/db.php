@@ -106,6 +106,20 @@ if ($conn === null || (is_object($conn) && $conn->connect_error) || $connError !
 
 // Set MySQL session timezone to IST
 $conn->query("SET time_zone = '+05:30'");
+$GLOBALS['conn'] = $conn;
+
+if (!function_exists('cj_get_db')) {
+    function cj_get_db(): ?mysqli {
+        global $conn;
+        if (isset($conn) && $conn instanceof mysqli) {
+            return $conn;
+        }
+        if (isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof mysqli) {
+            return $GLOBALS['conn'];
+        }
+        return null;
+    }
+}
 
 require_once __DIR__ . '/../includes/settings.php';
 require_once __DIR__ . '/../includes/catalog.php';

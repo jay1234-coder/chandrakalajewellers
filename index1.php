@@ -73,10 +73,10 @@ $seo = cj_merge_seo([
     <p>ChandraKala Jewellers — timeless 916 gold &amp; silver pieces crafted with passion on Civil Road.</p>
 
     <?php
-    $show_gold = cj_setting('show_gold_rate', '1') === '1';
-    $show_silver = cj_setting('show_silver_rate', '1') === '1';
-    $show_silver_925 = cj_setting('show_silver_925_rate', '1') === '1';
-    $show_copper = cj_setting('show_copper_rate', '1') === '1';
+    $show_gold = cj_setting('show_gold_rate', '1', $conn) === '1';
+    $show_silver = cj_setting('show_silver_rate', '1', $conn) === '1';
+    $show_silver_925 = cj_setting('show_silver_925_rate', '1', $conn) === '1';
+    $show_copper = cj_setting('show_copper_rate', '1', $conn) === '1';
     
     if ($show_gold || $show_silver || $show_silver_925 || $show_copper):
     ?>

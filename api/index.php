@@ -96,8 +96,12 @@ header('Content-Disposition: inline');
 
 // Helper to safely execute a target PHP script with its own directory as working directory
 function cj_dispatch_script(string $file): void {
+    global $conn;
     chdir(dirname($file));
     require $file;
+    if (isset($conn) && $conn instanceof mysqli) {
+        $GLOBALS['conn'] = $conn;
+    }
     exit;
 }
 

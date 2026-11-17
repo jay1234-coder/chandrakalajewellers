@@ -150,16 +150,6 @@ if (!function_exists('cj_settings_all')) {
             return $GLOBALS['cj_settings_cache'];
         }
 
-        $tmpDir = sys_get_temp_dir();
-        $cacheFile = $tmpDir . '/cj_settings.json';
-        if (is_file($cacheFile) && (time() - (int)@filemtime($cacheFile)) < 60) {
-            $cached = @json_decode((string)@file_get_contents($cacheFile), true);
-            if (is_array($cached) && !empty($cached)) {
-                $GLOBALS['cj_settings_cache'] = $cached;
-                return $cached;
-            }
-        }
-
         $out = cj_settings_defaults();
         $file = @include __DIR__ . '/../config/seo-config.php';
         if (is_array($file)) {
@@ -173,10 +163,13 @@ if (!function_exists('cj_settings_all')) {
         $out['razorpay_key_secret'] = trim((string) cj_env('CJ_RAZORPAY_KEY_SECRET', $out['razorpay_key_secret']));
         $out['razorpay_webhook_secret'] = trim((string) cj_env('CJ_RAZORPAY_WEBHOOK_SECRET', $out['razorpay_webhook_secret']));
 
-        $conn = $conn ?: (isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof mysqli ? $GLOBALS['conn'] : null);
-        if ($conn) {
+        $db = $conn ?: (isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof mysqli ? $GLOBALS['conn'] : null);
+        if (!$db && function_exists('cj_get_db')) {
+            $db = cj_get_db();
+        }
+        if ($db instanceof mysqli) {
             try {
-                $res = $conn->query('SELECT setting_key, setting_value FROM site_settings');
+                $res = $db->query('SELECT setting_key, setting_value FROM site_settings');
                 if ($res) {
                     while ($row = $res->fetch_assoc()) {
                         $k = (string) ($row['setting_key'] ?? '');
@@ -188,15 +181,14 @@ if (!function_exists('cj_settings_all')) {
             } catch (Throwable $ignore) {}
         }
         $GLOBALS['cj_settings_cache'] = $out;
-        @file_put_contents($cacheFile, json_encode($out));
         return $out;
     }
 }
 
 if (!function_exists('cj_setting')) {
-    function cj_setting(string $key, ?string $default = null): string
+    function cj_setting(string $key, ?string $default = null, ?mysqli $conn = null): string
     {
-        $all = cj_settings_all();
+        $all = cj_settings_all($conn);
         if (array_key_exists($key, $all) && $all[$key] !== '') {
             return $all[$key];
         }
@@ -217,6 +209,8 @@ if (!function_exists('cj_setting_set')) {
             return;
         }
         cj_setting_write($conn, $key, $value);
+        unset($GLOBALS['cj_settings_cache']);
+        @unlink(sys_get_temp_dir() . '/cj_settings.json');
     }
 }
 
