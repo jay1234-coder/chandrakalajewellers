@@ -11,10 +11,10 @@ if (empty($_SESSION['csrf_token'])) {
 
 $isLocal = function_exists('cj_is_local_host') && cj_is_local_host();
 
-$host = cj_env('CJ_DB_HOST') ?: cj_env('POSTGRES_HOST') ?: cj_env('DB_HOST');
-$user = cj_env('CJ_DB_USER') ?: cj_env('POSTGRES_USER') ?: cj_env('DB_USER');
-$pass = cj_env('CJ_DB_PASS') ?? cj_env('POSTGRES_PASSWORD') ?? cj_env('DB_PASS', '');
-$dbname = cj_env('CJ_DB_NAME') ?: cj_env('POSTGRES_DATABASE') ?: cj_env('DB_NAME');
+$host = cj_env('CJ_DB_HOST');
+$user = cj_env('CJ_DB_USER');
+$pass = cj_env('CJ_DB_PASS', '');
+$dbname = cj_env('CJ_DB_NAME');
 
 if ($isLocal) {
     $host = 'localhost';
@@ -24,7 +24,7 @@ if ($isLocal) {
 } elseif ($host === null || $user === null || $dbname === null || $pass === null || $pass === '') {
     error_log('CJ database credentials are not configured. Set CJ_DB_* in config/.env (use a rotated password).');
     http_response_code(500);
-    die('<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>Database Configuration Notice</h2><p>Database credentials are not configured. Set <code>CJ_DB_HOST</code>, <code>CJ_DB_USER</code>, <code>CJ_DB_PASS</code>, and <code>CJ_DB_NAME</code> in Vercel Environment Variables.</p></div>');
+    die('Store is temporarily unavailable.');
 }
 
 // Set default PHP timezone
@@ -47,7 +47,7 @@ if ($conn->connect_error) {
         }
         error_log('CJ database connection failed: ' . $conn->connect_error);
         http_response_code(500);
-        die('<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>Database Connection Error</h2><p>' . htmlspecialchars($conn->connect_error) . '</p><p>Please check your MySQL database host, port, user, and password in Vercel Environment Variables.</p></div>');
+        die('Store is temporarily unavailable.');
     }
 }
 

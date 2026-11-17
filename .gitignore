@@ -23,6 +23,7 @@ if0_38635607_cjdb.sql.zip
 sql.zip
 uploads.zip
 download.zip
+uploads/cache/
 !database/**/*.sql
 !database/*.sql
 !supabase/**/*.sql
