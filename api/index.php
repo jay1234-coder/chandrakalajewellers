@@ -67,6 +67,10 @@ if ($path !== '') {
     }
 }
 
+// Guarantee default HTML content type and inline disposition for all dynamic PHP scripts
+header('Content-Type: text/html; charset=UTF-8');
+header('Content-Disposition: inline');
+
 // 1. Root / Homepage
 if ($path === '' || $path === 'index' || $path === 'index.php') {
     require $rootDir . '/index.php';
