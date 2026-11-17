@@ -369,6 +369,7 @@
 
   navigator.serviceWorker.register(BASE + 'sw.js').then(function (reg) {
     swReg = reg;
+    try { reg.update(); } catch (e) {}
     var audience = 'customer';
     if (/admin/i.test(location.pathname) && !/superadmin/i.test(location.pathname)) audience = 'admin';
     if (/superadmin/i.test(location.pathname)) audience = 'superadmin';
