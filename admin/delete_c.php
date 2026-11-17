@@ -39,25 +39,15 @@ if (isset($_GET['delete_id'])) {
         $stmt_delete->bind_param("i", $id_to_delete);
 
         if ($stmt_delete->execute()) {
-            // 3. If database deletion is successful, attempt to delete the file
+            // 3. If database deletion is successful, attempt to delete local file if present
             if ($image_filename_to_delete) {
                 $file_path = $imageFolderPath . $image_filename_to_delete;
                 if (file_exists($file_path)) {
-                    if (unlink($file_path)) {
-                        $message = "Product and image deleted successfully!";
-                        $message_type = 'success';
-                    } else {
-                        $message = "Product deleted from database, but failed to delete image file: " . htmlspecialchars($image_filename_to_delete);
-                        $message_type = 'error';
-                    }
-                } else {
-                    $message = "Product deleted from database, but image file not found on server: " . htmlspecialchars($image_filename_to_delete);
-                    $message_type = 'error';
+                    @unlink($file_path);
                 }
-            } else {
-                $message = "Product deleted successfully (no associated image filename found or image filename was empty).";
-                $message_type = 'success';
             }
+            $message = "Product deleted successfully!";
+            $message_type = 'success';
         } else {
             $message = "Error deleting product from database: " . $stmt_delete->error;
             $message_type = 'error';

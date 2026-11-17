@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/rates-schema.php';
 require_once __DIR__ . '/includes/pricing.php';
 require_once __DIR__ . '/includes/orders.php';
 require_once __DIR__ . '/includes/catalog.php';
+require_once __DIR__ . '/includes/img-helper.php';
 
 if (function_exists('cj_is_local_host') && cj_is_local_host()) {
     ini_set('display_errors', '1');
@@ -131,13 +132,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_GET['action']) && $_GET['act
                 $unique_filename = uniqid('item_', true) . '.' . $file_extension;
                 $target_file = $uploadDir . $unique_filename;
                 
-                if (move_uploaded_file($tmp_name, $target_file)) {
+                require_once __DIR__ . '/includes/cloudinary.php';
+                $uploaded = false;
+                $cldErr = '';
+                if (function_exists('cj_cloudinary_is_enabled') && cj_cloudinary_is_enabled()) {
+                    $cldRes = cj_cloudinary_upload($tmp_name, $unique_filename, 'chandrakala/uploads');
+                    if (!empty($cldRes['success'])) {
+                        $uploaded = true;
+                    } else {
+                        $cldErr = $cldRes['error'] ?? 'Cloudinary upload failed.';
+                    }
+                }
+                if (is_writable($uploadDir) && @move_uploaded_file($tmp_name, $target_file)) {
+                    $uploaded = true;
+                }
+                
+                if ($uploaded) {
                     $uploaded_images[] = [
                         'filename' => $unique_filename,
                         'original_name' => $name
                     ];
                 } else {
-                    $errors[] = "Failed to move uploaded file: $name.";
+                    $errors[] = "Failed to upload file $name" . ($cldErr ? ": $cldErr" : ".");
                 }
             } else if ($_FILES['images']['error'][$key] != UPLOAD_ERR_NO_FILE) {
                 $errors[] = "Upload error for file $name: " . $_FILES['images']['error'][$key];
@@ -731,7 +747,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_image
                 $unique_filename = uniqid('jewellery_', true) . '.' . $file_extension;
                 $target_file = $uploadDir . $unique_filename;
 
-                if (move_uploaded_file($tmp_name, $target_file)) {
+                require_once __DIR__ . '/includes/cloudinary.php';
+                $uploaded = false;
+                $cldErr = '';
+                if (function_exists('cj_cloudinary_is_enabled') && cj_cloudinary_is_enabled()) {
+                    $cldRes = cj_cloudinary_upload($tmp_name, $unique_filename, 'chandrakala/catalogue');
+                    if (!empty($cldRes['success'])) {
+                        $uploaded = true;
+                    } else {
+                        $cldErr = $cldRes['error'] ?? 'Cloudinary upload failed.';
+                    }
+                }
+                if (is_writable($uploadDir) && @move_uploaded_file($tmp_name, $target_file)) {
+                    $uploaded = true;
+                }
+
+                if ($uploaded) {
                     $product_name = pathinfo($name, PATHINFO_FILENAME);
                     $product_name = str_replace(['_', '-'], ' ', $product_name);
                     $product_name = ucwords($product_name);
@@ -743,11 +774,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_image
                         $uploadedCount++;
                     } else {
                         $errors[] = "Failed to insert '$name' into database: " . $stmt->error;
-                        unlink($target_file);
+                        if (file_exists($target_file)) {
+                            @unlink($target_file);
+                        }
                     }
                     $stmt->close();
                 } else {
-                    $errors[] = "Failed to move uploaded file: '$name'.";
+                    $errors[] = "Failed to upload file '$name'" . ($cldErr ? ": $cldErr" : ".");
                 }
             } else if ($_FILES['catalogue_images']['error'][$key] != UPLOAD_ERR_NO_FILE) {
                 $error_code = $_FILES['catalogue_images']['error'][$key];
@@ -1325,7 +1358,7 @@ if ($just_logged_in) {
                     ?>
                         <article class="stock-card<?= $is_sold ? ' is-sold-out' : '' ?>" style="animation-delay: <?= min($idx * 0.04, 0.4) ?>s">
                             <div class="stock-card-top">
-                                <img src="uploads/<?= htmlspecialchars($row['image']) ?>" alt="" loading="lazy" decoding="async" width="80" height="80">
+                                <img src="<?= htmlspecialchars(cj_img_url($row['image'], 160, 'uploads')) ?>" alt="" loading="lazy" decoding="async" width="80" height="80">
                                 <div class="stock-card-meta">
                                     <h3><?= htmlspecialchars($row['name']) ?></h3>
                                     <p><?= htmlspecialchars($row['weight']) ?> g · <?= htmlspecialchars($metal_label) ?></p>
@@ -1381,7 +1414,7 @@ if ($just_logged_in) {
                             ?>
                                 <tr class="hover:bg-gray-50/50 transition-colors duration-150<?= $is_sold ? ' opacity-75' : '' ?>">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <img class="h-10 w-10 rounded-lg object-cover border border-gray-100 shadow-sm" src="uploads/<?= htmlspecialchars($row['image']) ?>" alt="Product photo" loading="lazy" decoding="async" width="40" height="40">
+                                        <img class="h-10 w-10 rounded-lg object-cover border border-gray-100 shadow-sm" src="<?= htmlspecialchars(cj_img_url($row['image'], 80, 'uploads')) ?>" alt="Product photo" loading="lazy" decoding="async" width="40" height="40">
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900"><?= htmlspecialchars($row['name']) ?></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-gray-500"><?= htmlspecialchars($row['weight']) ?> g</td>
@@ -1821,7 +1854,7 @@ if ($just_logged_in) {
             document.getElementById('edit_is_fav').checked = item.is_favourite == 1;
             document.getElementById('edit_is_sold_out').checked = item.is_sold_out == 1;
             document.getElementById('edit_current_image').value = item.image;
-            document.getElementById('edit_image_preview').src = 'uploads/' + item.image;
+            document.getElementById('edit_image_preview').src = 'https://res.cloudinary.com/hihrgcxm/image/upload/f_auto,q_auto,w_400,c_limit/chandrakala/uploads/' + item.image;
             document.getElementById('edit_image_preview').classList.remove('hidden');
             document.getElementById('edit_use_manual_rates').checked = item.use_manual_rates == 1;
             document.getElementById('edit_purity').value = item.purity || '';

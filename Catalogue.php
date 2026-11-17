@@ -33,9 +33,9 @@ if ($stmt) {
 function cj_catalogue_card(array $product, int $pi, bool $lazyForce = false): string
 {
     $delay = ($pi % 4) + 1;
-    $absImg = cj_abs_url('catalogue/' . $product['image_filename']);
+    $full = htmlspecialchars(cj_img_url($product['image_filename'], 1400, 'catalogue'));
     $thumb = htmlspecialchars(cj_img_url($product['image_filename'], 480, 'catalogue'));
-    $full = htmlspecialchars('./catalogue/' . $product['image_filename']);
+    $absImg = $full;
     $name = htmlspecialchars($product['name']);
     $desc = htmlspecialchars($product['description'] ?? '');
     $eager = !$lazyForce && $pi < 2;

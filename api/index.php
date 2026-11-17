@@ -40,6 +40,22 @@ $rootDir = dirname(__DIR__);
 
 // Handle static files if routed here
 if ($path !== '') {
+    // Cloudinary redirects for media on serverless runtime
+    if (strpos($path, 'uploads/') === 0) {
+        require_once $rootDir . '/includes/cloudinary.php';
+        $fn = substr($path, 8);
+        $cldUrl = cj_cloudinary_url($fn, 1200, 'uploads');
+        header('Location: ' . $cldUrl, true, 302);
+        exit;
+    }
+    if (strpos($path, 'catalogue/') === 0) {
+        require_once $rootDir . '/includes/cloudinary.php';
+        $fn = substr($path, 10);
+        $cldUrl = cj_cloudinary_url($fn, 1200, 'catalogue');
+        header('Location: ' . $cldUrl, true, 302);
+        exit;
+    }
+
     $staticFile = $rootDir . '/' . $path;
     if (is_file($staticFile)) {
         $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));

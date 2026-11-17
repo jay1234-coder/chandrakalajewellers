@@ -112,7 +112,7 @@ function cj_gallery_render_card(array $row, int $i = 0, bool $lazyForce = false)
     $metal_display = get_metal_name($row['metal_type']);
     $rounded_final_price = (int)$row['_price'];
     $delay = min($i % 3, 3);
-    $absImg = cj_abs_url('uploads/' . ltrim($row['image'], '/'));
+    $absImg = cj_img_url($row['image'], 1200);
     $productUrl = cj_abs_url('product?id=' . (int)$row['id']);
     $is_sold = !empty($row['is_sold_out']);
     $eager = !$lazyForce && $i < 2;

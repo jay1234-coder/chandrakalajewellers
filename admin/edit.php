@@ -11,6 +11,7 @@ error_reporting(E_ALL);
 ini_set('log_errors', '1');
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/pricing.php';
+require_once dirname(__DIR__) . '/includes/img-helper.php';
 
 cj_auth_bootstrap($conn);
 cj_require_role(['admin', 'superadmin'], 'admin');
@@ -62,19 +63,34 @@ if (isset($_GET['id'])) {
                 $message = "Error: Invalid image file type uploaded.";
                 $message_type = 'error';
             } else {
-                // Ensure 'uploads' directory exists and is writable
+                // Ensure 'uploads' directory exists and is writable if on local disk
                 if (!is_dir('../uploads')) {
-                    mkdir('../uploads', 0777, true);
+                    @mkdir('../uploads', 0777, true);
                 }
                 $new_image_name = uniqid('item_edit_', true) . '.' . $file_extension;
-                if (move_uploaded_file($_FILES['image']['tmp_name'], "../uploads/" . $new_image_name)) {
+                require_once __DIR__ . '/../includes/cloudinary.php';
+                $uploaded = false;
+                $cldErr = '';
+                if (function_exists('cj_cloudinary_is_enabled') && cj_cloudinary_is_enabled()) {
+                    $cldRes = cj_cloudinary_upload($_FILES['image']['tmp_name'], $new_image_name, 'chandrakala/uploads');
+                    if (!empty($cldRes['success'])) {
+                        $uploaded = true;
+                    } else {
+                        $cldErr = $cldRes['error'] ?? 'Cloudinary upload failed.';
+                    }
+                }
+                if (is_writable('../uploads') && @move_uploaded_file($_FILES['image']['tmp_name'], "../uploads/" . $new_image_name)) {
+                    $uploaded = true;
+                }
+
+                if ($uploaded) {
                     $image = $new_image_name;
                     // Delete old image if it's different from the new one and exists
                     if ($old_image && $old_image != $new_image_name && file_exists("../uploads/" . $old_image)) {
-                        unlink("../uploads/" . $old_image);
+                        @unlink("../uploads/" . $old_image);
                     }
                 } else {
-                    $message = "Failed to upload new image.";
+                    $message = "Failed to upload new image" . ($cldErr ? ": $cldErr" : ".");
                     $message_type = 'error';
                 }
             }
@@ -237,8 +253,8 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
 
                     <div class="mb-6 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
                         <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Item Image</label>
-                        <?php if ($product['image'] && file_exists("../uploads/" . $product['image'])): ?>
-                            <img src="../uploads/<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-24 h-24 object-cover rounded-xl border border-gray-100 mb-4 shadow-sm">
+                        <?php if (!empty($product['image'])): ?>
+                            <img src="<?= htmlspecialchars(cj_img_url($product['image'], 200, 'uploads')) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-24 h-24 object-cover rounded-xl border border-gray-100 mb-4 shadow-sm">
                         <?php endif; ?>
                         <input type="file" name="image" id="image" class="text-xs text-gray-500 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" accept="image/*">
                     </div>

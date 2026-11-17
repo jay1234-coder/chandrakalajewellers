@@ -37,6 +37,10 @@ htdocs/
 .cpanel/
 .softaculous/
 .override
+catalogue/*.jpg
+catalogue/*.jpeg
+catalogue/*.png
+catalogue/*.webp
 
 # Node.js dependencies and build outputs
 node_modules/

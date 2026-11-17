@@ -128,7 +128,7 @@ require_once 'includes/seo.php';
 $productUrl = cj_abs_url('product?id=' . (int)$product['id']);
 $rawImage = trim((string)($product['image'] ?? ''));
 $productImage = $rawImage !== ''
-    ? cj_abs_url('uploads/' . ltrim($rawImage, '/'))
+    ? cj_img_url($rawImage, 1200, 'uploads')
     : cj_abs_url('images/logo.png');
 
 // Schema price: prefer display price, then auto rate price, then stored manual_price.

@@ -66,9 +66,7 @@ $productName = htmlspecialchars($product['name']);
 // Round the final price to the nearest integer
 $productPrice = number_format(round($final_price), 0);
 $productType = htmlspecialchars($product['metal_type']);
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-$domain = $_SERVER['HTTP_HOST'];
-$productImageURL = $protocol . $domain . "/uploads/" . rawurlencode($product['image']);
+$productImageURL = cj_img_url($product['image'], 1200, 'uploads');
 $whatsappNumber = function_exists('cj_shop_whatsapp_digits') ? cj_shop_whatsapp_digits() : '919427080359';
 
 // Create message (rawurlencode for JS safety)

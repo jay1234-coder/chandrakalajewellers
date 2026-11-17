@@ -18,6 +18,13 @@ if ($f === '' || !preg_match('/^[a-zA-Z0-9._\-\s]+\.(jpe?g|png|gif|webp)$/i', $f
     exit('Bad request');
 }
 
+require_once __DIR__ . '/includes/cloudinary.php';
+if (function_exists('cj_cloudinary_is_enabled') && cj_cloudinary_is_enabled()) {
+    $cldUrl = cj_cloudinary_url($f, $w, $dir);
+    header('Location: ' . $cldUrl, true, 302);
+    exit;
+}
+
 $src = __DIR__ . '/' . $dir . '/' . $f;
 if (!is_file($src)) {
     http_response_code(404);
