@@ -18,7 +18,7 @@ if (!function_exists('cj_ensure_catalog_schema')) {
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             image VARCHAR(255) NOT NULL DEFAULT '',
-            description TEXT NOT NULL DEFAULT '',
+            description TEXT,
             weight DECIMAL(10,3) NOT NULL DEFAULT 0.000,
             metal_type VARCHAR(32) NOT NULL DEFAULT 'gold',
             manual_price DECIMAL(12,2) DEFAULT NULL,
@@ -30,7 +30,7 @@ if (!function_exists('cj_ensure_catalog_schema')) {
             category VARCHAR(80) NOT NULL DEFAULT '',
             sku VARCHAR(64) NOT NULL DEFAULT '',
             dimensions VARCHAR(80) NOT NULL DEFAULT '',
-            tags TEXT NOT NULL DEFAULT '',
+            tags TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
@@ -40,7 +40,7 @@ if (!function_exists('cj_ensure_catalog_schema')) {
             'category' => "ADD COLUMN category VARCHAR(80) NOT NULL DEFAULT '' AFTER stone",
             'sku' => "ADD COLUMN sku VARCHAR(64) NOT NULL DEFAULT '' AFTER category",
             'dimensions' => "ADD COLUMN dimensions VARCHAR(80) NOT NULL DEFAULT '' AFTER sku",
-            'tags' => "ADD COLUMN tags TEXT NOT NULL DEFAULT '' AFTER dimensions",
+            'tags' => "ADD COLUMN tags TEXT AFTER dimensions",
             'is_sold_out' => "ADD COLUMN is_sold_out TINYINT(1) NOT NULL DEFAULT 0 AFTER is_favourite",
             'use_manual_rates' => "ADD COLUMN use_manual_rates TINYINT(1) NOT NULL DEFAULT 0 AFTER is_sold_out",
         ];
