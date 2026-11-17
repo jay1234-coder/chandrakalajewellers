@@ -375,12 +375,12 @@ if ($currentRole === 'superadmin') {
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
             <?php include __DIR__ . '/includes/admin-theme-toggle.php'; ?>
-            <a href="admin.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Store Admin</a>
-            <a href="admin-orders.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Orders</a>
+            <a href="index.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Store Admin</a>
+            <a href="orders.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Orders</a>
             <?php if ($currentRole === 'superadmin'): ?>
                 <a href="superadmin.php" class="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl transition-colors">Control Center</a>
             <?php endif; ?>
-            <a href="admin.php?logout" class="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl border border-red-100 transition-colors">Log Out</a>
+            <a href="index.php?logout" class="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl border border-red-100 transition-colors">Log Out</a>
         </div>
     </div>
 </header>
@@ -551,7 +551,7 @@ if ($currentRole === 'superadmin') {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <?php if ($ordersCount > 0): ?>
-                                        <a href="admin-orders.php?status=all&search=<?= urlencode($c['phone']) ?>" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                                        <a href="orders.php?status=all&search=<?= urlencode($c['phone']) ?>" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
                                             <i class="fas fa-receipt text-[10px]"></i> <?= $ordersCount ?> <?= $ordersCount === 1 ? 'order' : 'orders' ?>
                                         </a>
                                     <?php else: ?>

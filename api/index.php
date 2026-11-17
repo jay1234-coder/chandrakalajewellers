@@ -38,6 +38,11 @@ $rawUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($rawUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
+// Clean duplicate /admin/admin/...
+while (strpos($path, 'admin/admin/') === 0) {
+    $path = substr($path, 6);
+}
+
 $rootDir = dirname(__DIR__);
 
 // Handle static files if routed here
@@ -101,11 +106,26 @@ if ($path === '' || $path === 'index' || $path === 'index.php') {
     cj_dispatch_script($rootDir . '/index.php');
 }
 
-// 2. Admin sub-directory routes (e.g. /admin/orders.php, /admin/index.php)
+// 2. Admin root routes (/admin, /admin.php)
+if ($path === 'admin' || $path === 'admin.php') {
+    cj_dispatch_script($rootDir . '/admin/index.php');
+}
+
+// 3. Admin sub-directory routes (e.g. /admin/orders.php, /admin/index.php, /admin/customers)
 if (strpos($path, 'admin/') === 0) {
     $sub = substr($path, 6);
-    if ($sub === '' || $sub === 'index' || $sub === 'index.php') {
+    if ($sub === '' || $sub === 'index' || $sub === 'index.php' || $sub === 'admin.php') {
         cj_dispatch_script($rootDir . '/admin/index.php');
+    }
+    // Sub-aliases inside admin
+    if ($sub === 'admin-orders' || $sub === 'admin-orders.php') {
+        $sub = 'orders.php';
+    }
+    if ($sub === 'admin-customers' || $sub === 'admin-customers.php') {
+        $sub = 'customers.php';
+    }
+    if ($sub === 'catalogue') {
+        $sub = 'delete_c.php';
     }
     $target = $rootDir . '/admin/' . $sub;
     if (is_file($target)) {
@@ -116,9 +136,32 @@ if (strpos($path, 'admin/') === 0) {
     }
 }
 
-// 3. Admin root (/admin)
-if ($path === 'admin') {
-    cj_dispatch_script($rootDir . '/admin.php');
+// 4. Admin aliases requested at root level (e.g. /orders, /customers, /admin-orders, /admin-customers)
+$adminAliases = [
+    'orders' => 'orders.php',
+    'orders.php' => 'orders.php',
+    'admin-orders' => 'orders.php',
+    'admin-orders.php' => 'orders.php',
+    'customers' => 'customers.php',
+    'customers.php' => 'customers.php',
+    'admin-customers' => 'customers.php',
+    'admin-customers.php' => 'customers.php',
+    'superadmin' => 'superadmin.php',
+    'superadmin.php' => 'superadmin.php',
+    'delete_c' => 'delete_c.php',
+    'delete_c.php' => 'delete_c.php',
+    'manual_rate' => 'manual_rate.php',
+    'manual_rate.php' => 'manual_rate.php',
+    'manual_rate_update' => 'manual_rate_update.php',
+    'manual_rate_update.php' => 'manual_rate_update.php',
+    'notifications' => 'notifications.php',
+    'notifications.php' => 'notifications.php',
+];
+if (isset($adminAliases[$path])) {
+    $target = $rootDir . '/admin/' . $adminAliases[$path];
+    if (is_file($target)) {
+        cj_dispatch_script($target);
+    }
 }
 
 // 4. API endpoints inside api/

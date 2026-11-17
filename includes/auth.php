@@ -249,8 +249,16 @@ if (!function_exists('cj_try_remember_login')) {
 if (!function_exists('cj_script_is_in_admin_dir')) {
     function cj_script_is_in_admin_dir(): bool
     {
+        $uri = str_replace('\\', '/', (string) ($_SERVER['REQUEST_URI'] ?? ''));
         $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
-        return (bool) preg_match('#/admin(?:/|$)#', $script);
+        $cwd = str_replace('\\', '/', getcwd());
+        if (basename($cwd) === 'admin') {
+            return true;
+        }
+        if (preg_match('#/admin(?:/|$|\.php)#', $uri) || preg_match('#/admin(?:/|$|\.php)#', $script)) {
+            return true;
+        }
+        return false;
     }
 }
 
