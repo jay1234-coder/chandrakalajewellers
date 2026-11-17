@@ -1,0 +1,15 @@
+/* TEAM */
+Business: ChandraKala Jewellers (also Chandrakala Jewellers)
+Website: https://chandrakalajewellers.in/index1
+Location: Opp. Bhoomi Complex, Civil Road, Khedbrahma-383255, Sabarkantha, Gujarat, India
+Contact: +91 9427080359 / chandrakalajewellers849@gmail.com
+WhatsApp: https://wa.me/919427080359
+Instagram: https://www.instagram.com/chandra.kalajewellers?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==
+Maps: https://www.google.com/maps/place/Chandrakala+jewellers/@24.0314016,73.0463503,17z/data=!3m1!4b1!4m6!3m5!1s0x395d0b1a27d5a3df:0x216db437426f9e6a!8m2!3d24.0314016!4d73.0463503
+
+/* SITE */
+Standards: HTML5, Schema.org JewelryStore, Open Graph
+Languages: English, Gujarati, Hindi (spoken in store)
+Canonical: https://chandrakalajewellers.in
+Sitemap: https://chandrakalajewellers.in/sitemap.xml
+Last update: 2026

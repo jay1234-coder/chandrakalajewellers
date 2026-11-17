@@ -1,0 +1,71 @@
+# ========================================================
+# Git Ignore for Chandrakala Jewellers
+# ========================================================
+
+# Sensitive environment credentials and secrets
+.env
+.env.*
+*.env
+config/.env
+backend/.env
+frontend/.env
+admin_app/.env
+config/admin-secret.php
+config/cron-secret.php
+!*.env.example
+
+# Large database dumps, backup archives, and zip files
+*.sql
+*.sql.zip
+*.zip
+if0_38635607_cjdb.sql
+if0_38635607_cjdb.sql.zip
+sql.zip
+uploads.zip
+download.zip
+!database/**/*.sql
+!database/*.sql
+!supabase/**/*.sql
+!supabase/*.sql
+
+# Backup and scratch folders
+scratch/
+_recovered/
+backup_ui_pre_opt/
+
+# Node.js dependencies and build outputs
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+.vercel/
+*/.vercel/
+
+# Flutter / Dart build artifacts
+.dart_tool/
+*/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+frontend/build/
+admin_app/build/
+*.iml
+.metadata
+
+# IDE and OS files
+*.crdownload
+*.part
+.idea/
+*/.idea/
+.vscode/
+*/.vscode/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
