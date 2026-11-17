@@ -148,7 +148,7 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php include __DIR__ . '/includes/gtm-head.php'; ?>
+    <?php include dirname(__DIR__) . '/includes/gtm-head.php'; ?>
     <title>Edit Product - ChandraKala Jewellers</title>
     <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -181,7 +181,7 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
     </script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-<?php include __DIR__ . '/includes/gtm-body.php'; ?>
+<?php include dirname(__DIR__) . '/includes/gtm-body.php'; ?>
 
     <header class="bg-white shadow-sm border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center gap-3">

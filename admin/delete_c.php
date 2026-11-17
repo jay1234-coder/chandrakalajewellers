@@ -118,7 +118,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <?php include __DIR__ . '/includes/gtm-head.php'; ?>
+    <?php include dirname(__DIR__) . '/includes/gtm-head.php'; ?>
     <title>Manage Catalogue Images - ChandraKala Jewellers</title>
     <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -139,7 +139,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
     </style>
 </head>
 <body class="admin-body min-h-screen bg-gray-50 text-gray-800 flex flex-col">
-<?php include __DIR__ . '/includes/gtm-body.php'; ?>
+<?php include dirname(__DIR__) . '/includes/gtm-body.php'; ?>
 
     <header class="admin-header bg-white shadow-sm border-b border-gray-100 py-3 px-4 sm:py-4 sm:px-6 md:px-12 flex justify-between items-center sticky top-0 z-40 gap-3">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
