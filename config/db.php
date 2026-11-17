@@ -11,16 +11,16 @@ if (empty($_SESSION['csrf_token'])) {
 
 $isLocal = function_exists('cj_is_local_host') && cj_is_local_host();
 
-$host = cj_env('CJ_DB_HOST');
-$user = cj_env('CJ_DB_USER');
-$pass = cj_env('CJ_DB_PASS', '');
-$dbname = cj_env('CJ_DB_NAME');
-$port = (int) cj_env('CJ_DB_PORT', '3306');
+$host = trim((string)(cj_env('CJ_DB_HOST') ?? ''));
+$user = trim((string)(cj_env('CJ_DB_USER') ?? ''));
+$pass = trim((string)(cj_env('CJ_DB_PASS', '') ?? ''));
+$dbname = trim((string)(cj_env('CJ_DB_NAME') ?? ''));
+$port = (int) trim((string)(cj_env('CJ_DB_PORT', '3306') ?? '3306'));
 
 if (strpos((string)$host, ':') !== false) {
     [$hostOnly, $portStr] = explode(':', (string)$host, 2);
-    $host = $hostOnly;
-    $port = (int)$portStr;
+    $host = trim($hostOnly);
+    $port = (int)trim($portStr);
 }
 
 if ($isLocal) {
@@ -29,7 +29,7 @@ if ($isLocal) {
     $pass = '';
     $dbname = 'if0_38635607_cjdb';
     $port = 3306;
-} elseif ($host === null || $user === null || $dbname === null) {
+} elseif ($host === '' || $user === '' || $dbname === '') {
     error_log('CJ database credentials are not configured. Set CJ_DB_* in Vercel Environment Variables.');
     http_response_code(503);
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>ChandraKala Jewellers — System Maintenance</title>';
@@ -48,30 +48,45 @@ date_default_timezone_set('Asia/Kolkata');
 
 $ssl = cj_env('CJ_DB_SSL', '0') === '1' || strpos((string)$host, 'tidbcloud') !== false || strpos((string)$host, 'aiven') !== false;
 
-if ($ssl && extension_loaded('mysqli')) {
-    $conn = mysqli_init();
-    $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-    @$conn->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, false);
-    @$conn->real_connect($host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
-} else {
-    $conn = @new mysqli($host, $user, $pass, $dbname, $port);
+$conn = null;
+$connError = null;
+
+try {
+    if ($ssl && extension_loaded('mysqli')) {
+        $conn = mysqli_init();
+        $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
+        @$conn->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, false);
+        @$conn->real_connect($host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
+    } else {
+        $conn = @new mysqli($host, $user, $pass, $dbname, $port);
+    }
+} catch (Throwable $e) {
+    $connError = $e->getMessage();
 }
 
-if ($conn->connect_error) {
+if ($conn === null || (is_object($conn) && $conn->connect_error) || $connError !== null) {
+    $err = $connError ?? ($conn ? $conn->connect_error : 'Unknown database connection error');
+
     // If the database doesn't exist locally, try to auto-create it
-    if ($host === 'localhost' && $conn->connect_errno === 1049) {
-        $tempConn = @new mysqli($host, $user, $pass);
-        if (!$tempConn->connect_error) {
-            $tempConn->query("CREATE DATABASE IF NOT EXISTS `" . $tempConn->real_escape_string($dbname) . "`");
-            $tempConn->close();
-            $conn = @new mysqli($host, $user, $pass, $dbname, $port);
-        }
+    if ($host === 'localhost') {
+        try {
+            $tempConn = @new mysqli($host, $user, $pass);
+            if ($tempConn && !$tempConn->connect_error) {
+                $tempConn->query("CREATE DATABASE IF NOT EXISTS `" . $tempConn->real_escape_string($dbname) . "`");
+                $tempConn->close();
+                $conn = @new mysqli($host, $user, $pass, $dbname, $port);
+                if ($conn && !$conn->connect_error) {
+                    $connError = null;
+                }
+            }
+        } catch (Throwable $ignore) {}
     }
-    if ($conn->connect_error) {
+
+    if ($connError !== null || $conn === null || (is_object($conn) && $conn->connect_error)) {
         if ($isLocal) {
-            die("Database connection failed: " . $conn->connect_error . ". Please make sure MySQL is running in XAMPP and database '" . htmlspecialchars($dbname) . "' is imported.");
+            die("Database connection failed: " . htmlspecialchars($err) . ". Please make sure MySQL is running in XAMPP and database '" . htmlspecialchars($dbname) . "' is imported.");
         }
-        error_log('CJ database connection failed: ' . $conn->connect_error);
+        error_log('CJ database connection failed: ' . $err);
         http_response_code(503);
         echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>ChandraKala Jewellers — System Maintenance</title>';
         echo '<style>body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;}';

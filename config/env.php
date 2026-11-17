@@ -92,16 +92,16 @@ if (!function_exists('cj_env')) {
     function cj_env(string $key, ?string $default = null): ?string
     {
         if (array_key_exists($key, $_ENV) && $_ENV[$key] !== '') {
-            return (string) $_ENV[$key];
+            return trim((string) $_ENV[$key]);
         }
         $fromEnv = getenv($key);
         if ($fromEnv !== false && $fromEnv !== '') {
-            return (string) $fromEnv;
+            return trim((string) $fromEnv);
         }
         if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-            return (string) $_SERVER[$key];
+            return trim((string) $_SERVER[$key]);
         }
-        return $default;
+        return $default !== null ? trim($default) : null;
     }
 }
 

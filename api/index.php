@@ -19,7 +19,9 @@ if (!is_dir('/tmp/sessions')) {
 register_shutdown_function(function () {
     $error = error_get_last();
     if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        http_response_code(500);
+        if (!headers_sent()) {
+            http_response_code(500);
+        }
         echo "<!DOCTYPE html><html><head><title>500 Application Error</title>";
         echo "<style>body{font-family:system-ui,-apple-system,sans-serif;padding:30px;background:#111;color:#eee;}";
         echo ".card{background:#222;border:1px solid #444;border-radius:8px;padding:24px;max-width:800px;margin:0 auto;}";
