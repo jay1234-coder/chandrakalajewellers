@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $_SESSION['error_message'] = 'Could not update that order.';
     }
-    header('Location: orders.php' . ($embed ? '?embed=1' : ''));
+    header('Location: /admin/orders.php' . ($embed ? '?embed=1' : ''));
     exit;
 }
 
@@ -92,9 +92,9 @@ if ($cq) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>Orders — ChandraKala Jewellers</title>
-    <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
+    <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
@@ -104,7 +104,7 @@ if ($cq) {
         <h1 class="text-lg font-bold font-serif">Orders</h1>
         <p class="text-xs text-amber-700 font-semibold uppercase tracking-wider">Reservations &amp; stock lock</p>
     </div>
-    <a href="<?= htmlspecialchars(cj_admin_home_href()) ?>" class="text-sm font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">&larr; Admin</a>
+    <a href="/admin/index.php" class="text-sm font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">&larr; Admin</a>
 </header>
 <?php endif; ?>
 

@@ -28,7 +28,7 @@ if (isset($_GET['secret'])) {
 
 $cj_admin_embed = (!empty($_GET['embed']) || !empty($_POST['embed'])
     || (!empty($_SERVER['HTTP_REFERER']) && strpos((string)$_SERVER['HTTP_REFERER'], 'embed=1') !== false));
-$cj_admin_home = $cj_admin_embed ? 'index.php?embed=1' : 'index.php';
+$cj_admin_home = $cj_admin_embed ? '/admin/index.php?embed=1' : '/admin/index.php';
 
 // Logout first — always clear remember cookie/token even if PHP session already expired.
 if (isset($_GET['logout'])) {
@@ -36,6 +36,9 @@ if (isset($_GET['logout'])) {
         cj_log_activity($conn, 'logout', 'Signed out');
     }
     cj_invalidate_remember_tokens($conn, 0);
+    if (function_exists('cj_clear_auth_cookie')) {
+        cj_clear_auth_cookie();
+    }
     $_SESSION = [];
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_destroy();
@@ -44,7 +47,12 @@ if (isset($_GET['logout'])) {
     exit();
 }
 
-// Restore session from remember-me cookie when PHP session expired.
+// Restore session from signed cookie or remember-me token when PHP session expired.
+if (empty($_SESSION['loggedin'])) {
+    if (function_exists('cj_restore_auth_from_cookie')) {
+        cj_restore_auth_from_cookie();
+    }
+}
 if (empty($_SESSION['loggedin'])) {
     cj_try_remember_login($conn, ['admin', 'superadmin']);
 }
@@ -63,7 +71,7 @@ if (
     && !$cj_admin_embed
     && $_SERVER['REQUEST_METHOD'] !== 'POST'
 ) {
-    header('Location: superadmin.php?tab=store');
+    header('Location: /admin/superadmin.php?tab=store');
     exit;
 }
 
@@ -796,10 +804,10 @@ if ($just_logged_in) {
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <?php include dirname(__DIR__) . '/includes/gtm-head.php'; ?>
     <title>Store Admin — ChandraKala Jewellers</title>
-    <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
+    <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
     <style>
         body {
@@ -884,7 +892,7 @@ if ($just_logged_in) {
     <?php if (empty($cj_admin_embed)): ?>
     <header class="admin-header bg-white shadow-sm border-b border-gray-100 py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src="images/logo.png" alt="Jewellery Store Logo" class="h-10 w-auto shrink-0">
+            <img src="/images/logo.png" alt="Jewellery Store Logo" class="h-10 w-auto shrink-0">
             <div class="min-w-0">
                 <h1 class="text-base sm:text-xl font-bold text-gray-900 font-serif leading-tight truncate">ChandraKala Jewellers</h1>
                 <p class="text-[10px] sm:text-xs text-amber-600 font-medium tracking-wide">ADMIN PORTAL</p>
@@ -892,11 +900,11 @@ if ($just_logged_in) {
         </div>
         <div class="flex items-center gap-2 sm:gap-4 shrink-0">
             <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-            <a href="orders.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Orders</a>
-            <a href="customers.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
-            <a href="notifications.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
+            <a href="/admin/orders.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Orders</a>
+            <a href="/admin/customers.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
+            <a href="/admin/notifications.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
             <span class="text-sm font-semibold text-gray-500 hidden md:inline">Welcome, <?= htmlspecialchars($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Admin') ?></span>
-            <a href="?logout" class="logout-btn bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-4 sm:px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">Log Out</a>
+            <a href="/admin/index.php?logout" class="logout-btn bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-4 sm:px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">Log Out</a>
         </div>
     </header>
     <?php else: ?>
@@ -928,16 +936,16 @@ if ($just_logged_in) {
         ?>
 
         <nav class="admin-mobile-jump" aria-label="Quick sections">
-            <a href="orders.php">Orders</a>
-            <a href="customers.php">Customers</a>
+            <a href="/admin/orders.php">Orders</a>
+            <a href="/admin/customers.php">Customers</a>
             <a href="#ratesSection">Rates</a>
             <a href="#rateFormulaSection">Count rates</a>
             <a href="#addItemSection">Add item</a>
             <a href="#stockList">Stock</a>
             <a href="#followUsSection">Follow Us</a>
-            <a href="notifications.php">Notify</a>
+            <a href="/admin/notifications.php">Notify</a>
             <a href="#visitorAnalytics">Visitors</a>
-            <a href="delete_c.php">Catalogue</a>
+            <a href="/admin/delete_c.php">Catalogue</a>
         </nav>
 
         <?php
@@ -1011,7 +1019,7 @@ if ($just_logged_in) {
                 </div>
                 <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Counted gram rates after the formula below (not the full board rate). These drive shop prices.</p>
             </a>
-            <a href="delete_c.php" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm block hover:border-sky-200 hover:shadow-md transition-all duration-200 group">
+            <a href="/admin/delete_c.php" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm block hover:border-sky-200 hover:shadow-md transition-all duration-200 group">
                 <div class="flex items-center gap-4">
                     <div class="icon-box w-12 h-12 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-images"></i></div>
                     <div class="min-w-0">
@@ -1337,7 +1345,7 @@ if ($just_logged_in) {
                 <div>
                     <h2 class="text-lg font-bold text-gray-900 mb-4 font-serif pb-2 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
                         <span><i class="fas fa-images text-amber-500 mr-1"></i> Catalogue Bulk</span>
-                        <a href="delete_c.php" class="text-xs text-red-500 hover:underline">Manage Catalogue &rarr;</a>
+                        <a href="/admin/delete_c.php" class="text-xs text-red-500 hover:underline">Manage Catalogue &rarr;</a>
                     </h2>
                     
                     <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>" enctype="multipart/form-data">

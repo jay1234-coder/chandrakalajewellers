@@ -1,6 +1,6 @@
 <?php
 /**
- * ChandraKala Jewellers — Store Admin Gateway
- * Dispatches directly to admin/index.php
+ * Canonical redirect for legacy /admin.php URL to /admin/index.php.
  */
-require_once __DIR__ . '/admin/index.php';
+header('Location: /admin/index.php', true, 301);
+exit;

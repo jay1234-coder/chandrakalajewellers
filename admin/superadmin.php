@@ -20,11 +20,14 @@ if (isset($_GET['logout'])) {
         cj_log_activity($conn, 'logout', 'Signed out from control center');
     }
     cj_invalidate_remember_tokens($conn, 0);
+    if (function_exists('cj_clear_auth_cookie')) {
+        cj_clear_auth_cookie();
+    }
     $_SESSION = [];
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_destroy();
     }
-    header('Location: ../secret');
+    header('Location: /secret');
     exit;
 }
 
@@ -41,7 +44,7 @@ if (!$loggedIn) {
     exit();
 }
 if ($role !== 'superadmin') {
-    header('Location: index.php');
+    header('Location: /admin/index.php');
     exit();
 }
 
@@ -253,7 +256,7 @@ $nav = [
             <?php foreach ($nav as $key => $label): ?>
                 <a class="sa-nav-link <?= $tab === $key ? 'is-active' : '' ?>" href="?tab=<?= urlencode($key) ?>"><?= htmlspecialchars($label) ?></a>
             <?php endforeach; ?>
-            <a class="sa-nav-link" href="index.php" target="_blank" rel="noopener">Open store admin ↗</a>
+            <a class="sa-nav-link" href="/admin/index.php" target="_blank" rel="noopener">Open store admin ↗</a>
             <a class="sa-nav-link sa-nav-danger" href="?logout">Log out</a>
         </nav>
     </div>
@@ -262,14 +265,14 @@ $nav = [
 <?php if ($tab === 'store'): ?>
     <?php
     $storeFocus = (string)($_GET['focus'] ?? '');
-    $storeSrc = 'index.php?embed=1';
+    $storeSrc = '/admin/index.php?embed=1';
     if ($storeFocus === 'follow') {
         $storeSrc .= '#followUsSection';
     }
     ?>
     <iframe class="sa-iframe" title="Store Admin" src="<?= htmlspecialchars($storeSrc) ?>"></iframe>
 <?php elseif ($tab === 'notifications'): ?>
-    <iframe class="sa-iframe" title="Notifications" src="notifications.php?embed=1"></iframe>
+    <iframe class="sa-iframe" title="Notifications" src="/admin/notifications.php?embed=1"></iframe>
 <?php else: ?>
 <main class="admin-main max-w-7xl mx-auto p-4 sm:p-6">
     <?php if ($msg): ?>

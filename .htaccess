@@ -50,18 +50,22 @@ RewriteRule ^ /%1 [R=301,L]
 
 # Silently rewrite extensionless URLs to their .php files internally
 RewriteRule ^secret/?$ secret.php [L,NC]
-RewriteRule ^admin/admin.*$ /secret [R=302,L]
+RewriteRule ^admin/?$ /admin/index.php [R=302,L]
+RewriteRule ^admin/admin.*$ /admin/index.php [R=302,L]
 RewriteRule ^Catalogue/?$ Catalogue.php [L,NC]
-RewriteRule ^admin/?$ admin/index.php [L,NC]
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^(.*?)/?$ $1.php [L]
 
-# Admin aliases if requested extensionless or at root level
-RewriteRule ^orders(\.php)?$ admin/orders.php [L,NC]
-RewriteRule ^customers(\.php)?$ admin/customers.php [L,NC]
-RewriteRule ^admin-orders(\.php)?$ admin/orders.php [L,NC]
-RewriteRule ^admin-customers(\.php)?$ admin/customers.php [L,NC]
+# Admin aliases if requested extensionless or at root level (canonical redirect into /admin/)
+RewriteRule ^orders(\.php)?$ /admin/orders.php [R=301,L,NC]
+RewriteRule ^customers(\.php)?$ /admin/customers.php [R=301,L,NC]
+RewriteRule ^admin-orders(\.php)?$ /admin/orders.php [R=301,L,NC]
+RewriteRule ^admin-customers(\.php)?$ /admin/customers.php [R=301,L,NC]
+RewriteRule ^admin\.php$ /admin/index.php [R=301,L,NC]
+RewriteRule ^superadmin(\.php)?$ /admin/superadmin.php [R=301,L,NC]
+RewriteRule ^delete_c(\.php)?$ /admin/delete_c.php [R=301,L,NC]
+RewriteRule ^manual_rate(\.php)?$ /admin/manual_rate.php [R=301,L,NC]
 
 # PWA manifest MIME (InfinityFree often serves .webmanifest as text/plain or 404 HTML)
 <IfModule mod_mime.c>

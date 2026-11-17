@@ -265,18 +265,12 @@ if (!function_exists('cj_script_is_in_admin_dir')) {
 if (!function_exists('cj_admin_home_href')) {
     /**
      * Dashboard URL that works both from /admin/* pages and from the site root.
-     * Never use a bare "admin" or "superadmin" href from inside /admin/ — that
-     * becomes /admin/admin and 404s.
+     * Always uses root-relative paths to prevent any admin/admin relative resolution bugs.
      */
     function cj_admin_home_href(?string $role = null, bool $logout = false): string
     {
         $role = $role ?? (string) ($_SESSION['role'] ?? 'admin');
-        $inAdmin = cj_script_is_in_admin_dir();
-        if ($role === 'superadmin') {
-            $path = $inAdmin ? 'superadmin.php' : 'admin/superadmin.php';
-        } else {
-            $path = $inAdmin ? 'index.php' : 'admin/index.php';
-        }
+        $path = ($role === 'superadmin') ? '/admin/superadmin.php' : '/admin/index.php';
         return $logout ? $path . '?logout' : $path;
     }
 }
@@ -284,6 +278,11 @@ if (!function_exists('cj_admin_home_href')) {
 if (!function_exists('cj_require_role')) {
     function cj_require_role(array $roles, string $redirect = 'admin'): void
     {
+        if (empty($_SESSION['loggedin'])) {
+            if (function_exists('cj_restore_auth_from_cookie')) {
+                cj_restore_auth_from_cookie();
+            }
+        }
         if (empty($_SESSION['loggedin'])) {
             header('Location: /secret');
             exit;
@@ -319,6 +318,9 @@ if (!function_exists('cj_finish_login_session')) {
         }
         if (function_exists('cj_persist_session_cookie')) {
             cj_persist_session_cookie();
+        }
+        if (function_exists('cj_issue_auth_cookie')) {
+            cj_issue_auth_cookie($user);
         }
     }
 }

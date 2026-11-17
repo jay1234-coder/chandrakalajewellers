@@ -106,9 +106,9 @@ if ($path === 'secret' || $path === 'secret.php') {
     cj_dispatch_script($rootDir . '/secret.php');
 }
 
-// Redirect any /admin/admin directly to /secret
+// Redirect any /admin/admin directly to /admin/index.php
 if ($path === 'admin/admin' || strpos($path, 'admin/admin') === 0) {
-    header('Location: /secret', true, 302);
+    header('Location: /admin/index.php', true, 302);
     exit;
 }
 
@@ -117,9 +117,10 @@ if ($path === '' || $path === 'index' || $path === 'index.php') {
     cj_dispatch_script($rootDir . '/index.php');
 }
 
-// 2. Admin root routes (/admin, /admin.php)
+// 2. Admin root routes (/admin, /admin.php) -> canonical redirect to /admin/index.php
 if ($path === 'admin' || $path === 'admin.php') {
-    cj_dispatch_script($rootDir . '/admin/index.php');
+    header('Location: /admin/index.php', true, 302);
+    exit;
 }
 
 // 3. Admin sub-directory routes (e.g. /admin/orders.php, /admin/index.php, /admin/customers)
@@ -130,13 +131,16 @@ if (strpos($path, 'admin/') === 0) {
     }
     // Sub-aliases inside admin
     if ($sub === 'admin-orders' || $sub === 'admin-orders.php') {
-        $sub = 'orders.php';
+        header('Location: /admin/orders.php', true, 301);
+        exit;
     }
     if ($sub === 'admin-customers' || $sub === 'admin-customers.php') {
-        $sub = 'customers.php';
+        header('Location: /admin/customers.php', true, 301);
+        exit;
     }
     if ($sub === 'catalogue') {
-        $sub = 'delete_c.php';
+        header('Location: /admin/delete_c.php', true, 301);
+        exit;
     }
     $target = $rootDir . '/admin/' . $sub;
     if (is_file($target)) {
@@ -147,32 +151,30 @@ if (strpos($path, 'admin/') === 0) {
     }
 }
 
-// 4. Admin aliases requested at root level (e.g. /orders, /customers, /admin-orders, /admin-customers)
-$adminAliases = [
-    'orders' => 'orders.php',
-    'orders.php' => 'orders.php',
-    'admin-orders' => 'orders.php',
-    'admin-orders.php' => 'orders.php',
-    'customers' => 'customers.php',
-    'customers.php' => 'customers.php',
-    'admin-customers' => 'customers.php',
-    'admin-customers.php' => 'customers.php',
-    'superadmin' => 'superadmin.php',
-    'superadmin.php' => 'superadmin.php',
-    'delete_c' => 'delete_c.php',
-    'delete_c.php' => 'delete_c.php',
-    'manual_rate' => 'manual_rate.php',
-    'manual_rate.php' => 'manual_rate.php',
-    'manual_rate_update' => 'manual_rate_update.php',
-    'manual_rate_update.php' => 'manual_rate_update.php',
-    'notifications' => 'notifications.php',
-    'notifications.php' => 'notifications.php',
+// 4. Admin aliases requested at root level (canonical redirect into /admin/)
+$adminRedirects = [
+    'orders' => '/admin/orders.php',
+    'orders.php' => '/admin/orders.php',
+    'admin-orders' => '/admin/orders.php',
+    'admin-orders.php' => '/admin/orders.php',
+    'customers' => '/admin/customers.php',
+    'customers.php' => '/admin/customers.php',
+    'admin-customers' => '/admin/customers.php',
+    'admin-customers.php' => '/admin/customers.php',
+    'superadmin' => '/admin/superadmin.php',
+    'superadmin.php' => '/admin/superadmin.php',
+    'delete_c' => '/admin/delete_c.php',
+    'delete_c.php' => '/admin/delete_c.php',
+    'manual_rate' => '/admin/manual_rate.php',
+    'manual_rate.php' => '/admin/manual_rate.php',
+    'manual_rate_update' => '/admin/manual_rate_update.php',
+    'manual_rate_update.php' => '/admin/manual_rate_update.php',
+    'notifications' => '/admin/notifications.php',
+    'notifications.php' => '/admin/notifications.php',
 ];
-if (isset($adminAliases[$path])) {
-    $target = $rootDir . '/admin/' . $adminAliases[$path];
-    if (is_file($target)) {
-        cj_dispatch_script($target);
-    }
+if (isset($adminRedirects[$path])) {
+    header('Location: ' . $adminRedirects[$path], true, 301);
+    exit;
 }
 
 // 4. API endpoints inside api/

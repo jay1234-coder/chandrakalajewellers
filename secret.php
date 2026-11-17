@@ -33,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) |
         $entered_password = trim((string) ($_POST['admin_password'] ?? ''));
         $ok = false;
 
+        if ($username === '' && $entered_password !== '') {
+            $username = 'admin';
+        }
+
         if ($username !== '' && $entered_password !== '') {
             $ok = cj_try_user_login($conn, $username, $entered_password);
         } elseif ($entered_password !== '') {
@@ -61,6 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) |
             }
             if (function_exists('cj_persist_session_cookie')) {
                 cj_persist_session_cookie();
+            }
+            if (function_exists('cj_issue_auth_cookie')) {
+                cj_issue_auth_cookie([
+                    'id' => (int) ($_SESSION['user_id'] ?? 0),
+                    'username' => (string) ($_SESSION['username'] ?? 'admin'),
+                    'role' => (string) ($_SESSION['role'] ?? 'admin'),
+                    'display_name' => (string) ($_SESSION['display_name'] ?? 'Admin'),
+                ]);
             }
             session_write_close();
 
@@ -132,15 +144,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['password_submit']) |
             <input type="hidden" name="password_submit" value="1">
             <div>
                 <label for="admin_username" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Username</label>
-                <input type="text" id="admin_username" name="admin_username" autocomplete="username" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none text-base" required>
+                <input type="text" id="admin_username" name="admin_username" value="admin" autocomplete="username" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none text-base" placeholder="admin">
             </div>
             <div>
                 <label for="admin_password" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Password</label>
-                <input type="password" id="admin_password" name="admin_password" autocomplete="current-password" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all duration-200 text-base" required>
+                <input type="password" id="admin_password" name="admin_password" autocomplete="current-password" class="px-4 py-3.5 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all duration-200 text-base" required autofocus>
             </div>
 
             <label for="remember_me" class="flex items-center gap-2.5 cursor-pointer select-none group">
-                <input type="checkbox" id="remember_me" name="remember_me" value="1" class="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500/40 focus:ring-offset-0 accent-amber-600">
+                <input type="checkbox" id="remember_me" name="remember_me" value="1" checked class="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500/40 focus:ring-offset-0 accent-amber-600">
                 <span class="text-sm text-gray-600 group-hover:text-gray-800">Remember me</span>
             </label>
             

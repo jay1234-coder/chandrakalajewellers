@@ -53,8 +53,10 @@ $products_with_manual_rates_query = $conn->query("SELECT id, name, manual_price 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include __DIR__ . '/includes/gtm-head.php'; ?>
     <title>Update Manual Rates - ChandraKala Jewellers</title>
-    <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
+    <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css">
+    <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -66,14 +68,14 @@ $products_with_manual_rates_query = $conn->query("SELECT id, name, manual_price 
 
     <header class="bg-white shadow-sm border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <img src="images/logo.png" alt="Jewellery Store Logo" class="h-10 w-auto">
+            <img src="/images/logo.png" alt="Jewellery Store Logo" class="h-10 w-auto">
             <div>
                 <h1 class="text-xl font-bold text-gray-900 font-serif leading-tight">ChandraKala Jewellers</h1>
                 <p class="text-xs text-amber-600 font-medium tracking-wide">ADMIN PORTAL</p>
             </div>
         </div>
         <div>
-            <a href="<?= htmlspecialchars(cj_admin_home_href()) ?>" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-gray-200">
+            <a href="/admin/index.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-gray-200">
                 &larr; Back to Dashboard
             </a>
         </div>
@@ -136,7 +138,7 @@ $products_with_manual_rates_query = $conn->query("SELECT id, name, manual_price 
                 <?php else: ?>
                     <div class="text-center py-8 text-gray-500">
                         <p>No products are currently set to use manual override prices.</p>
-                        <a href="index.php" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Edit items in dashboard to set manual overrides &rarr;</a>
+                        <a href="/admin/index.php" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Edit items in dashboard to set manual overrides &rarr;</a>
                     </div>
                 <?php endif; ?>
             </form>

@@ -159,12 +159,111 @@ if (!function_exists('cj_admin_noindex_headers')) {
     }
 }
 
+if (!function_exists('cj_auth_secret_key')) {
+    function cj_auth_secret_key(): string
+    {
+        $pass = function_exists('cj_env') ? (string)(cj_env('SESSION_SECRET') ?? cj_env('CJ_DB_PASS') ?? '') : '';
+        return hash('sha256', 'cj_signed_auth_token_key_' . $pass);
+    }
+}
+
+if (!function_exists('cj_issue_auth_cookie')) {
+    /**
+     * Issues an HMAC-SHA256 signed stateless authentication cookie.
+     * Prevents session loss across serverless container restarts or cold starts.
+     */
+    function cj_issue_auth_cookie(array $user, int $lifetime = 604800): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+        $payload = [
+            'user_id' => (int) ($user['id'] ?? $user['user_id'] ?? 0),
+            'username' => (string) ($user['username'] ?? ''),
+            'role' => (string) ($user['role'] ?? 'admin'),
+            'display_name' => (string) ($user['display_name'] ?? $user['username'] ?? 'Admin'),
+            'exp' => time() + $lifetime,
+        ];
+        $b64 = base64_encode(json_encode($payload));
+        $sig = hash_hmac('sha256', $b64, cj_auth_secret_key());
+        $val = $b64 . '.' . $sig;
+
+        $params = cj_session_cookie_params();
+        $options = [
+            'expires' => time() + $lifetime,
+            'path' => '/',
+            'secure' => $params['secure'],
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('cj_admin_jwt', $val, $options);
+        $_COOKIE['cj_admin_jwt'] = $val;
+    }
+}
+
+if (!function_exists('cj_clear_auth_cookie')) {
+    /** Clears the signed authentication cookie on signout. */
+    function cj_clear_auth_cookie(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+        $params = cj_session_cookie_params();
+        $options = [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => $params['secure'],
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('cj_admin_jwt', '', $options);
+        unset($_COOKIE['cj_admin_jwt']);
+    }
+}
+
+if (!function_exists('cj_restore_auth_from_cookie')) {
+    /** Restores session state from HMAC-signed cookie if PHP session expired or cold-started. */
+    function cj_restore_auth_from_cookie(): bool
+    {
+        $raw = (string) ($_COOKIE['cj_admin_jwt'] ?? '');
+        if ($raw === '' || strpos($raw, '.') === false) {
+            return false;
+        }
+        [$b64, $sig] = explode('.', $raw, 2);
+        $expected = hash_hmac('sha256', $b64, cj_auth_secret_key());
+        if (!hash_equals($expected, $sig)) {
+            return false;
+        }
+        $json = base64_decode($b64, true);
+        if (!$json) {
+            return false;
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data) || empty($data['exp']) || (int) $data['exp'] < time()) {
+            return false;
+        }
+
+        $_SESSION['loggedin'] = true;
+        $_SESSION['user_id'] = (int) ($data['user_id'] ?? 0);
+        $_SESSION['username'] = (string) ($data['username'] ?? 'admin');
+        $_SESSION['role'] = (string) ($data['role'] ?? 'admin');
+        $_SESSION['display_name'] = (string) ($data['display_name'] ?? 'Admin');
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return true;
+    }
+}
+
 if (!function_exists('cj_security_bootstrap')) {
     function cj_security_bootstrap(): void
     {
         cj_configure_session();
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
+        }
+        if (empty($_SESSION['loggedin'])) {
+            cj_restore_auth_from_cookie();
         }
         cj_send_security_headers();
     }

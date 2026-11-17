@@ -120,10 +120,11 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <?php include __DIR__ . '/includes/gtm-head.php'; ?>
     <title>Manage Catalogue Images - ChandraKala Jewellers</title>
-    <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
+    <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
     <style>
         body { font-family: 'Poppins', sans-serif; }
         .product-image-thumbnail {
@@ -142,14 +143,14 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
 
     <header class="admin-header bg-white shadow-sm border-b border-gray-100 py-3 px-4 sm:py-4 sm:px-6 md:px-12 flex justify-between items-center sticky top-0 z-40 gap-3">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src="images/logo.png" alt="Jewellery Store Logo" class="h-8 sm:h-10 w-auto shrink-0">
+            <img src="/images/logo.png" alt="Jewellery Store Logo" class="h-8 sm:h-10 w-auto shrink-0">
             <div class="min-w-0">
                 <h1 class="text-sm sm:text-xl font-bold text-gray-900 font-serif leading-tight truncate">ChandraKala Jewellers</h1>
                 <p class="text-[10px] sm:text-xs text-amber-600 font-medium tracking-wide">CATALOGUE MANAGEMENT</p>
             </div>
         </div>
         <div class="catalogue-header-actions shrink-0">
-            <a href="<?= htmlspecialchars(cj_admin_home_href()) ?>" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-5 rounded-xl transition-colors duration-150 text-xs sm:text-sm border border-gray-200 whitespace-nowrap">
+            <a href="/admin/index.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-5 rounded-xl transition-colors duration-150 text-xs sm:text-sm border border-gray-200 whitespace-nowrap">
                 &larr; Dashboard
             </a>
         </div>
@@ -188,7 +189,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
             <div class="admin-card bg-white rounded-xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center text-gray-500 font-medium">
                 <i class="fas fa-image text-4xl text-gray-200 mb-3"></i>
                 <p>No images found in the catalogue to manage.</p>
-                <a href="index.php" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Upload photos in the Dashboard &rarr;</a>
+                <a href="/admin/index.php" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Upload photos in the Dashboard &rarr;</a>
             </div>
         <?php else: ?>
             <div class="catalogue-grid-admin">

@@ -1,6 +1,6 @@
 <?php
 /**
- * ChandraKala Jewellers — Store Orders Gateway
- * Dispatches directly to admin/orders.php
+ * Canonical redirect for legacy /admin-orders.php URL to /admin/orders.php.
  */
-require_once __DIR__ . '/admin/orders.php';
+header('Location: /admin/orders.php', true, 301);
+exit;

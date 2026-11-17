@@ -59,7 +59,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     
     <div class="glass-card p-8 rounded-2xl shadow-xl w-full max-w-md z-10 transition-all duration-300 hover:shadow-2xl">
         <div class="text-center mb-6">
-            <img src="images/logo.png" alt="ChandraKala Jewellers official logo" class="h-16 w-auto mx-auto mb-3 filter drop-shadow-sm">
+            <img src="/images/logo.png" alt="ChandraKala Jewellers official logo" class="h-16 w-auto mx-auto mb-3 filter drop-shadow-sm">
             <h1 class="text-2xl font-bold text-gray-900 font-serif leading-tight">ChandraKala Jewellers</h1>
             <span class="text-[10px] text-amber-600 font-semibold tracking-widest uppercase mt-1 inline-block">Rates Portal</span>
             <p class="text-xs text-gray-500 mt-3 leading-relaxed">Family store access only · Khedbrahma, Gujarat<br>This is <strong>not</strong> a customer login. Do not enter Google, bank, or email passwords here.</p>
@@ -77,7 +77,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
         ?>
 
-        <form method="POST" action="manual_rate_update" class="space-y-5" autocomplete="on">
+        <form method="POST" action="/admin/manual_rate_update.php" class="space-y-5" autocomplete="on">
             <div>
                 <label for="admin_password" class="block text-gray-700 text-xs font-semibold uppercase tracking-wider mb-2">Password</label>
                 <div class="relative">
@@ -92,7 +92,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 Sign in to rates portal
             </button>
         </form>
-        <p class="text-[11px] text-center text-gray-400 mt-5">Prefer full store admin? <a href="index.php" class="text-amber-700 hover:underline">Open store admin</a></p>
+        <p class="text-[11px] text-center text-gray-400 mt-5">Prefer full store admin? <a href="/admin/index.php" class="text-amber-700 hover:underline">Open store admin</a></p>
     </div>
 </body>
 </html>
@@ -102,8 +102,11 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
 // --- Logout functionality ---
 if (isset($_GET['logout'])) {
+    if (function_exists('cj_clear_auth_cookie')) {
+        cj_clear_auth_cookie();
+    }
     session_destroy();
-    header("Location: manual_rate_update");
+    header("Location: /admin/manual_rate_update.php");
     exit();
 }
 
@@ -161,17 +164,17 @@ $rate = $rate_query->fetch_assoc() ?? [];
 
     <header class="bg-white shadow-sm border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <img src="images/logo.png" alt="ChandraKala Jewellers official logo" class="h-10 w-auto">
+            <img src="/images/logo.png" alt="ChandraKala Jewellers official logo" class="h-10 w-auto">
             <div>
                 <h1 class="text-xl font-bold text-gray-900 font-serif leading-tight">ChandraKala Jewellers</h1>
                 <p class="text-xs text-amber-600 font-medium tracking-wide">RATES PORTAL</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="index.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-gray-200">
+            <a href="/admin/index.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-gray-200">
                 &larr; Back to Dashboard
             </a>
-            <a href="?logout=true" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">
+            <a href="/admin/manual_rate_update.php?logout=true" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">
                 Logout
             </a>
         </div>

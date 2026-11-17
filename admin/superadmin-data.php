@@ -12,10 +12,10 @@ if (empty($_SESSION['loggedin'])) {
     exit();
 }
 if (($_SESSION['role'] ?? '') !== 'superadmin') {
-    header('Location: index.php');
+    header('Location: /admin/index.php');
     exit();
 }
 
 $tab = $_GET['tab'] ?? 'products';
-header('Location: superadmin.php?tab=data&data_tab=' . urlencode((string)$tab));
+header('Location: /admin/superadmin.php?tab=data&data_tab=' . urlencode((string)$tab));
 exit;
