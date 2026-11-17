@@ -155,7 +155,31 @@ self.addEventListener('fetch', (event) => {
           const cached = await caches.match(req);
           if (cached) return cached;
           const home = await caches.match('./index1');
-          return home || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+          if (home) return home;
+          return new Response(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline — ChandraKala Jewellers</title>
+<style>
+body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; text-align: center; }
+.card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 32px 24px; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+h1 { color: #d97706; margin: 12px 0 8px; font-size: 20px; }
+p { color: #94a3b8; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+button { background: #d97706; color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; }
+button:hover { background: #b45309; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="font-size: 40px;">📶</div>
+  <h1>Connection Issue Detected</h1>
+  <p>Your browser could not reach ChandraKala Jewellers. If you are connected to Wi-Fi, your network DNS may still be updating.</p>
+  <button onclick="window.location.reload()">Retry Now</button>
+</div>
+</body>
+</html>`, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         })
     );
     return;
