@@ -12,9 +12,12 @@ if (!defined('CJ_CHARSET_SET')) {
     define('CJ_CHARSET_SET', true);
     echo '<meta charset="UTF-8">' . "\n";
     echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">' . "\n";
-    if (function_exists('cj_base_url')) {
-        echo '<base href="' . htmlspecialchars(rtrim(cj_base_url(), '/') . '/', ENT_QUOTES, 'UTF-8') . '">' . "\n";
+    $cjBaseHref = '/';
+    if (function_exists('cj_is_local_host') && cj_is_local_host() && function_exists('cj_base_url')) {
+        $parsedPath = (string)parse_url(cj_base_url(), PHP_URL_PATH);
+        $cjBaseHref = rtrim($parsedPath, '/') . '/';
     }
+    echo '<base href="' . htmlspecialchars($cjBaseHref, ENT_QUOTES, 'UTF-8') . '">' . "\n";
 }
 ?>
 <!-- Critical Above-The-Fold CSS (Instant Paint - 0ms FOUC) -->

@@ -72,8 +72,8 @@ if (!empty($seoConfig['ga4_id'])) {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ChandraKala">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="images/icons/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/images/icons/icon-192.png">
 <title><?= $title ?></title>
 <meta name="description" content="<?= $description ?>">
 <meta name="keywords" content="<?= $keywords ?>">
@@ -148,8 +148,8 @@ $cjModifiedIso = !empty($seo['modified_iso'])
 <link rel="author" href="<?= htmlspecialchars(cj_abs_url('humans.txt'), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="sitemap" type="application/xml" href="<?= htmlspecialchars(cj_abs_url('sitemap.xml'), ENT_QUOTES, 'UTF-8') ?>">
 
-<link rel="icon" href="<?= htmlspecialchars(cj_abs_url('images/logo.png'), ENT_QUOTES, 'UTF-8') ?>" type="image/png">
-<link rel="apple-touch-icon" href="<?= htmlspecialchars(cj_abs_url('images/logo.png'), ENT_QUOTES, 'UTF-8') ?>">
+<link rel="icon" href="/images/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/images/logo.png">
 
 <?php
 $schemas = $seo['schema'] ?? [];

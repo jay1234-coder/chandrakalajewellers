@@ -408,9 +408,13 @@
       } catch (e) {}
     });
     document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(function (link) {
-      if (link.href) urls.push(link.href);
+      if (!link.href) return;
+      try {
+        var u = new URL(link.href, location.href);
+        if (u.origin === location.origin) urls.push(u.href);
+      } catch (e) {}
     });
-    return urls;
+    return Array.from(new Set(urls));
   }
 
   function precacheSiteAssets(reg) {
@@ -419,20 +423,27 @@
     var pageUrls = collectPageImageUrls();
 
     function sendToSw(urls) {
-      if (!urls.length) return;
-      var payload = { type: 'PRECACHE_URLS', urls: urls };
+      var cleanUrls = Array.from(new Set((urls || []).filter(function (u) {
+        try {
+          var parsed = new URL(u, location.href);
+          return parsed.origin === location.origin || parsed.hostname === 'res.cloudinary.com';
+        } catch (e) {
+          return false;
+        }
+      })));
+      if (!cleanUrls.length) return;
+      var payload = { type: 'PRECACHE_URLS', urls: cleanUrls };
       try {
         if (worker) worker.postMessage(payload);
         else if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage(payload);
       } catch (e) {}
-      // Also warm browser HTTP cache
-      urls.slice(0, 40).forEach(function (u) {
+      // Also warm browser HTTP cache safely (only same-origin & Cloudinary)
+      cleanUrls.slice(0, 40).forEach(function (u) {
         try {
-          var isSame = (new URL(u, location.href).origin === location.origin);
-          fetch(u, { credentials: isSame ? 'same-origin' : 'omit', cache: 'force-cache' }).catch(function () {});
-        } catch (e) {
-          fetch(u, { cache: 'force-cache' }).catch(function () {});
-        }
+          var parsed = new URL(u, location.href);
+          var isSame = (parsed.origin === location.origin);
+          fetch(parsed.href, { credentials: isSame ? 'same-origin' : 'omit', cache: 'force-cache' }).catch(function () {});
+        } catch (e) {}
       });
     }
 

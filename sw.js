@@ -1,7 +1,7 @@
 /* ChandraKala PWA — offline pages + persistent image cache */
-const PAGE_CACHE = 'cj-pages-v13';
-const ASSET_CACHE = 'cj-assets-v13';
-const IMAGE_CACHE = 'cj-images-v13';
+const PAGE_CACHE = 'cj-pages-v14';
+const ASSET_CACHE = 'cj-assets-v14';
+const IMAGE_CACHE = 'cj-images-v14';
 const ALL_CACHES = [PAGE_CACHE, ASSET_CACHE, IMAGE_CACHE];
 
 const PRECACHE_PAGES = [
