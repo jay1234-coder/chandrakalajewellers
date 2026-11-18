@@ -18,7 +18,8 @@ cj_require_role(['admin', 'superadmin'], 'admin');
 
 $currentRole = (string)($_SESSION['role'] ?? 'admin');
 $tab = ($_GET['tab'] ?? 'reels') === 'orders' ? 'orders' : (($_GET['tab'] ?? 'reels') === 'comments' ? 'comments' : 'reels');
-$range = in_array($_GET['range'] ?? 'all', ['all', 'today', '7d', '30d'], true) ? (string)$_GET['range'] : 'all';
+$rawRange = (string)($_GET['range'] ?? 'all');
+$range = in_array($rawRange, ['all', 'today', '7d', '30d'], true) ? $rawRange : 'all';
 
 $msg = '';
 $msgType = '';
@@ -77,7 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($action === 'update_order_status') {
             $oid = (int)($_POST['order_id'] ?? 0);
-            $status = in_array($_POST['status'] ?? '', ['new', 'contacted', 'completed'], true) ? (string)$_POST['status'] : 'new';
+            $rawStatus = (string)($_POST['status'] ?? '');
+            $status = in_array($rawStatus, ['new', 'contacted', 'completed'], true) ? $rawStatus : 'new';
             if ($oid > 0) {
                 $st = $conn->prepare("UPDATE video_reel_orders SET status = ? WHERE id = ?");
                 if ($st) {
