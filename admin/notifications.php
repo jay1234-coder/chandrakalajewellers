@@ -113,7 +113,7 @@ $homeLogout = cj_admin_home_href(null, true);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
-    <link rel="manifest" href="/admin/manifest.webmanifest">
+    <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
 <?php

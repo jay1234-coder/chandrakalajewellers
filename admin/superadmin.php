@@ -236,7 +236,7 @@ $nav = [
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="../css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body class="admin-body sa-body<?= $tab === 'store' || $tab === 'notifications' ? ' sa-embed-mode' : '' ?>">
 <header class="sa-header sticky top-0 z-40 px-4 sm:px-6 py-3 flex flex-wrap gap-3 justify-between items-center">
