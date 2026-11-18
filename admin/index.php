@@ -819,19 +819,31 @@ if ($metal_q) {
 }
 $product_types = cj_get_product_types($conn);
 $cat_ocr_pending = 0;
-$ocrChk = @$conn->query("SELECT SUM(CASE WHEN ocr_status = 0 THEN 1 ELSE 0 END) AS p FROM products");
-if ($ocrChk && ($ocrRow = $ocrChk->fetch_assoc())) {
-    $cat_ocr_pending = (int)($ocrRow['p'] ?? 0);
+try {
+    $ocrChk = $conn->query("SELECT SUM(CASE WHEN ocr_status = 0 THEN 1 ELSE 0 END) AS p FROM products");
+    if ($ocrChk && ($ocrRow = $ocrChk->fetch_assoc())) {
+        $cat_ocr_pending = (int)($ocrRow['p'] ?? 0);
+    }
+} catch (Throwable $e) {
+    $cat_ocr_pending = 0;
 }
 $active_reels_count = 0;
-$reelsChk = @$conn->query("SELECT COUNT(*) AS c FROM jewellery_reels WHERE is_active = 1");
-if ($reelsChk && ($reelsRow = $reelsChk->fetch_assoc())) {
-    $active_reels_count = (int)($reelsRow['c'] ?? 0);
+try {
+    $reelsChk = $conn->query("SELECT COUNT(*) AS c FROM video_reels WHERE is_active = 1");
+    if ($reelsChk && ($reelsRow = $reelsChk->fetch_assoc())) {
+        $active_reels_count = (int)($reelsRow['c'] ?? 0);
+    }
+} catch (Throwable $e) {
+    $active_reels_count = 0;
 }
 $pending_orders_overview = 0;
-$pendOrdChk = @$conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'");
-if ($pendOrdChk && ($pendOrdRow = $pendOrdChk->fetch_assoc())) {
-    $pending_orders_overview = (int)($pendOrdRow['c'] ?? 0);
+try {
+    $pendOrdChk = $conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'");
+    if ($pendOrdChk && ($pendOrdRow = $pendOrdChk->fetch_assoc())) {
+        $pending_orders_overview = (int)($pendOrdRow['c'] ?? 0);
+    }
+} catch (Throwable $e) {
+    $pending_orders_overview = 0;
 }
 
 $cjShellViewMeta = [
