@@ -6,7 +6,7 @@
  */
 require_once __DIR__ . '/seo.php';
 $cjFontUrl = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap';
-$cjAssetVer = '9';
+$cjAssetVer = '10';
 
 if (!defined('CJ_CHARSET_SET')) {
     define('CJ_CHARSET_SET', true);

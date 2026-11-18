@@ -17,11 +17,11 @@ if (!function_exists('cj_feature') || !cj_feature('feat_customer_accounts')) {
             <label>Name
                 <input name="name" id="cj-account-name" maxlength="120" autocomplete="name" value="<?= htmlspecialchars($cjCust['name'] ?? '') ?>">
             </label>
-            <label>Mobile
-                <input name="phone" id="cj-account-phone" inputmode="numeric" maxlength="15" autocomplete="tel" required>
+            <label>Mobile <span id="cj-account-phone-hint"></span>
+                <input name="phone" id="cj-account-phone" type="text" maxlength="160" autocomplete="tel" required>
             </label>
             <label>Email <span>(optional, for invoices)</span>
-                <input name="email" id="cj-account-email" type="email" autocomplete="email">
+                <input name="email" id="cj-account-email" type="text" inputmode="email" maxlength="160" autocomplete="email" autocapitalize="off" spellcheck="false">
             </label>
             <label>Password
                 <input name="password" id="cj-account-password" type="password" minlength="6" autocomplete="new-password" required>

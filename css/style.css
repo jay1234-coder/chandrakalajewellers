@@ -4794,6 +4794,13 @@ html[data-theme="dark"] .follow-qr-badge {
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 10px;
     font: inherit;
+    background: var(--bg-light, #fff);
+    color: var(--text-primary, #111827);
+}
+
+.cj-account-form input::placeholder,
+.cj-account-page-form input::placeholder {
+    color: var(--text-light, #9ca3af);
 }
 
 .cj-account-error {

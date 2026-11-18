@@ -65,12 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cid = (int)($_POST['customer_id'] ?? 0);
         $name = mb_substr(trim((string)($_POST['name'] ?? '')), 0, 120);
         $phone = cj_normalize_customer_phone((string)($_POST['phone'] ?? ''));
-        $email = mb_substr(trim((string)($_POST['email'] ?? '')), 0, 160);
+        $email = function_exists('cj_normalize_customer_email')
+            ? cj_normalize_customer_email((string)($_POST['email'] ?? ''))
+            : mb_substr(trim((string)($_POST['email'] ?? '')), 0, 160);
 
         if ($cid <= 0 || $name === '' || strlen($phone) !== 10) {
             $message = 'Customer name and valid 10-digit mobile number are required.';
             $messageType = 'error';
-        } elseif ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        } elseif ($email !== '' && !(function_exists('cj_is_valid_customer_email') ? cj_is_valid_customer_email($email) : filter_var($email, FILTER_VALIDATE_EMAIL))) {
             $message = 'Please provide a valid email address or leave it blank.';
             $messageType = 'error';
         } else {
@@ -353,10 +355,88 @@ if ($currentRole === 'superadmin') {
     <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
     <style>
-        .badge-gold { background: rgba(245, 158, 11, 0.12); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.25); }
-        .badge-blue { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; border: 1px solid rgba(59, 130, 246, 0.25); }
+        .badge-gold { background: rgba(245, 158, 11, 0.14); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-blue { background: rgba(59, 130, 246, 0.14); color: #1d4ed8; border: 1px solid rgba(59, 130, 246, 0.3); }
         .avatar-circle { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; background: linear-gradient(135deg, #d97706, #b45309); font-size: 14px; text-transform: uppercase; }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+
+        /* Dedicated High-Contrast Dark Mode for Customers & Staff Directory
+           (Overrides Tailwind CDN runtime styles cleanly) */
+        html[data-theme="dark"] body.admin-body {
+            background: #0c0e12 !important;
+            color: #f3f4f6 !important;
+        }
+        html[data-theme="dark"] header {
+            background: #12151c !important;
+            border-color: #2e3544 !important;
+        }
+        html[data-theme="dark"] .cj-cust-card,
+        html[data-theme="dark"] .cj-cust-panel,
+        html[data-theme="dark"] .cj-cust-modal-box {
+            background: #161a22 !important;
+            border-color: #2e3544 !important;
+            color: #f3f4f6 !important;
+        }
+        html[data-theme="dark"] .cj-cust-table-bar {
+            background: #1b2130 !important;
+            border-color: #2e3544 !important;
+        }
+        html[data-theme="dark"] .cj-cust-table thead {
+            background: #1d2435 !important;
+            color: #f0d78c !important;
+        }
+        html[data-theme="dark"] .cj-cust-table thead th {
+            color: #f0d78c !important;
+        }
+        html[data-theme="dark"] .cj-cust-table tbody {
+            background: #161a22 !important;
+        }
+        html[data-theme="dark"] .cj-cust-table tbody tr {
+            background: #161a22 !important;
+            border-color: #262d3d !important;
+        }
+        html[data-theme="dark"] .cj-cust-table tbody tr:hover {
+            background: #1f2636 !important;
+        }
+        html[data-theme="dark"] .cj-cust-table td {
+            color: #e5e7eb !important;
+        }
+        html[data-theme="dark"] .cj-cust-tabs {
+            background: #161a22 !important;
+            border-color: #2e3544 !important;
+        }
+        html[data-theme="dark"] .badge-gold {
+            background: rgba(240, 215, 140, 0.16) !important;
+            color: #fde68a !important;
+            border-color: rgba(240, 215, 140, 0.4) !important;
+        }
+        html[data-theme="dark"] .badge-blue {
+            background: rgba(59, 130, 246, 0.18) !important;
+            color: #93c5fd !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
+        }
+        html[data-theme="dark"] .cj-cust-action-btn {
+            color: #cbd5e1 !important;
+            background: rgba(255, 255, 255, 0.04) !important;
+        }
+        html[data-theme="dark"] .cj-cust-action-btn:hover {
+            background: rgba(240, 215, 140, 0.16) !important;
+            color: #fde68a !important;
+        }
+        html[data-theme="dark"] .cj-cust-action-btn.cj-del:hover {
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #fca5a5 !important;
+        }
+        html[data-theme="dark"] input,
+        html[data-theme="dark"] select {
+            background: #10131a !important;
+            color: #f3f4f6 !important;
+            border-color: #343d52 !important;
+        }
+        html[data-theme="dark"] input:disabled {
+            background: #1c2230 !important;
+            color: #9ca3af !important;
+        }
     </style>
 </head>
 <body class="admin-body min-h-screen bg-gray-50/60 font-sans text-gray-800">
@@ -394,7 +474,7 @@ if ($currentRole === 'superadmin') {
             </h2>
             <p class="text-xs text-gray-500 mt-1">Manage registered shopper accounts, review purchase history, and manage store staff.</p>
         </div>
-        <div class="flex items-center gap-2 border border-gray-200 bg-white p-1 rounded-xl shadow-sm">
+        <div class="cj-cust-tabs flex items-center gap-2 border border-gray-200 bg-white p-1 rounded-xl shadow-sm">
             <a href="?tab=customers<?= $embed ? '&amp;embed=1' : '' ?>" class="px-4 py-2 text-xs font-bold rounded-lg transition-all <?= $tab === 'customers' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' ?>">
                 <i class="fas fa-shopping-bag mr-1.5"></i> Customers (<?= $totalCust ?>)
             </a>
@@ -417,7 +497,7 @@ if ($currentRole === 'superadmin') {
     <?php if ($tab === 'customers'): ?>
         <!-- Statistics Row -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="cj-cust-card bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Registered</span>
                     <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fas fa-users"></i></span>
@@ -425,7 +505,7 @@ if ($currentRole === 'superadmin') {
                 <div class="text-2xl font-bold text-gray-900 font-serif"><?= number_format($totalCust) ?></div>
                 <div class="text-[11px] text-gray-500 mt-1">Verified shopper profiles</div>
             </div>
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="cj-cust-card bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Orders</span>
                     <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-receipt"></i></span>
@@ -433,7 +513,7 @@ if ($currentRole === 'superadmin') {
                 <div class="text-2xl font-bold text-gray-900 font-serif"><?= number_format($totalCustOrders) ?></div>
                 <div class="text-[11px] text-gray-500 mt-1">Placed by registered users</div>
             </div>
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="cj-cust-card bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
                     <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fas fa-rupee-sign"></i></span>
@@ -441,7 +521,7 @@ if ($currentRole === 'superadmin') {
                 <div class="text-2xl font-bold text-gray-900 font-serif">₹<?= number_format(round($totalSpentAll)) ?></div>
                 <div class="text-[11px] text-gray-500 mt-1">Total confirmed value</div>
             </div>
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="cj-cust-card bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">New (30d)</span>
                     <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fas fa-user-plus"></i></span>
@@ -452,7 +532,7 @@ if ($currentRole === 'superadmin') {
         </div>
 
         <!-- Search & Filter Controls -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm mb-6">
+        <div class="cj-cust-panel bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm mb-6">
             <form method="get" class="flex flex-wrap items-center gap-3">
                 <input type="hidden" name="tab" value="customers">
                 <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
@@ -489,8 +569,8 @@ if ($currentRole === 'superadmin') {
         </div>
 
         <!-- Customer List Table -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div class="cj-cust-panel bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="cj-cust-table-bar px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Shopper Directory (<?= count($customers) ?>)</h3>
                 <span class="text-xs text-gray-500">Displaying up to 150 accounts</span>
             </div>
@@ -503,7 +583,7 @@ if ($currentRole === 'superadmin') {
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100 text-xs">
+                    <table class="cj-cust-table min-w-full divide-y divide-gray-100 text-xs">
                         <thead class="bg-gray-50/75 text-gray-500 uppercase font-semibold text-[11px] tracking-wider">
                             <tr>
                                 <th scope="col" class="px-6 py-3.5 text-left">Customer</th>
@@ -564,10 +644,10 @@ if ($currentRole === 'superadmin') {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="inline-flex items-center gap-1">
-                                        <button type="button" onclick="openEditCustomerModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, 'UTF-8') ?>)" class="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit Customer Details">
+                                        <button type="button" onclick="openEditCustomerModal(<?= htmlspecialchars(json_encode($c), ENT_QUOTES, 'UTF-8') ?>)" class="cj-cust-action-btn p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit Customer Details">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" onclick="openResetPasswordModal(<?= (int)$c['id'] ?>, '<?= htmlspecialchars(addslashes($c['name'])) ?>')" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Reset Password">
+                                        <button type="button" onclick="openResetPasswordModal(<?= (int)$c['id'] ?>, '<?= htmlspecialchars(addslashes($c['name'])) ?>')" class="cj-cust-action-btn p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Reset Password">
                                             <i class="fas fa-key"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Are you sure you want to delete this customer account? This cannot be undone.');" class="inline">
@@ -575,7 +655,7 @@ if ($currentRole === 'superadmin') {
                                             <input type="hidden" name="action" value="delete_customer">
                                             <input type="hidden" name="customer_id" value="<?= (int)$c['id'] ?>">
                                             <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
-                                            <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Account">
+                                            <button type="submit" class="cj-cust-action-btn cj-del p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Account">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
@@ -601,9 +681,9 @@ if ($currentRole === 'superadmin') {
             </button>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="cj-cust-panel bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-100 text-xs">
+                <table class="cj-cust-table min-w-full divide-y divide-gray-100 text-xs">
                     <thead class="bg-gray-50/75 text-gray-500 uppercase font-semibold text-[11px] tracking-wider">
                         <tr>
                             <th scope="col" class="px-6 py-3.5 text-left">Staff Member</th>
@@ -671,7 +751,7 @@ if ($currentRole === 'superadmin') {
 
 <!-- Modal: Edit Customer Profile -->
 <div id="editCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+    <div class="cj-cust-modal-box bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
             <h3 class="text-base font-bold font-serif text-gray-900">Edit Customer Profile</h3>
             <button type="button" onclick="closeEditCustomerModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -692,7 +772,7 @@ if ($currentRole === 'superadmin') {
             </div>
             <div class="mb-4">
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Email Address (optional)</label>
-                <input type="email" name="email" id="edit_cust_email" maxlength="160" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none">
+                <input type="text" inputmode="email" name="email" id="edit_cust_email" maxlength="160" placeholder="name@example.com" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none">
             </div>
 
             <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
@@ -705,7 +785,7 @@ if ($currentRole === 'superadmin') {
 
 <!-- Modal: Reset Customer Password -->
 <div id="resetPasswordModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
+    <div class="cj-cust-modal-box bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
             <h3 class="text-base font-bold font-serif text-gray-900">Reset Customer Password</h3>
             <button type="button" onclick="closeResetPasswordModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -732,7 +812,7 @@ if ($currentRole === 'superadmin') {
 
 <!-- Modal: Add New Staff Admin -->
 <div id="addAdminModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+    <div class="cj-cust-modal-box bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
             <h3 class="text-base font-bold font-serif text-gray-900">Add Staff Account</h3>
             <button type="button" onclick="closeAddAdminModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -773,7 +853,7 @@ if ($currentRole === 'superadmin') {
 
 <!-- Modal: Edit Staff Admin -->
 <div id="editAdminModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+    <div class="cj-cust-modal-box bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
             <h3 class="text-base font-bold font-serif text-gray-900">Edit Staff Account</h3>
             <button type="button" onclick="closeEditAdminModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>

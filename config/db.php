@@ -6,10 +6,26 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 if (empty($_SESSION['csrf_token'])) {
-    if (!empty($_COOKIE['cj_csrf'])) {
+    if (!empty($_COOKIE['cj_csrf']) && is_string($_COOKIE['cj_csrf']) && strlen($_COOKIE['cj_csrf']) >= 32) {
         $_SESSION['csrf_token'] = (string) $_COOKIE['cj_csrf'];
     } else {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+}
+// Persist CSRF token in a secure cookie for ALL visitors (customers & admins)
+// so serverless container switches on Vercel never reject valid form submissions.
+if (empty($_COOKIE['cj_csrf']) || $_COOKIE['cj_csrf'] !== $_SESSION['csrf_token']) {
+    if (!headers_sent() && function_exists('cj_session_cookie_params')) {
+        $csrfParams = cj_session_cookie_params();
+        setcookie('cj_csrf', $_SESSION['csrf_token'], [
+            'expires' => time() + 604800,
+            'path' => '/',
+            'domain' => $csrfParams['domain'],
+            'secure' => $csrfParams['secure'],
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        $_COOKIE['cj_csrf'] = $_SESSION['csrf_token'];
     }
 }
 
