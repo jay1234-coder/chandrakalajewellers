@@ -35,7 +35,7 @@ $seo = cj_merge_seo([
     'title' => 'Jewellery Reels & Live Showcase | ChandraKala Jewellers Khedbrahma',
     'description' => 'Watch real handcrafted 22K 916 gold, bridal, mangalsutra and 925 silver jewellery reels from ChandraKala Jewellers, Civil Road, Khedbrahma. Tap any reel to order or visit.',
     'canonical' => cj_abs_url('reels'),
-    'schema' => array_merge([cj_schema_business()], $videoSchemas),
+    'schema' => array_merge([cj_local_business_schema()], $videoSchemas),
 ]);
 ?>
 <!DOCTYPE html>

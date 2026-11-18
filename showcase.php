@@ -81,7 +81,7 @@ $seo = cj_merge_seo([
     'title' => ($rid > 0 ? "Jewellery Showcase Reel #{$rid} | " : 'Showroom Showcase | ') . 'ChandraKala Jewellers Khedbrahma',
     'description' => 'Watch this handcrafted 916 gold & silver jewellery reel from ChandraKala Jewellers, Civil Road, Khedbrahma. Check live gold rates, customer reviews, order on WhatsApp, or visit our showroom.',
     'canonical' => $reelShareUrl,
-    'schema' => [cj_schema_business()],
+    'schema' => [cj_local_business_schema()],
 ]);
 ?>
 <!DOCTYPE html>
