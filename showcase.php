@@ -77,11 +77,36 @@ $reelShareUrl = cj_abs_url('showcase?v=' . $rid);
 $waOrderMsg = "Namaste ChandraKala Jewellers! I loved Jewellery Reel #{$rid} on your website and would like to order / know the weight, live price & availability.\nLink: {$reelShareUrl}";
 $waOrderUrl = 'https://wa.me/919427080359?text=' . rawurlencode($waOrderMsg);
 
+$scSchemas = [
+    cj_local_business_schema(),
+    cj_breadcrumb_schema([
+        ['name' => 'Home', 'url' => cj_abs_url('index1')],
+        ['name' => 'Jewellery Reels', 'url' => cj_abs_url('reels')],
+        ['name' => $rid > 0 ? "Showcase Reel #{$rid}" : 'Showroom Showcase', 'url' => $reelShareUrl],
+    ]),
+];
+$scExtraHead = '';
+$scOgImage = cj_abs_url('images/logo.png');
+if ($reel) {
+    $scSchemas[] = cj_reel_video_object_schema($reel);
+    if (!empty($reel['poster_thumb'])) {
+        $scOgImage = (string)$reel['poster_thumb'];
+    }
+    $hdEsc = htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8');
+    $scExtraHead = '<meta property="og:video" content="' . $hdEsc . '">' . "\n"
+        . '<meta property="og:video:secure_url" content="' . $hdEsc . '">' . "\n"
+        . '<meta property="og:video:type" content="video/mp4">' . "\n";
+}
+
 $seo = cj_merge_seo([
-    'title' => ($rid > 0 ? "Jewellery Showcase Reel #{$rid} | " : 'Showroom Showcase | ') . 'ChandraKala Jewellers Khedbrahma',
-    'description' => 'Watch this handcrafted 916 gold & silver jewellery reel from ChandraKala Jewellers, Civil Road, Khedbrahma. Check live gold rates, customer reviews, order on WhatsApp, or visit our showroom.',
+    'title' => $reel ? cj_reel_seo_title($reel) : 'Showroom Showcase | ChandraKala Jewellers Khedbrahma',
+    'description' => $reel ? cj_reel_seo_description($reel) : 'Watch handcrafted 916 gold & silver jewellery reels from ChandraKala Jewellers, Civil Road, Khedbrahma. Check live per-gram gold rates, reviews & order on WhatsApp.',
+    'keywords' => 'ChandraKala Jewellers Khedbrahma, 916 gold jewellery video, hallmark gold reel Gujarat, Sabarkantha jewellers, bridal gold jewellery video',
     'canonical' => $reelShareUrl,
-    'schema' => [cj_local_business_schema()],
+    'og_type' => $reel ? 'video.other' : 'website',
+    'og_image' => $scOgImage,
+    'extra_head' => $scExtraHead,
+    'schema' => $scSchemas,
 ]);
 ?>
 <!DOCTYPE html>
@@ -234,9 +259,19 @@ $seo = cj_merge_seo([
     transform: translateY(-2px);
 }
 .cj-sc-act-btn.is-liked {
-    background: rgba(244, 63, 94, 0.12);
-    border-color: rgba(244, 63, 94, 0.55);
-    color: #f43f5e;
+    background: rgba(255, 48, 64, 0.1);
+    border-color: rgba(255, 48, 64, 0.55);
+    color: #ff3040;
+}
+.cj-sc-act-btn .cj-sc-heart-path {
+    fill: transparent;
+    stroke: currentColor;
+    stroke-width: 2;
+    transition: fill 0.18s ease, stroke 0.18s ease;
+}
+.cj-sc-act-btn.is-liked .cj-sc-heart-path {
+    fill: #ff3040;
+    stroke: #ff3040;
 }
 .cj-sc-act-btn.is-order {
     background: var(--gold-shine);
@@ -245,8 +280,16 @@ $seo = cj_merge_seo([
     box-shadow: 0 8px 22px rgba(212, 175, 55, 0.32);
 }
 .cj-sc-act-icon {
-    font-size: 18px;
-    line-height: 1;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.cj-sc-act-icon svg {
+    width: 21px;
+    height: 21px;
+    display: block;
 }
 
 /* Right Column Showroom Contact & Conversion Hub */
@@ -447,13 +490,20 @@ $seo = cj_merge_seo([
                 <div class="cj-sc-top-bar">
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         <?php if (!empty($reel['is_top_viewed'])): ?>
-                            <span class="cj-sc-pill is-gold">👑 Top Viewed</span>
+                            <span class="cj-sc-pill is-gold">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                                Top Viewed
+                            </span>
                         <?php endif; ?>
                         <span class="cj-sc-pill">
-                            👁 <span id="scBadgeViews"><?= htmlspecialchars(cj_format_reel_count((int)$reel['display_views'])) ?></span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <span id="scBadgeViews"><?= htmlspecialchars(cj_format_reel_count((int)$reel['display_views'])) ?></span>
                         </span>
                     </div>
-                    <button type="button" id="cjMuteToggle" class="cj-sc-ctrl-btn" aria-label="Toggle sound">🔇 Sound Off</button>
+                    <button type="button" id="cjMuteToggle" class="cj-sc-ctrl-btn" aria-label="Toggle sound">
+                        <svg id="cjScMuteSvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                        <span id="cjScMuteLbl">Muted</span>
+                    </button>
                 </div>
 
                 <?php if ($prevId > 0 && $nextId > 0): ?>
@@ -464,22 +514,30 @@ $seo = cj_merge_seo([
                 <?php endif; ?>
             </div>
 
-            <!-- Interactive Bar: Like · Comment · Order · Share -->
+            <!-- Interactive Bar: Modern Instagram-Style Vector SVG Controls -->
             <div class="cj-sc-actions">
                 <button type="button" id="cjLikeBtn" class="cj-sc-act-btn <?= $isLiked ? 'is-liked' : '' ?>" data-reel-id="<?= $rid ?>">
-                    <span class="cj-sc-act-icon" id="cjLikeIcon"><?= $isLiked ? '❤️' : '🤍' ?></span>
+                    <span class="cj-sc-act-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="cj-sc-heart-path" stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </span>
                     <span>Like (<span id="cjLikeCount"><?= (int)$reel['likes_count'] ?></span>)</span>
                 </button>
                 <a href="#reel-comments" class="cj-sc-act-btn">
-                    <span class="cj-sc-act-icon">💬</span>
+                    <span class="cj-sc-act-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    </span>
                     <span>Comment (<span id="cjCommentCount"><?= (int)$reel['comments_count'] ?></span>)</span>
                 </a>
                 <button type="button" id="cjOpenOrderModalBtn" class="cj-sc-act-btn is-order">
-                    <span class="cj-sc-act-icon">🛍️</span>
+                    <span class="cj-sc-act-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </span>
                     <span>Order Now</span>
                 </button>
                 <button type="button" id="cjShareBtn" class="cj-sc-act-btn">
-                    <span class="cj-sc-act-icon">🔗</span>
+                    <span class="cj-sc-act-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </span>
                     <span id="cjShareText">Share</span>
                 </button>
             </div>
@@ -727,16 +785,23 @@ $seo = cj_merge_seo([
             }
         }).catch(function () {});
 
-        // Sound toggle
+        // Sound toggle (crisp SVG update)
         if (muteBtn && video) {
             muteBtn.addEventListener('click', function () {
                 video.muted = !video.muted;
-                muteBtn.textContent = video.muted ? '🔇 Sound Off' : '🔊 Sound On';
+                var svg = document.getElementById('cjScMuteSvg');
+                var lbl = document.getElementById('cjScMuteLbl');
+                if (svg) {
+                    svg.innerHTML = video.muted
+                        ? '<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'
+                        : '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
+                }
+                if (lbl) lbl.textContent = video.muted ? 'Muted' : 'Sound On';
                 if (!video.muted) { video.play().catch(function () {}); }
             });
         }
 
-        // Like toggle
+        // Like toggle (SVG outline <-> solid crimson controlled via .is-liked)
         if (likeBtn) {
             likeBtn.addEventListener('click', function () {
                 fetch(trackUrl, {
@@ -747,7 +812,6 @@ $seo = cj_merge_seo([
                 }).then(function (r) { return r.json(); }).then(function (d) {
                     if (!d || !d.ok) return;
                     likeBtn.classList.toggle('is-liked', !!d.liked);
-                    if (likeIcon) likeIcon.textContent = d.liked ? '❤️' : '🤍';
                     if (likeCount) likeCount.textContent = d.likes_count;
                 }).catch(function () {});
             });

@@ -210,7 +210,8 @@ $cjReelsCount = count($cjReelsList);
 
         <?php if ($isTop): ?>
             <span class="cj-bento-top-badge">
-                <span aria-hidden="true">👑</span> Top Viewed
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                Top Viewed
             </span>
         <?php endif; ?>
 
@@ -222,7 +223,8 @@ $cjReelsCount = count($cjReelsList);
 
         <?php if ($likesCount > 0): ?>
             <span class="cj-bento-like-pill" aria-hidden="true">
-                ♥ <?= htmlspecialchars(cj_format_reel_count($likesCount)) ?>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#ff3040" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <?= htmlspecialchars(cj_format_reel_count($likesCount)) ?>
             </span>
         <?php endif; ?>
     </a>

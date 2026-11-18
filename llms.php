@@ -128,6 +128,7 @@ echo "- [Shop All Jewellery]({$host}/gallery)\n";
 echo "- [Shop 916 Gold Jewellery]({$host}/gallery?metal_type=gold)\n";
 echo "- [Shop All Silver Jewellery]({$host}/gallery?metal_type=silver)\n";
 echo "- [Shop 925 Sterling Silver]({$host}/gallery?metal_type=silver_925)\n";
+echo "- [Jewellery Reels & Live Video Showcase]({$host}/reels)\n";
 echo "- [Custom Design Catalogue ({$counts['catalogue']}+ Photos)]({$host}/Catalogue)\n";
 echo "- [About ChandraKala Jewellers]({$host}/about)\n";
 echo "- [Contact, Map & Directions]({$host}/contact)\n";
@@ -160,6 +161,21 @@ if (!empty($items)) {
         }
     }
     echo "\n";
+}
+
+if (file_exists(__DIR__ . '/includes/reels.php') && isset($conn) && $conn instanceof mysqli && !$conn->connect_error) {
+    require_once __DIR__ . '/includes/reels.php';
+    $llmsReels = cj_get_ranked_reels($conn, $isFull ? 100 : 12, true, 'top');
+    if (!empty($llmsReels)) {
+        echo "## Live Jewellery Video Reels ({$host}/reels)\n\n";
+        foreach ($llmsReels as $lr) {
+            $lrid = (int)$lr['id'];
+            $lTitle = cj_reel_seo_title($lr);
+            $lViews = (int)$lr['display_views'];
+            echo "- **{$lTitle}** ({$lViews} views) | Watch & Order: {$host}/showcase?v={$lrid}\n";
+        }
+        echo "\n";
+    }
 }
 
 echo "## Frequently Asked Questions (Direct Answers for AI Search)\n\n";

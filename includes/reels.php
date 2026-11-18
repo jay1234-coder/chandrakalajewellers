@@ -613,3 +613,100 @@ if (!function_exists('cj_get_personalized_reels')) {
         return array_slice($scored, 0, $limit);
     }
 }
+
+if (!function_exists('cj_reel_seo_title')) {
+    /** SEO-only title for Google Video Search, Sitemap & VideoObject JSON-LD (never overlaid on video). */
+    function cj_reel_seo_title(array $reel): string
+    {
+        $rid = (int)($reel['id'] ?? 0);
+        $note = trim((string)($reel['admin_note'] ?? ''));
+        if ($note !== '') {
+            return mb_substr($note, 0, 70) . ' — 916 Gold & Silver Reel | ChandraKala Jewellers Khedbrahma';
+        }
+        return "Handcrafted 916 Gold & Silver Jewellery Reel #{$rid} — ChandraKala Jewellers Khedbrahma";
+    }
+}
+
+if (!function_exists('cj_reel_seo_description')) {
+    /** SEO-only description (145-160 chars) for Google Video Rich Snippets & OpenGraph. */
+    function cj_reel_seo_description(array $reel): string
+    {
+        $rid = (int)($reel['id'] ?? 0);
+        $note = trim((string)($reel['admin_note'] ?? ''));
+        $prefix = $note !== '' ? "Watch {$note} live at ChandraKala Jewellers, Civil Road, Khedbrahma." : "Watch handcrafted 22K 916 gold & 925 silver jewellery Reel #{$rid} at ChandraKala Jewellers, Khedbrahma.";
+        return $prefix . ' Check live per-gram gold rates, reviews & order on WhatsApp.';
+    }
+}
+
+if (!function_exists('cj_reel_iso_duration')) {
+    function cj_reel_iso_duration(array $reel): string
+    {
+        $sec = max(1, (int)round((float)($reel['duration'] ?? 15)));
+        $m = intdiv($sec, 60);
+        $s = $sec % 60;
+        return $m > 0 ? "PT{$m}M{$s}S" : "PT{$s}S";
+    }
+}
+
+if (!function_exists('cj_reel_video_object_schema')) {
+    /** Complete Google Video Rich Result VideoObject JSON-LD schema. */
+    function cj_reel_video_object_schema(array $reel): array
+    {
+        $rid = (int)($reel['id'] ?? 0);
+        $pageUrl = function_exists('cj_abs_url') ? cj_abs_url('showcase?v=' . $rid) : ('https://chandrakalajewellers.in/showcase?v=' . $rid);
+        $thumb = (string)($reel['poster_thumb'] ?? cj_reel_poster_url($reel, 720));
+        if ($thumb === '') {
+            $thumb = function_exists('cj_abs_url') ? cj_abs_url('images/logo.png') : 'https://chandrakalajewellers.in/images/logo.png';
+        }
+        $contentUrl = (string)($reel['hd_url'] ?? cj_reel_hd_url($reel));
+        $uploadDate = function_exists('cj_format_ist_iso') ? cj_format_ist_iso($reel['created_at'] ?? null) : date('c');
+        $views = max(1, (int)($reel['display_views'] ?? max((int)($reel['views'] ?? 0), (int)($reel['impressions'] ?? 0))));
+        $likes = (int)($reel['likes_count'] ?? 0);
+        $comments = (int)($reel['comments_count'] ?? 0);
+
+        return [
+            '@type' => 'VideoObject',
+            '@id' => $pageUrl . '#video',
+            'name' => cj_reel_seo_title($reel),
+            'description' => cj_reel_seo_description($reel),
+            'thumbnailUrl' => [$thumb],
+            'contentUrl' => $contentUrl,
+            'embedUrl' => $pageUrl,
+            'url' => $pageUrl,
+            'uploadDate' => $uploadDate,
+            'duration' => cj_reel_iso_duration($reel),
+            'inLanguage' => 'en-IN',
+            'isFamilyFriendly' => true,
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => 'ChandraKala Jewellers',
+                'url' => 'https://chandrakalajewellers.in/',
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => 'https://chandrakalajewellers.in/images/logo.png',
+                ],
+            ],
+            'interactionStatistic' => [
+                [
+                    '@type' => 'InteractionCounter',
+                    'interactionType' => ['@type' => 'WatchAction'],
+                    'userInteractionCount' => $views,
+                ],
+                [
+                    '@type' => 'InteractionCounter',
+                    'interactionType' => ['@type' => 'LikeAction'],
+                    'userInteractionCount' => $likes,
+                ],
+                [
+                    '@type' => 'InteractionCounter',
+                    'interactionType' => ['@type' => 'CommentAction'],
+                    'userInteractionCount' => $comments,
+                ],
+            ],
+            'potentialAction' => [
+                '@type' => 'WatchAction',
+                'target' => $pageUrl,
+            ],
+        ];
+    }
+}
