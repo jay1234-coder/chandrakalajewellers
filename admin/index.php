@@ -792,6 +792,12 @@ if ($metal_q) {
         $metal_counts_admin[$mr['metal_type']] = (int)$mr['c'];
     }
 }
+$product_types = cj_get_product_types($conn);
+$cat_ocr_pending = 0;
+$ocrChk = @$conn->query("SELECT SUM(CASE WHEN ocr_status = 0 THEN 1 ELSE 0 END) AS p FROM products");
+if ($ocrChk && ($ocrRow = $ocrChk->fetch_assoc())) {
+    $cat_ocr_pending = (int)($ocrRow['p'] ?? 0);
+}
 ?>
 
 <?php
@@ -1296,8 +1302,18 @@ if ($just_logged_in) {
                             <input type="text" id="purity" name="purity" placeholder="e.g. 22K / 916" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
                         </div>
                         <div>
-                            <label for="category" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type (optional)</label>
-                            <input type="text" id="category" name="category" placeholder="e.g. Necklace" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
+                            <label for="category" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type / Category</label>
+                            <div class="flex items-center gap-1.5">
+                                <select id="category" name="category" data-product-type-select class="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none">
+                                    <option value="">-- Select Jewellery Type --</option>
+                                    <?php foreach ($product_types as $ptype): ?>
+                                        <option value="<?= htmlspecialchars($ptype, ENT_QUOTES) ?>"><?= htmlspecialchars($ptype) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" onclick="openAddTypeQuick('category')" title="Add New Jewellery Type" aria-label="Add New Jewellery Type" class="shrink-0 w-10 h-10 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center justify-center shadow-sm transition-colors cursor-pointer">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label for="stone" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stone (optional)</label>
@@ -1328,9 +1344,14 @@ if ($just_logged_in) {
                         </div>
                     </div>
 
-                    <!-- Image upload wrapper -->
+                    <!-- Image upload wrapper + Self-Built OCR Auto-Fill -->
                     <div class="mt-5 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Item Image</label>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Item Image + Auto OCR Scan</label>
+                            <button type="button" id="ocr_scan_add_btn" onclick="runImageOcrScan(false)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer">
+                                <i class="fas fa-wand-magic-sparkles"></i> Scan Image (OCR + SEO Name)
+                            </button>
+                        </div>
                         <input type="file" id="image_upload" name="image" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" required>
                         <input type="hidden" name="image_filename" id="image_filename">
                         
@@ -1341,6 +1362,7 @@ if ($just_logged_in) {
                                     <div class="progress-bar" id="progress_bar">0%</div>
                                 </div>
                                 <div id="progress_message" class="text-xs text-gray-500 mt-1"></div>
+                                <div id="ocr_status_add" class="text-[11px] text-amber-700 font-medium mt-1"></div>
                             </div>
                         </div>
                     </div>
@@ -1382,8 +1404,24 @@ if ($just_logged_in) {
                     </form>
                 </div>
                 
-                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mt-6 text-xs text-amber-800 leading-relaxed">
-                    <strong>Tip:</strong> Uploading items in bulk automatically creates placeholder catalogue entries using filenames.
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mt-6 text-xs text-amber-900 leading-relaxed space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <strong class="flex items-center gap-1.5"><i class="fas fa-robot text-amber-600"></i> Background Catalogue OCR Engine</strong>
+                        <span id="catOcrBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $cat_ocr_pending > 0 ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800' ?>">
+                            <?= $cat_ocr_pending > 0 ? ($cat_ocr_pending . ' pending') : 'All ' . (int)$catalogue_count . ' Named' ?>
+                        </span>
+                    </div>
+                    <p id="catOcrStatusText" class="text-[11px] text-amber-800">
+                        <?= $cat_ocr_pending > 0 ? 'Auto-scanning newly uploaded photos in background for fancy SEO names & tags...' : 'Every catalogue image has been enriched with fancy SEO names, categories & AI search tags.' ?>
+                    </p>
+                    <div class="w-full h-1.5 bg-amber-200/70 rounded-full overflow-hidden">
+                        <?php $ocrPct = $catalogue_count > 0 ? (int)round((($catalogue_count - $cat_ocr_pending) / $catalogue_count) * 100) : 100; ?>
+                        <div id="catOcrBar" class="h-full bg-amber-600 transition-all duration-300" style="width: <?= $ocrPct ?>%"></div>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button type="button" id="catOcrRunBtn" onclick="startCatalogueOcrWorker(false)" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold cursor-pointer">Scan Pending</button>
+                        <button type="button" onclick="if(confirm('Re-scan and refresh SEO names for all catalogue photos?')) startCatalogueOcrWorker(true);" class="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold cursor-pointer">Re-Scan All</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1635,8 +1673,18 @@ if ($just_logged_in) {
                         <input type="text" id="edit_purity" name="purity" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
                     </div>
                     <div>
-                        <label for="edit_category" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type</label>
-                        <input type="text" id="edit_category" name="category" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
+                        <label for="edit_category" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type / Category</label>
+                        <div class="flex items-center gap-1.5">
+                            <select id="edit_category" name="category" data-product-type-select class="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none">
+                                <option value="">-- Select Jewellery Type --</option>
+                                <?php foreach ($product_types as $ptype): ?>
+                                    <option value="<?= htmlspecialchars($ptype, ENT_QUOTES) ?>"><?= htmlspecialchars($ptype) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" onclick="openAddTypeQuick('edit_category')" title="Add New Jewellery Type" aria-label="Add New Jewellery Type" class="shrink-0 w-10 h-10 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center justify-center shadow-sm transition-colors cursor-pointer">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label for="edit_stone" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stone</label>
@@ -1680,7 +1728,12 @@ if ($just_logged_in) {
                 </div>
 
                 <div class="mt-4 border border-dashed border-gray-200 rounded-xl p-3 bg-gray-50/50">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Change Image (Optional)</label>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase">Change Image (Optional) + OCR Scan</label>
+                        <button type="button" id="ocr_scan_edit_btn" onclick="runImageOcrScan(true)" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm cursor-pointer">
+                            <i class="fas fa-wand-magic-sparkles"></i> Scan Image (OCR + SEO)
+                        </button>
+                    </div>
                     <input type="file" id="edit_image_upload" name="image" accept="image/*" class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
                     
                     <div class="flex gap-4 items-center mt-3">
@@ -1690,6 +1743,7 @@ if ($just_logged_in) {
                                 <div class="progress-bar" id="edit_progress_bar">0%</div>
                             </div>
                             <div id="edit_progress_message" class="text-xs text-gray-500 mt-1"></div>
+                            <div id="ocr_status_edit" class="text-[11px] text-amber-700 font-medium mt-1"></div>
                         </div>
                     </div>
                 </div>
@@ -2167,6 +2221,14 @@ if ($just_logged_in) {
                                         submitBtn.disabled = false;
                                         submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                                     }
+                                    // Auto-trigger our Self-Built OCR + SEO Name Engine when adding a new item with empty fields
+                                    if (inputFileId === 'image_upload') {
+                                        var nameEl = document.getElementById('name');
+                                        var descEl = document.getElementById('description');
+                                        if ((nameEl && !nameEl.value.trim()) || (descEl && !descEl.value.trim())) {
+                                            runImageOcrScan(false, processedFile);
+                                        }
+                                    }
                                 } else {
                                     const errorMsg = response.message || (response.errors ? response.errors.join(', ') : 'Unknown upload error');
                                     progressMessage.textContent = 'Upload failed: ' + errorMsg;
@@ -2222,15 +2284,226 @@ if ($just_logged_in) {
             document.getElementById('edit_image_preview').classList.remove('hidden');
             document.getElementById('edit_use_manual_rates').checked = item.use_manual_rates == 1;
             document.getElementById('edit_purity').value = item.purity || '';
-            document.getElementById('edit_category').value = item.category || '';
+            setProductTypeSelectValue(document.getElementById('edit_category'), item.category || '');
             document.getElementById('edit_stone').value = item.stone || '';
             document.getElementById('edit_dimensions').value = item.dimensions || '';
             document.getElementById('edit_sku').value = item.sku || '';
             document.getElementById('edit_tags').value = item.tags || '';
+            var editOcrStatus = document.getElementById('ocr_status_edit');
+            if (editOcrStatus) editOcrStatus.textContent = '';
 
             calculatePrice('edit');
             editModal.style.display = 'flex';
         }
+
+        const CJ_ADMIN_CSRF = <?= json_encode((string)($_SESSION['csrf_token'] ?? '')) ?>;
+
+        function setProductTypeSelectValue(selectEl, val) {
+            if (!selectEl) return;
+            val = (val || '').trim();
+            if (val === '') {
+                selectEl.value = '';
+                return;
+            }
+            var found = false;
+            for (var i = 0; i < selectEl.options.length; i++) {
+                if (selectEl.options[i].value.toLowerCase() === val.toLowerCase()) {
+                    selectEl.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                var opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = val;
+                selectEl.appendChild(opt);
+                selectEl.value = val;
+            }
+        }
+
+        async function openAddTypeQuick(targetSelectId) {
+            var newType = window.prompt('Enter new Jewellery Type name (e.g., Choker, Kamarbandh, Toe Ring, Jhumka):');
+            if (!newType || !newType.trim()) return;
+            newType = newType.trim();
+
+            try {
+                var fd = new FormData();
+                fd.append('name', newType);
+                fd.append('csrf_token', CJ_ADMIN_CSRF);
+                var res = await fetch('/api/product-types.php', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                });
+                var data = await res.json();
+                if (!data || !data.ok) {
+                    alert((data && data.error) ? data.error : 'Could not add product type.');
+                    return;
+                }
+                var added = data.added || newType;
+                document.querySelectorAll('select[data-product-type-select]').forEach(function (sel) {
+                    var currentVal = sel.value;
+                    var hasOpt = Array.from(sel.options).some(function (o) { return o.value.toLowerCase() === added.toLowerCase(); });
+                    if (!hasOpt) {
+                        var opt = document.createElement('option');
+                        opt.value = added;
+                        opt.textContent = added;
+                        sel.appendChild(opt);
+                    }
+                    if (sel.id === targetSelectId) {
+                        sel.value = added;
+                    } else {
+                        sel.value = currentVal;
+                    }
+                });
+            } catch (err) {
+                alert('Network error adding product type.');
+            }
+        }
+
+        async function runImageOcrScan(isEdit, fileOverride) {
+            var prefix = isEdit ? 'edit_' : '';
+            var statusEl = document.getElementById(isEdit ? 'ocr_status_edit' : 'ocr_status_add');
+            var btn = document.getElementById(isEdit ? 'ocr_scan_edit_btn' : 'ocr_scan_add_btn');
+            var fileInput = document.getElementById(isEdit ? 'edit_image_upload' : 'image_upload');
+            var hiddenFn = document.getElementById(isEdit ? 'edit_image_filename' : 'image_filename');
+            var currentImg = isEdit ? document.getElementById('edit_current_image') : null;
+
+            var file = fileOverride || (fileInput && fileInput.files && fileInput.files[0]) || null;
+            var fnVal = (hiddenFn && hiddenFn.value) ? hiddenFn.value : (currentImg ? currentImg.value : '');
+
+            if (!file && !fnVal) {
+                if (statusEl) statusEl.textContent = 'Please select or upload a product photo first.';
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning Image...';
+            }
+            if (statusEl) statusEl.textContent = 'Running OCR & Visual AI analysis...';
+
+            try {
+                var fd = new FormData();
+                fd.append('csrf_token', CJ_ADMIN_CSRF);
+                if (file) {
+                    fd.append('image', file);
+                    fd.append('filename_hint', file.name || '');
+                } else {
+                    fd.append('image_filename', fnVal);
+                    fd.append('folder', 'uploads');
+                }
+                if (isEdit) {
+                    var idEl = document.getElementById('edit_item_id');
+                    if (idEl && idEl.value) fd.append('item_id', idEl.value);
+                }
+
+                var res = await fetch('/api/ocr-analyze.php', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                });
+                var data = await res.json();
+                if (!data || !data.ok) {
+                    if (statusEl) statusEl.textContent = 'OCR error: ' + ((data && data.error) || 'Failed to analyze image.');
+                    return;
+                }
+
+                var nameEl = document.getElementById(prefix + 'name');
+                var descEl = document.getElementById(prefix + 'description');
+                var catEl = document.getElementById(prefix + 'category');
+                var metalEl = document.getElementById(prefix + 'metal_type');
+                var purityEl = document.getElementById(prefix + 'purity');
+                var stoneEl = document.getElementById(prefix + 'stone');
+                var weightEl = document.getElementById(prefix + 'weight');
+                var skuEl = document.getElementById(prefix + 'sku');
+                var tagsEl = document.getElementById(prefix + 'tags');
+
+                if (nameEl && data.name) nameEl.value = data.name;
+                if (descEl && data.description) descEl.value = data.description;
+                if (catEl && data.category) setProductTypeSelectValue(catEl, data.category);
+                if (metalEl && data.metal_type) metalEl.value = data.metal_type;
+                if (purityEl && data.purity) purityEl.value = data.purity;
+                if (stoneEl && data.stone !== undefined) stoneEl.value = data.stone;
+                if (weightEl && data.weight && (!weightEl.value || parseFloat(weightEl.value) === 0)) weightEl.value = data.weight;
+                if (skuEl && data.sku && !skuEl.value) skuEl.value = data.sku;
+                if (tagsEl && data.tags) tagsEl.value = data.tags;
+
+                if (typeof calculatePrice === 'function') calculatePrice(isEdit ? 'edit' : 'add');
+
+                var sigText = (data.signals && data.signals.length) ? (' · ' + data.signals.join(' | ')) : '';
+                if (statusEl) statusEl.textContent = '✓ ' + (data.engine || 'OCR AI') + sigText;
+            } catch (err) {
+                if (statusEl) statusEl.textContent = 'Network error running OCR scan.';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> ' + (isEdit ? 'Scan Image (OCR + SEO)' : 'Scan Image (OCR + SEO Name)');
+                }
+            }
+        }
+
+        // Background Catalogue OCR Worker (runs non-blocking in small batches)
+        var cjCatOcrRunning = false;
+        async function startCatalogueOcrWorker(resetAll) {
+            if (cjCatOcrRunning) return;
+            cjCatOcrRunning = true;
+            var badge = document.getElementById('catOcrBadge');
+            var statusText = document.getElementById('catOcrStatusText');
+            var bar = document.getElementById('catOcrBar');
+            var btn = document.getElementById('catOcrRunBtn');
+            if (btn) btn.disabled = true;
+
+            var firstCall = true;
+            try {
+                while (true) {
+                    var fd = new FormData();
+                    fd.append('csrf_token', CJ_ADMIN_CSRF);
+                    fd.append('batch', '4');
+                    if (resetAll && firstCall) {
+                        fd.append('reset_all', '1');
+                    }
+                    firstCall = false;
+
+                    var res = await fetch('/api/catalogue-ocr-worker.php', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'same-origin'
+                    });
+                    var data = await res.json();
+                    if (!data || !data.ok) {
+                        if (statusText) statusText.textContent = 'OCR paused: ' + ((data && data.error) || 'unknown error');
+                        break;
+                    }
+                    var total = data.total || 0;
+                    var processed = data.processed || 0;
+                    var pending = data.pending || 0;
+                    var pct = total > 0 ? Math.round((processed / total) * 100) : 100;
+                    if (bar) bar.style.width = pct + '%';
+                    if (badge) badge.textContent = pending > 0 ? (processed + '/' + total + ' scanned') : ('All ' + total + ' Named');
+                    if (statusText) {
+                        if (pending > 0 && data.updated && data.updated.length) {
+                            statusText.textContent = 'Background OCR naming: "' + data.updated[0].name + '" (' + pending + ' left)...';
+                        } else if (pending === 0) {
+                            statusText.textContent = '✓ Complete! All ' + total + ' catalogue designs have SEO names, categories & AI tags.';
+                        }
+                    }
+                    if (pending <= 0 || data.updated_count === 0) break;
+                    await new Promise(function (r) { setTimeout(r, 350); });
+                }
+            } catch (e) {
+                if (statusText) statusText.textContent = 'Background OCR paused (network). Click Scan Pending to resume.';
+            } finally {
+                cjCatOcrRunning = false;
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // Auto-start background Catalogue OCR silently if any newly uploaded catalogue images are pending
+        <?php if ($cat_ocr_pending > 0): ?>
+        setTimeout(function () { startCatalogueOcrWorker(false); }, 1800);
+        <?php endif; ?>
 
         function closeEditModal() {
             editModal.style.display = 'none';

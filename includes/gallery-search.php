@@ -38,21 +38,23 @@ if (!function_exists('cj_gallery_synonym_map')) {
     function cj_gallery_synonym_map(): array
     {
         return [
-            'gold' => ['gold', 'golden', 'sona', 'gld', 'golde', 'hallmark', '22k', '18k', '14k'],
-            'silver' => ['silver', 'silvar', 'sliver', 'silvr', 'chandi', 'silbery'],
-            'silver_925' => ['925', '92.5', 'sterling', 'sterling925', 'silver925', 'oxidised', 'oxidized'],
-            'ring' => ['ring', 'rings', 'anguthi', 'angoothi', 'anguthiyu', 'finger'],
-            'chain' => ['chain', 'chains', 'haar', 'necklace', 'necklaces', 'pendant', 'pendants', 'locket'],
-            'earring' => ['earring', 'earrings', 'ear', 'bali', 'jhumka', 'jhumkas', 'tops'],
-            'bangle' => ['bangle', 'bangles', 'kada', 'kadas', 'bracelet', 'bracelets', 'kangan'],
-            'mangalsutra' => ['mangalsutra', 'mangal', 'thali', 'blackbeads'],
-            'anklet' => ['anklet', 'anklets', 'payal', 'pajeb'],
-            'nose' => ['nose', 'nath', 'nosering', 'nose-pin', 'nosepin'],
+            'gold' => ['gold', 'golden', 'sona', 'sonu', 'gld', 'golde', 'hallmark', '916', '22k', '22kt', '20k', '18k', '14k', 'yellow'],
+            'silver' => ['silver', 'silvar', 'sliver', 'silvr', 'chandi', 'silbery', 'pure'],
+            'silver_925' => ['925', '92.5', 'sterling', 'sterling925', 'silver925', 'oxidised', 'oxidized', 'italian'],
+            'ring' => ['ring', 'rings', 'anguthi', 'angoothi', 'anguthiyu', 'vinti', 'viti', 'finger', 'solitaire', 'band'],
+            'chain' => ['chain', 'chains', 'haar', 'necklace', 'necklaces', 'pendant', 'pendent', 'pendants', 'locket', 'choker', 'dokiya', 'magmala', 'kanthi', 'set'],
+            'earring' => ['earring', 'earrings', 'ear', 'bali', 'baliya', 'jhumka', 'jhumkas', 'tops', 'butti', 'buti', 'kanchain', 'stud', 'studs'],
+            'bangle' => ['bangle', 'bangles', 'kada', 'kadas', 'bracelet', 'bracelets', 'kangan', 'patala', 'patla', 'chudi', 'hathpan', 'pandora'],
+            'mangalsutra' => ['mangalsutra', 'mangal', 'sutra', 'tanmaniya', 'thali', 'blackbeads', 'dokiya'],
+            'anklet' => ['anklet', 'anklets', 'payal', 'pajeb', 'zanzar', 'jhanjhar'],
+            'nose' => ['nose', 'nath', 'nosering', 'nose-pin', 'nosepin', 'chuni'],
+            'kundan' => ['kundan', 'polki', 'jadau', 'meenakari', 'antique', 'temple', 'royal', 'heritage', 'filigree'],
+            'diamond' => ['diamond', 'ad', 'cz', 'crystal', 'stone', 'pearl', 'moti', 'ruby', 'emerald', 'gem'],
             'kids' => ['kids', 'kid', 'baby', 'children', 'child'],
-            'mens' => ['mens', 'men', 'man', 'gents', 'gentleman'],
-            'womens' => ['womens', 'women', 'woman', 'ladies', 'lady'],
-            'light' => ['light', 'lightweight', 'daily', 'dailywear', 'simple'],
-            'heavy' => ['heavy', 'bridal', 'wedding', 'party', 'occasion'],
+            'mens' => ['mens', 'men', 'man', 'gents', 'gentleman', 'boys', 'bmw', 'mercedes'],
+            'womens' => ['womens', 'women', 'woman', 'ladies', 'lady', 'bridal', 'dulhan', 'girls'],
+            'light' => ['light', 'lightweight', 'daily', 'dailywear', 'simple', 'minimal', 'modern', 'sleek'],
+            'heavy' => ['heavy', 'bridal', 'wedding', 'shadi', 'party', 'occasion', 'festive', 'traditional', 'grand'],
             'sold' => ['sold', 'soldout', 'unavailable'],
             'available' => ['available', 'instock', 'stock'],
         ];
@@ -364,5 +366,160 @@ if (!function_exists('cj_gallery_filter_catalog')) {
         });
 
         return $scored;
+    }
+}
+
+if (!function_exists('cj_catalogue_ai_search')) {
+    /**
+     * Regex + Synonym + Fuzzy AI Search for the Custom Design Catalogue (`products` table).
+     *
+     * @param list<array<string,mixed>> $items
+     * @return array{items:list<array<string,mixed>>,intents:list<string>,tokens:list<string>}
+     */
+    function cj_catalogue_ai_search(array $items, string $query, string $categoryFilter = ''): array
+    {
+        $normQ = cj_gallery_normalize($query);
+        $catFilterNorm = mb_strtolower(trim($categoryFilter), 'UTF-8');
+
+        // Pre-filter by category chip if selected
+        if ($catFilterNorm !== '' && $catFilterNorm !== 'all') {
+            $synMap = cj_gallery_synonym_map();
+            $catKeywords = [$catFilterNorm];
+            foreach ($synMap as $key => $words) {
+                if (str_contains($catFilterNorm, $key) || in_array($catFilterNorm, $words, true)) {
+                    $catKeywords = array_merge($catKeywords, $words);
+                }
+            }
+            $catKeywords = array_values(array_unique(array_filter($catKeywords)));
+            $catRegex = '/(?:' . implode('|', array_map(static fn($w) => preg_quote($w, '/'), $catKeywords)) . ')/iu';
+
+            $items = array_values(array_filter($items, static function ($row) use ($catRegex, $catFilterNorm) {
+                $cat = mb_strtolower(trim((string)($row['category'] ?? '')), 'UTF-8');
+                if ($cat !== '' && ($cat === $catFilterNorm || str_contains($cat, $catFilterNorm) || str_contains($catFilterNorm, $cat))) {
+                    return true;
+                }
+                $hay = implode(' ', [
+                    (string)($row['name'] ?? ''),
+                    (string)($row['description'] ?? ''),
+                    (string)($row['category'] ?? ''),
+                    (string)($row['tags'] ?? ''),
+                    (string)($row['ocr_text'] ?? ''),
+                ]);
+                return (bool)preg_match($catRegex, $hay);
+            }));
+        }
+
+        if ($normQ === '') {
+            return ['items' => $items, 'intents' => [], 'tokens' => []];
+        }
+
+        // Strip common conversational filler words ("show me", "looking for", "i want", "best", "designs")
+        $cleanQ = preg_replace('/\b(?:show|me|find|search|looking|for|want|need|buy|get|give|please|some|best|latest|new|nice|good|design|designs|photo|photos|image|images|jewellery|jewelry|piece|pieces|in|of|with|and|or|the|a|an|for)\b/iu', ' ', $normQ) ?? $normQ;
+        $tokens = cj_gallery_tokens($cleanQ);
+        if (empty($tokens)) {
+            $tokens = cj_gallery_tokens($normQ);
+        }
+
+        $synMap = cj_gallery_synonym_map();
+        $intents = [];
+        $expandedGroups = [];
+        foreach ($tokens as $tok) {
+            $group = [$tok];
+            foreach ($synMap as $key => $words) {
+                foreach ($words as $w) {
+                    if ($tok === $w || (mb_strlen($tok, 'UTF-8') >= 4 && cj_gallery_token_close($tok, $w))) {
+                        $group = array_merge($group, $words);
+                        $intents[] = ucfirst(str_replace('_', ' ', $key));
+                        break;
+                    }
+                }
+            }
+            $expandedGroups[$tok] = array_values(array_unique($group));
+        }
+        $intents = array_values(array_unique($intents));
+
+        $scored = [];
+        foreach ($items as $row) {
+            $name = cj_gallery_normalize((string)($row['name'] ?? ''));
+            $cat = cj_gallery_normalize((string)($row['category'] ?? ''));
+            $tags = cj_gallery_normalize((string)($row['tags'] ?? ''));
+            $desc = cj_gallery_normalize((string)($row['description'] ?? ''));
+            $ocr = cj_gallery_normalize((string)($row['ocr_text'] ?? ''));
+            $file = cj_gallery_normalize((string)($row['image_filename'] ?? ''));
+            $hay = trim("$name $cat $tags $desc $ocr $file");
+            $hayTokens = cj_gallery_tokens($hay);
+
+            $score = 0.0;
+            $matchedTokens = 0;
+
+            // Exact full phrase regex boost
+            $phraseRegex = '/' . preg_quote($normQ, '/') . '/iu';
+            if (preg_match($phraseRegex, $name)) {
+                $score += 65;
+            } elseif (preg_match($phraseRegex, $hay)) {
+                $score += 35;
+            }
+
+            foreach ($tokens as $tok) {
+                $group = $expandedGroups[$tok] ?? [$tok];
+                $regex = '/\b(?:' . implode('|', array_map(static fn($w) => preg_quote($w, '/'), $group)) . ')/iu';
+                $hit = false;
+
+                if (preg_match($regex, $name)) {
+                    $score += 32;
+                    $hit = true;
+                } elseif (preg_match($regex, $cat)) {
+                    $score += 28;
+                    $hit = true;
+                } elseif (preg_match($regex, $tags)) {
+                    $score += 22;
+                    $hit = true;
+                } elseif (preg_match($regex, $ocr)) {
+                    $score += 20;
+                    $hit = true;
+                } elseif (preg_match($regex, $desc)) {
+                    $score += 14;
+                    $hit = true;
+                } elseif (str_contains($hay, $tok)) {
+                    $score += 12;
+                    $hit = true;
+                } else {
+                    // Typo-tolerant fuzzy fallback
+                    foreach ($hayTokens as $ht) {
+                        if (cj_gallery_token_close($tok, $ht)) {
+                            $score += 10;
+                            $hit = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($hit) {
+                    $matchedTokens++;
+                }
+            }
+
+            if ($matchedTokens === 0 || $score < 10) {
+                continue;
+            }
+
+            // Bonus when ALL user query tokens matched
+            if ($matchedTokens === count($tokens) && count($tokens) > 1) {
+                $score += 25;
+            }
+
+            $row['_ai_score'] = $score;
+            $scored[] = $row;
+        }
+
+        usort($scored, static function ($a, $b) {
+            $cmp = ($b['_ai_score'] <=> $a['_ai_score']);
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+            return (int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0);
+        });
+
+        return ['items' => $scored, 'intents' => $intents, 'tokens' => $tokens];
     }
 }

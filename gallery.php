@@ -24,6 +24,11 @@ if (!in_array($filter_metal, $allowed_filters, true)) {
     $filter_metal = 'all';
 }
 
+$filter_category = trim((string)($_GET['category'] ?? 'all'));
+if ($filter_category === '') {
+    $filter_category = 'all';
+}
+
 $sort = $_GET['sort'] ?? 'newest';
 $allowed_sorts = ['newest', 'price_asc', 'price_desc', 'name_asc'];
 if (!in_array($sort, $allowed_sorts, true)) {
@@ -161,19 +166,36 @@ $raw_silver = (int)($metal_counts['silver'] ?? 0);
 $raw_925 = (int)($metal_counts['silver_925'] ?? 0);
 $metal_counts['silver'] = $raw_silver + $raw_925;
 
+// Counts for Jewellery Type / Category sidebar filter
+$category_counts = ['all' => $metal_counts['all']];
+$cat_q = $conn->query("SELECT category, COUNT(*) AS c FROM jewellery_items WHERE category IS NOT NULL AND TRIM(category) != '' GROUP BY category ORDER BY c DESC, category ASC");
+if ($cat_q) {
+    while ($cr = $cat_q->fetch_assoc()) {
+        $cname = trim((string)$cr['category']);
+        if ($cname !== '') {
+            $category_counts[$cname] = (int)$cr['c'];
+        }
+    }
+}
+
 $needs_php_search = ($search_q !== '');
 $page_items = [];
 $total_items = 0;
 
 if ($needs_php_search) {
-    $where_sql = '';
+    $whereParts = [];
     if ($filter_metal === 'silver') {
-        $where_sql = " WHERE metal_type IN ('silver', 'silver_925')";
+        $whereParts[] = "metal_type IN ('silver', 'silver_925')";
     } elseif ($filter_metal !== 'all') {
         $filter_metal_safe = $conn->real_escape_string($filter_metal);
-        $where_sql = " WHERE metal_type = '{$filter_metal_safe}'";
+        $whereParts[] = "metal_type = '{$filter_metal_safe}'";
     }
-    $result = $conn->query("SELECT id, name, description, tags, image, weight, metal_type, is_sold_out, use_manual_rates, cached_price FROM jewellery_items" . $where_sql . " ORDER BY id DESC");
+    if ($filter_category !== 'all') {
+        $filter_cat_safe = $conn->real_escape_string($filter_category);
+        $whereParts[] = "category = '{$filter_cat_safe}'";
+    }
+    $where_sql = !empty($whereParts) ? (' WHERE ' . implode(' AND ', $whereParts)) : '';
+    $result = $conn->query("SELECT id, name, description, tags, category, image, weight, metal_type, is_sold_out, use_manual_rates, cached_price FROM jewellery_items" . $where_sql . " ORDER BY id DESC");
     $catalog = [];
     if ($result) {
         while ($row = $result->fetch_assoc()) {
@@ -206,6 +228,11 @@ if ($needs_php_search) {
         $where[] = 'metal_type = ?';
         $types .= 's';
         $params[] = $filter_metal;
+    }
+    if ($filter_category !== 'all') {
+        $where[] = 'category = ?';
+        $types .= 's';
+        $params[] = $filter_category;
     }
     if ($filter_min !== null) {
         $where[] = 'cached_price >= ?';
@@ -406,6 +433,22 @@ $sort_labels = [
                         </div>
                     </section>
 
+                    <?php if (count($category_counts) > 1): ?>
+                    <section class="filter-group reveal">
+                        <h3>Jewellery Type</h3>
+                        <div class="filter-options">
+                            <?php foreach ($category_counts as $cKey => $cQty): ?>
+                                <label class="filter-radio<?= $filter_category === (string)$cKey ? ' is-active' : '' ?>">
+                                    <input type="radio" name="category" value="<?= htmlspecialchars((string)$cKey) ?>" <?= $filter_category === (string)$cKey ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <span class="filter-radio-ui"></span>
+                                    <span class="filter-radio-label"><?= htmlspecialchars($cKey === 'all' ? 'All types' : (string)$cKey) ?></span>
+                                    <span class="filter-count"><?= (int)$cQty ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+                    <?php endif; ?>
+
                     <section class="filter-group reveal reveal-delay-1">
                         <h3>Sort by</h3>
                         <div class="filter-options">
@@ -435,7 +478,7 @@ $sort_labels = [
                         <button type="submit" class="btn filter-apply-btn">Apply price</button>
                     </section>
 
-                    <?php if ($filter_metal !== 'all' || $sort !== 'newest' || $min_price !== null || $max_price !== null || $search_q !== ''): ?>
+                    <?php if ($filter_metal !== 'all' || $filter_category !== 'all' || $sort !== 'newest' || $min_price !== null || $max_price !== null || $search_q !== ''): ?>
                         <a href="gallery" class="filter-clear">Clear all filters</a>
                     <?php endif; ?>
                 </form>

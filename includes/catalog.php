@@ -82,6 +82,169 @@ if (!function_exists('cj_ensure_catalog_schema')) {
             UNIQUE KEY uq_session (session_key),
             KEY idx_last_seen (last_seen_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        cj_ensure_product_types_schema($conn);
+        cj_ensure_catalogue_ocr_schema($conn);
+    }
+}
+
+if (!function_exists('cj_default_product_types')) {
+    /** @return list<string> */
+    function cj_default_product_types(): array
+    {
+        return [
+            'Ring',
+            'Necklace Set',
+            'Mangalsutra',
+            'Tanmaniya',
+            'Pendant Butti Set',
+            'Earrings / Butti',
+            'Gold Chain',
+            'Dokiya',
+            'Bangles / Patala',
+            'Kada',
+            'Bracelet',
+            'Hathpan',
+            'Payal / Anklet',
+            'Bridal Set',
+            'Kundan Set',
+            'Kanchain',
+            'Nose Pin',
+            'Coin / Bar',
+        ];
+    }
+}
+
+if (!function_exists('cj_ensure_product_types_schema')) {
+    function cj_ensure_product_types_schema(mysqli $conn): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $conn->query("CREATE TABLE IF NOT EXISTS product_types (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(80) NOT NULL,
+            slug VARCHAR(96) NOT NULL,
+            sort_order INT NOT NULL DEFAULT 100,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_type_name (name),
+            KEY idx_sort (sort_order, name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $cntQ = $conn->query("SELECT COUNT(*) AS c FROM product_types");
+        $cnt = $cntQ ? (int)($cntQ->fetch_assoc()['c'] ?? 0) : 0;
+        if ($cnt === 0) {
+            $stmt = $conn->prepare("INSERT IGNORE INTO product_types (name, slug, sort_order) VALUES (?, ?, ?)");
+            if ($stmt) {
+                $order = 10;
+                foreach (cj_default_product_types() as $typeName) {
+                    $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $typeName), '-'));
+                    $stmt->bind_param('ssi', $typeName, $slug, $order);
+                    $stmt->execute();
+                    $order += 10;
+                }
+                $stmt->close();
+            }
+        }
+    }
+}
+
+if (!function_exists('cj_get_product_types')) {
+    /** @return list<string> */
+    function cj_get_product_types(mysqli $conn): array
+    {
+        $types = [];
+        try {
+            $res = @$conn->query("SELECT name FROM product_types ORDER BY sort_order ASC, name ASC");
+            if (!$res) {
+                cj_ensure_product_types_schema($conn);
+                $res = @$conn->query("SELECT name FROM product_types ORDER BY sort_order ASC, name ASC");
+            }
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $n = trim((string)($row['name'] ?? ''));
+                    if ($n !== '') {
+                        $types[] = $n;
+                    }
+                }
+            }
+            // Also merge any custom categories already used in jewellery_items
+            $catRes = @$conn->query("SELECT DISTINCT category FROM jewellery_items WHERE category IS NOT NULL AND TRIM(category) != '' ORDER BY category ASC");
+            if ($catRes) {
+                while ($row = $catRes->fetch_assoc()) {
+                    $n = trim((string)$row['category']);
+                    if ($n !== '' && !in_array($n, $types, true)) {
+                        $types[] = $n;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            return cj_default_product_types();
+        }
+        return !empty($types) ? $types : cj_default_product_types();
+    }
+}
+
+if (!function_exists('cj_add_product_type')) {
+    /** @return array{ok:bool,name?:string,error?:string} */
+    function cj_add_product_type(mysqli $conn, string $rawName): array
+    {
+        $name = trim(preg_replace('/\s+/', ' ', strip_tags($rawName)));
+        if ($name === '' || mb_strlen($name, 'UTF-8') < 2) {
+            return ['ok' => false, 'error' => 'Please enter a valid type name (at least 2 characters).'];
+        }
+        if (mb_strlen($name, 'UTF-8') > 64) {
+            $name = mb_substr($name, 0, 64, 'UTF-8');
+        }
+        cj_ensure_product_types_schema($conn);
+        $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+        if ($slug === '') {
+            $slug = 'type-' . substr(md5($name), 0, 8);
+        }
+        $stmt = $conn->prepare("INSERT IGNORE INTO product_types (name, slug, sort_order) VALUES (?, ?, 500)");
+        if (!$stmt) {
+            return ['ok' => false, 'error' => 'Database error: ' . $conn->error];
+        }
+        $stmt->bind_param('ss', $name, $slug);
+        $ok = $stmt->execute();
+        $stmt->close();
+        if (!$ok) {
+            return ['ok' => false, 'error' => 'Could not save product type.'];
+        }
+        return ['ok' => true, 'name' => $name];
+    }
+}
+
+if (!function_exists('cj_ensure_catalogue_ocr_schema')) {
+    function cj_ensure_catalogue_ocr_schema(mysqli $conn): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $check = @$conn->query("SHOW TABLES LIKE 'products'");
+        if (!$check || $check->num_rows === 0) {
+            return;
+        }
+
+        $cols = [
+            'category' => "ADD COLUMN category VARCHAR(80) NOT NULL DEFAULT ''",
+            'tags' => "ADD COLUMN tags TEXT",
+            'ocr_text' => "ADD COLUMN ocr_text TEXT",
+            'ocr_status' => "ADD COLUMN ocr_status TINYINT(1) NOT NULL DEFAULT 0",
+            'created_at' => "ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        ];
+        foreach ($cols as $col => $ddl) {
+            $c = @$conn->query("SHOW COLUMNS FROM products LIKE '" . $conn->real_escape_string($col) . "'");
+            if ($c && $c->num_rows === 0) {
+                @$conn->query("ALTER TABLE products " . $ddl);
+            }
+        }
     }
 }
 

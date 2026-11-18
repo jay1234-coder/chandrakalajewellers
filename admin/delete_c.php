@@ -3,6 +3,7 @@
 
 require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/img-helper.php';
 
 cj_auth_bootstrap($conn);
 cj_require_role(['admin', 'superadmin'], 'admin');
@@ -101,13 +102,20 @@ if (isset($_GET['delete_all'])) {
 }
 
 // --- Fetch all products to display (after potential deletion) ---
-$sql_fetch_all = "SELECT id, name, image_filename FROM products ORDER BY name ASC";
+$hasCatCol = ($conn->query("SHOW COLUMNS FROM products LIKE 'category'")?->num_rows ?? 0) > 0;
+$sql_fetch_all = $hasCatCol
+    ? "SELECT id, name, image_filename, category, ocr_status, created_at FROM products ORDER BY id DESC"
+    : "SELECT id, name, image_filename FROM products ORDER BY id DESC";
 $result_fetch_all = $conn->query($sql_fetch_all);
 
 $products_to_display = [];
+$ocr_pending_count = 0;
 if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
     while ($row = $result_fetch_all->fetch_assoc()) {
         $products_to_display[] = $row;
+        if ($hasCatCol && empty($row['ocr_status'])) {
+            $ocr_pending_count++;
+        }
     }
 }
 
@@ -175,7 +183,10 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
                 <p class="text-xs text-gray-500 mt-0.5"><?php echo count($products_to_display); ?> image<?php echo count($products_to_display) === 1 ? '' : 's'; ?> · tap to manage</p>
             </div>
             <?php if (!empty($products_to_display)): ?>
-                <div class="catalogue-header-actions">
+                <div class="catalogue-header-actions flex flex-wrap gap-2">
+                    <button type="button" id="delCatOcrBtn" onclick="runDeletePageOcr(false)" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm shadow-sm cursor-pointer">
+                        <i class="fas fa-wand-magic-sparkles mr-1"></i> Auto-OCR Scan (<?= (int)$ocr_pending_count ?> Pending)
+                    </button>
                     <a href="?delete_all=1&csrf_token=<?php echo urlencode($_SESSION['csrf_token']); ?>"
                        onclick="return confirm('Are you sure you want to delete ALL catalogue photos and database entries? This action is permanent and cannot be undone!');"
                        class="block w-full sm:w-auto text-center bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2.5 px-5 rounded-xl transition-all duration-150 text-sm border border-red-100 shadow-sm active:scale-[0.98]">
@@ -184,6 +195,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
                 </div>
             <?php endif; ?>
         </div>
+        <div id="delCatOcrStatus" class="hidden mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium"></div>
 
         <?php if (empty($products_to_display)): ?>
             <div class="admin-card bg-white rounded-xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center text-gray-500 font-medium">
@@ -194,16 +206,22 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
         <?php else: ?>
             <div class="catalogue-grid-admin">
                 <?php foreach ($products_to_display as $i => $product): ?>
-                    <div class="catalogue-card-admin bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" style="animation-delay: <?php echo min($i * 0.03, 0.45); ?>s">
+                    <div class="catalogue-card-admin bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" data-cat-card-id="<?php echo (int)$product['id']; ?>" style="animation-delay: <?php echo min($i * 0.03, 0.45); ?>s">
                         <img
-                            src="<?php echo htmlspecialchars($imageFolderPath . $product['image_filename']); ?>"
+                            src="<?php echo htmlspecialchars(cj_img_url($product['image_filename'], 400, 'catalogue')); ?>"
                             alt="<?php echo htmlspecialchars($product['name']); ?>"
                             class="product-image-thumbnail"
                             loading="lazy"
                             onerror="this.onerror=null;this.src='https://placehold.co/400x180/E0E0E0/888888?text=Image+Not+Found';"
                         >
                         <div class="p-3 sm:p-4 flex flex-col justify-between flex-grow gap-2">
-                            <p class="text-gray-800 font-semibold text-xs sm:text-sm text-center line-clamp-2 leading-snug"><?php echo htmlspecialchars($product['name']); ?></p>
+                            <?php if (!empty($product['category'])): ?>
+                                <span class="self-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200" data-cat-pill><?php echo htmlspecialchars($product['category']); ?></span>
+                            <?php endif; ?>
+                            <p class="text-gray-800 font-semibold text-xs sm:text-sm text-center line-clamp-2 leading-snug" data-cat-title><?php echo htmlspecialchars($product['name']); ?></p>
+                            <?php if (!empty($product['created_at']) && function_exists('cj_format_ist')): ?>
+                                <p class="text-[10px] text-gray-400 text-center"><?php echo htmlspecialchars(cj_format_ist($product['created_at'], 'd M Y, h:i A')); ?></p>
+                            <?php endif; ?>
                             <a href="?delete_id=<?php echo (int)$product['id']; ?>&csrf_token=<?php echo urlencode($_SESSION['csrf_token']); ?>"
                                onclick="return confirm('Are you sure you want to delete &quot;<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>&quot;? This action cannot be undone.');"
                                class="block w-full bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2.5 px-3 rounded-xl text-center text-xs transition-colors duration-150 border border-red-100 active:scale-[0.97]">
@@ -215,6 +233,57 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
             </div>
         <?php endif; ?>
     </main>
+
+    <script>
+    (function () {
+        var csrf = <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>;
+        var running = false;
+        window.runDeletePageOcr = async function (resetAll) {
+            if (running) return;
+            running = true;
+            var btn = document.getElementById('delCatOcrBtn');
+            var status = document.getElementById('delCatOcrStatus');
+            if (btn) btn.disabled = true;
+            if (status) { status.classList.remove('hidden'); status.textContent = 'Starting Background OCR Engine...'; }
+            var first = true;
+            try {
+                while (true) {
+                    var fd = new FormData();
+                    fd.append('csrf_token', csrf);
+                    fd.append('batch', '4');
+                    if (resetAll && first) fd.append('reset_all', '1');
+                    first = false;
+                    var res = await fetch('/api/catalogue-ocr-worker.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+                    var data = await res.json();
+                    if (!data || !data.ok) {
+                        if (status) status.textContent = 'OCR error: ' + ((data && data.error) || 'unknown');
+                        break;
+                    }
+                    (data.updated || []).forEach(function (u) {
+                        var card = document.querySelector('[data-cat-card-id="' + u.id + '"]');
+                        if (!card) return;
+                        var t = card.querySelector('[data-cat-title]');
+                        if (t) t.textContent = u.name;
+                    });
+                    if (btn) btn.innerHTML = '<i class="fas fa-wand-magic-sparkles mr-1"></i> Auto-OCR Scan (' + (data.pending || 0) + ' Pending)';
+                    if (status) status.textContent = data.pending > 0
+                        ? ('Background OCR running: ' + data.processed + ' / ' + data.total + ' designs enriched...')
+                        : ('✓ All ' + data.total + ' catalogue designs enriched with fancy SEO names & categories!');
+                    if (!data.pending || data.updated_count === 0) break;
+                    await new Promise(function (r) { setTimeout(r, 300); });
+                }
+            } catch (e) {
+                if (status) status.textContent = 'OCR paused due to network error.';
+            } finally {
+                running = false;
+                if (btn) btn.disabled = false;
+            }
+        };
+        <?php if ($ocr_pending_count > 0): ?>
+        setTimeout(function () { window.runDeletePageOcr(false); }, 1200);
+        <?php endif; ?>
+    })();
+    </script>
 
     <footer class="bg-gray-900 text-gray-400 py-5 border-t border-gray-800 text-center text-xs mt-auto" style="padding-bottom: max(1.25rem, env(safe-area-inset-bottom));">
         <p>&copy; <?php echo date('Y'); ?> ChandraKala Jewellers. All rights reserved.</p>
