@@ -4,9 +4,9 @@
  * GET  -> list all selectable product types
  * POST -> add a new product type dynamically via the "+" button
  */
-require_once dirname(__DIR__) . '/config/db.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/catalog.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/catalog.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');

@@ -4,10 +4,10 @@
  * Accepts an uploaded image file, base64 data URI, or filename/URL (+ optional client OCR text)
  * and returns automated fancy SEO name, 150-char description, selectable type, metal, purity, stone, weight & tags.
  */
-require_once dirname(__DIR__) . '/config/db.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/ai-vision.php';
-require_once dirname(__DIR__) . '/includes/img-helper.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/ai-vision.php';
+require_once dirname(__DIR__, 2) . '/includes/img-helper.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
@@ -45,7 +45,7 @@ if (!empty($_FILES['image']['tmp_name']) && (int)$_FILES['image']['error'] === U
 } elseif (!empty($_POST['image_filename'])) {
     $fn = basename((string)$_POST['image_filename']);
     $folder = ((string)($_POST['folder'] ?? 'uploads')) === 'catalogue' ? 'catalogue' : 'uploads';
-    $localPath = dirname(__DIR__) . '/' . $folder . '/' . $fn;
+    $localPath = dirname(__DIR__, 2) . '/' . $folder . '/' . $fn;
     if (is_file($localPath)) {
         $imageSource = $localPath;
     } else {

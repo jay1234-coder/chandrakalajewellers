@@ -204,15 +204,17 @@ if (isset($adminRedirects[$path])) {
     exit;
 }
 
-// 4. API endpoints inside api/
+// 4. API endpoints inside api/ or includes/api/ (keeps Vercel serverless function count under Hobby 12-function cap)
 if (strpos($path, 'api/') === 0) {
     $sub = substr($path, 4);
-    $target = __DIR__ . '/' . $sub;
-    if (is_file($target) && realpath($target) !== __FILE__) {
-        cj_dispatch_script($target);
-    }
-    if (is_file($target . '.php')) {
-        cj_dispatch_script($target . '.php');
+    foreach ([__DIR__ . '/', $rootDir . '/includes/api/'] as $apiBase) {
+        $target = $apiBase . $sub;
+        if (is_file($target) && realpath($target) !== __FILE__) {
+            cj_dispatch_script($target);
+        }
+        if (is_file($target . '.php')) {
+            cj_dispatch_script($target . '.php');
+        }
     }
 }
 

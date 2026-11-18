@@ -4,9 +4,9 @@
  * Bypasses Vercel's 4.5MB serverless body limit so 50MB–100MB HD jewellery reels
  * upload straight from the browser to Cloudinary with real-time progress bar.
  */
-require_once dirname(__DIR__) . '/config/db.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/reels.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/reels.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
@@ -121,8 +121,8 @@ if ($action === 'save') {
     $stmt->close();
 
     // Ping IndexNow for /reels freshness
-    if (file_exists(dirname(__DIR__) . '/includes/indexnow-helper.php')) {
-        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+    if (file_exists(dirname(__DIR__, 2) . '/includes/indexnow-helper.php')) {
+        require_once dirname(__DIR__, 2) . '/includes/indexnow-helper.php';
         if (function_exists('cj_ping_indexnow')) {
             @cj_ping_indexnow(['https://chandrakalajewellers.in/reels', 'https://chandrakalajewellers.in/showcase?v=' . $newId]);
         }

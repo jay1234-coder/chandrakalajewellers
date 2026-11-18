@@ -3,9 +3,9 @@
  * Public Video Reels Engagement & Impressions Tracking API.
  * Handles: impression, view, click, whatsapp, call, share, like (toggle), comment/review, order/booking.
  */
-require_once dirname(__DIR__) . '/config/db.php';
-require_once dirname(__DIR__) . '/includes/reels.php';
-require_once dirname(__DIR__) . '/includes/customers.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/reels.php';
+require_once dirname(__DIR__, 2) . '/includes/customers.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');

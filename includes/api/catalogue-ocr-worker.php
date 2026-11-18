@@ -4,10 +4,10 @@
  * Scans unnamed/pending catalogue photos in small fast batches, extracts OCR & visual cues,
  * and saves SEO-rich fancy names, descriptions, categories & tags automatically.
  */
-require_once dirname(__DIR__) . '/config/db.php';
-require_once dirname(__DIR__) . '/includes/auth.php';
-require_once dirname(__DIR__) . '/includes/ai-vision.php';
-require_once dirname(__DIR__) . '/includes/img-helper.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/ai-vision.php';
+require_once dirname(__DIR__, 2) . '/includes/img-helper.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
@@ -85,7 +85,7 @@ $updStmt = $conn->prepare("UPDATE products SET name = ?, description = ?, catego
 foreach ($rows as $row) {
     $id = (int)$row['id'];
     $fn = basename((string)$row['image_filename']);
-    $local = dirname(__DIR__) . '/catalogue/' . $fn;
+    $local = dirname(__DIR__, 2) . '/catalogue/' . $fn;
     // Prefer local file if available (super fast), else fast 320px Cloudinary thumbnail
     $imgSrc = is_file($local) ? $local : cj_img_url($fn, 320, 'catalogue');
 

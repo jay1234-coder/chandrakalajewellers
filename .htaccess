@@ -38,6 +38,11 @@ RewriteRule ^robots\.txt$ robots.php [L]
 RewriteRule ^llms\.txt$ llms.php [L]
 RewriteRule ^llms-full\.txt$ llms.php?full=1 [L]
 
+# Dispatch /api/<endpoint> to includes/api/ when not present in api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/includes/api/$1 -f
+RewriteRule ^api/(.+)$ includes/api/$1 [L]
+
 # Redirect browser to remove .php extension if present in the URL bar (GET requests only)
 # Exclude admin directory and utility scripts so admin routing is never broken
 RewriteCond %{REQUEST_METHOD} GET
