@@ -39,13 +39,15 @@ $isLiked = $reel ? cj_reel_is_liked_by_visitor($conn, (int)$reel['id'], $visitor
 $reelComments = $reel ? cj_get_reel_comments($conn, (int)$reel['id'], 50) : [];
 $custSession = function_exists('cj_customer_session') ? cj_customer_session() : null;
 
-// Live Gold & Silver rates (matches index1.php standard + manual rates)
+// Live Gold & Silver rates (all stored per 1 gram, matching index1.php)
 $rate = cj_get_standard_rates($conn);
-$manualRates = cj_get_manual_rates($conn);
-$rateGold24 = (float)($manualRates['gold_24k_rate'] ?? $rate['gold_rate'] ?? 0);
-$rateGold22 = (float)($manualRates['gold_22k_rate'] ?? $rate['gold_rate'] ?? 0);
-$rateSilver = (float)($manualRates['silver_rate'] ?? $rate['silver_rate'] ?? 0);
-$rateUpdatedAt = $manualRates['updated_at'] ?? $rate['updated_at'] ?? null;
+$showGold = cj_setting('show_gold_rate', '1', $conn) === '1';
+$showSilver = cj_setting('show_silver_rate', '1', $conn) === '1';
+$showSilver925 = cj_setting('show_silver_925_rate', '1', $conn) === '1';
+$rateGold1g = (float)($rate['gold_rate'] ?? 0);
+$rateSilver1g = (float)($rate['silver_rate'] ?? 0);
+$rateSilver925_1g = (float)($rate['silver_925_rate'] ?? 0);
+$rateUpdatedAt = $rate['updated_at'] ?? null;
 $rateUpdatedIst = !empty($rateUpdatedAt) ? cj_format_ist($rateUpdatedAt, 'd M Y, h:i A') : cj_format_ist(null, 'd M Y, h:i A');
 
 // Live IST Showroom Open Status (10:00 AM - 8:00 PM IST, Mon-Sun)
@@ -511,25 +513,31 @@ $seo = cj_merge_seo([
                 </div>
             </section>
 
-            <!-- 2. Today's Live Gold & Silver Rates (Builds Instant Buying Confidence) -->
+            <!-- 2. Today's Live Gold & Silver Rates (Per 1 Gram — Matches Homepage) -->
             <section class="cj-sc-card">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                     <h2 style="font-family:'Playfair Display',serif;font-size:17px;margin:0;">Today's Live Showroom Rates</h2>
-                    <span style="font-size:11px;color:var(--text-secondary);">Updated: <?= htmlspecialchars($rateUpdatedIst) ?> IST</span>
+                    <span style="font-size:11px;color:var(--text-secondary);">Updated: <?= htmlspecialchars($rateUpdatedIst) ?></span>
                 </div>
                 <div class="cj-sc-rates-row">
+                    <?php if ($showGold): ?>
                     <div class="cj-sc-rate-box">
-                        <small>24K Gold (10g)</small>
-                        <strong><?= $rateGold24 > 0 ? ('₹' . number_format(round($rateGold24))) : 'Call' ?></strong>
+                        <small>Gold (per 1g)</small>
+                        <strong><?= $rateGold1g > 0 ? ('₹' . number_format($rateGold1g, 2) . '/g') : 'Call' ?></strong>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($showSilver): ?>
                     <div class="cj-sc-rate-box">
-                        <small>22K 916 (10g)</small>
-                        <strong><?= $rateGold22 > 0 ? ('₹' . number_format(round($rateGold22))) : 'Call' ?></strong>
+                        <small>Silver (per 1g)</small>
+                        <strong><?= $rateSilver1g > 0 ? ('₹' . number_format($rateSilver1g, 2) . '/g') : 'Call' ?></strong>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($showSilver925): ?>
                     <div class="cj-sc-rate-box">
-                        <small>Silver (1kg)</small>
-                        <strong><?= $rateSilver > 0 ? ('₹' . number_format(round($rateSilver))) : 'Call' ?></strong>
+                        <small>925 Silver (per 1g)</small>
+                        <strong><?= $rateSilver925_1g > 0 ? ('₹' . number_format($rateSilver925_1g, 2) . '/g') : 'Call' ?></strong>
                     </div>
+                    <?php endif; ?>
                 </div>
                 <div class="cj-sc-trust-grid" style="margin-top:14px;">
                     <div class="cj-sc-trust-item"><span>🏅</span>BIS 916 HUID</div>

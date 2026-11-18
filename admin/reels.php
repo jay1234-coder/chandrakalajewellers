@@ -255,7 +255,7 @@ foreach ($reelOrders as $or) {
                 <p class="text-xs text-gray-500">Direct high-speed Cloudinary video upload (supports MP4, MOV, WebM up to 100 MB each). No title is shown on the storefront video wall — pure moving jewellery!</p>
             </div>
             <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-                IST Time: <?= htmlspecialchars(cj_format_ist(null, 'd M Y, h:i A')) ?> IST
+                IST Time: <?= htmlspecialchars(cj_format_ist(null, 'd M Y, h:i A')) ?>
             </span>
         </div>
 
@@ -317,7 +317,7 @@ foreach ($reelOrders as $or) {
                 <div class="p-3.5 flex-1 flex flex-col justify-between gap-3">
                     <div>
                         <div class="flex items-center justify-between gap-2 text-[11px] text-gray-500 mb-2">
-                            <span title="Upload IST Date & Time">🕒 <?= htmlspecialchars($istTime) ?> IST</span>
+                            <span title="Upload IST Date & Time">🕒 <?= htmlspecialchars($istTime) ?></span>
                             <a href="/showcase?v=<?= $rid ?>" target="_blank" rel="noopener" class="text-amber-600 font-bold hover:underline">Open &nearr;</a>
                         </div>
 
@@ -422,7 +422,7 @@ foreach ($reelOrders as $or) {
                                 <?php endif; ?>
                                 <div class="text-gray-600"><?= htmlspecialchars((string)($o['message'] ?: '—')) ?></div>
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-gray-500"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '', 'd M Y, h:i A')) ?> IST</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-gray-500"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '', 'd M Y, h:i A')) ?></td>
                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <form method="post" class="inline-flex items-center gap-1.5">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -461,7 +461,7 @@ foreach ($reelOrders as $or) {
                             <span class="font-bold text-gray-900"><?= htmlspecialchars((string)$cm['customer_name']) ?></span>
                             <?php if (!empty($cm['customer_phone'])): ?><span class="text-gray-500">(<?= htmlspecialchars((string)$cm['customer_phone']) ?>)</span><?php endif; ?>
                             <?php if ((int)$cm['rating'] > 0): ?><span class="text-amber-500"><?= str_repeat('★', (int)$cm['rating']) ?></span><?php endif; ?>
-                            <span class="text-gray-400">· <?= htmlspecialchars(cj_format_ist($cm['created_at'] ?? '', 'd M Y, h:i A')) ?> IST</span>
+                            <span class="text-gray-400">· <?= htmlspecialchars(cj_format_ist($cm['created_at'] ?? '', 'd M Y, h:i A')) ?></span>
                         </div>
                         <p class="text-xs text-gray-700 mt-1"><?= nl2br(htmlspecialchars((string)$cm['comment'])) ?></p>
                     </div>

@@ -199,15 +199,15 @@ $rate = $rate_query->fetch_assoc() ?? [];
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Gold Rate (10g)</label>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Gold Rate (per 1g)</label>
                         <input type="number" name="gold_rate" value="<?= $rate['gold_rate'] ?? '' ?>" class="p-3 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all text-sm" step="0.01" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Silver Rate (10g)</label>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Silver Rate (per 1g)</label>
                         <input type="number" name="silver_rate" value="<?= $rate['silver_rate'] ?? '' ?>" class="p-3 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all text-sm" step="0.01" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Silver 92.5 (10g)</label>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">925 Silver Rate (per 1g)</label>
                         <input type="number" name="silver_925_rate" value="<?= $rate['silver_925_rate'] ?? '' ?>" class="p-3 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all text-sm" step="0.01" required>
                     </div>
                     <div>
