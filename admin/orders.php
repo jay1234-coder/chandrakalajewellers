@@ -120,7 +120,7 @@ if ($cq) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>Orders — ChandraKala Jewellers</title>
     <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
@@ -129,17 +129,14 @@ if ($cq) {
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
-<?php if (empty($embed)): ?>
-<header class="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 flex justify-between items-center">
-    <div>
-        <h1 class="text-lg font-bold font-serif">Orders</h1>
-        <p class="text-xs text-amber-700 font-semibold uppercase tracking-wider">Reservations &amp; stock lock</p>
-    </div>
-    <a href="/admin/index.php" class="text-sm font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">&larr; Admin</a>
-</header>
-<?php endif; ?>
-
-<main class="max-w-5xl mx-auto p-4 sm:p-6">
+<?php
+$cjShellPage     = 'orders';
+$cjShellTitle    = 'Orders & Reservations';
+$cjShellSubtitle = 'Confirm sales, manage sold-out website status & refunds';
+$cjShellEmbed    = !empty($embed);
+$cjShellMaxWidth = '1120px';
+include dirname(__DIR__) . '/includes/admin-shell-start.php';
+?>
     <?php if (!empty($_SESSION['success_message'])): ?>
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl mb-4 text-sm"><?= htmlspecialchars($_SESSION['success_message']) ?></div>
         <?php unset($_SESSION['success_message']); ?>
@@ -242,7 +239,7 @@ if ($cq) {
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
-</main>
+<?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 
 <!-- Confirm Sale: Ask Admin Whether to Mark Sold Out on Website -->
 <div id="cjConfirmSaleModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);">

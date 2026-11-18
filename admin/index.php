@@ -30,6 +30,33 @@ $cj_admin_embed = (!empty($_GET['embed']) || !empty($_POST['embed'])
     || (!empty($_SERVER['HTTP_REFERER']) && strpos((string)$_SERVER['HTTP_REFERER'], 'embed=1') !== false));
 $cj_admin_home = $cj_admin_embed ? '/admin/index.php?embed=1' : '/admin/index.php';
 
+$cj_allowed_views = ['overview', 'rates', 'add-item', 'inventory', 'follow-us', 'analytics'];
+$cj_raw_view = strtolower(trim((string)($_GET['view'] ?? $_POST['view'] ?? '')));
+if ($cj_raw_view === '') {
+    if (isset($_GET['va_page'])) {
+        $cj_raw_view = 'analytics';
+    } elseif (isset($_GET['page'])) {
+        $cj_raw_view = 'inventory';
+    } else {
+        $cj_raw_view = 'overview';
+    }
+}
+$adminView = in_array($cj_raw_view, $cj_allowed_views, true) ? $cj_raw_view : 'overview';
+
+$cj_view_url = static function (string $view, array $extra = []) use ($cj_admin_embed): string {
+    $params = [];
+    if ($cj_admin_embed) {
+        $params['embed'] = '1';
+    }
+    $params['view'] = $view;
+    foreach ($extra as $k => $v) {
+        if ($v !== null && $v !== '') {
+            $params[$k] = $v;
+        }
+    }
+    return '/admin/index.php?' . http_build_query($params);
+};
+
 // Logout first — always clear remember cookie/token even if PHP session already expired.
 if (isset($_GET['logout'])) {
     if (!empty($_SESSION['loggedin'])) {
@@ -185,7 +212,7 @@ cj_ensure_rates_schema($conn);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (($_POST['rate_action'] ?? '') === 'update_rates'))) {
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try updating rates again.';
-        header('Location: ' . $cj_admin_home . '#ratesSection');
+        header('Location: ' . $cj_view_url('rates') . '#ratesSection');
         exit();
     }
 
@@ -227,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (
     } catch (Throwable $e) {
         $conn->rollback();
         $_SESSION['error_message'] = $e->getMessage();
-        header('Location: ' . $cj_admin_home . '#ratesSection');
+        header('Location: ' . $cj_view_url('rates') . '#ratesSection');
         exit();
     }
 
@@ -237,14 +264,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (
     cj_notify_event($conn, 'rates_updated', $_SESSION['username'] ?? 'admin', null, false);
     cj_log_activity($conn, 'update_rates', "Gold {$gold}, Silver {$silver}, 925 {$silver925}, Copper {$copper}, making {$making}%");
     cj_auto_ping_indexnow();
-    header('Location: ' . $cj_admin_home . '#ratesSection');
+    header('Location: ' . $cj_view_url('rates') . '#ratesSection');
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates']) || (($_POST['rate_action'] ?? '') === 'update_manual_rates'))) {
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try updating rates again.';
-        header('Location: ' . $cj_admin_home . '#ratesSection');
+        header('Location: ' . $cj_view_url('rates') . '#ratesSection');
         exit();
     }
 
@@ -277,7 +304,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates'
     } catch (Throwable $e) {
         $conn->rollback();
         $_SESSION['error_message'] = $e->getMessage();
-        header('Location: ' . $cj_admin_home . '#ratesSection');
+        header('Location: ' . $cj_view_url('rates') . '#ratesSection');
         exit();
     }
 
@@ -285,14 +312,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_manual_rates'
     require_once dirname(__DIR__) . '/includes/push.php';
     cj_notify_event($conn, 'rates_updated', $_SESSION['username'] ?? 'admin', 'Manual override rates were updated. Check the shop for latest prices.', false);
     cj_log_activity($conn, 'update_manual_rates', "Gold {$manual_gold}, Silver {$manual_silver}, 925 {$manual_silver925}, Copper {$manual_copper}");
-    header('Location: ' . $cj_admin_home . '#ratesSection');
+    header('Location: ' . $cj_view_url('rates') . '#ratesSection');
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rate_formula']) || (($_POST['rate_action'] ?? '') === 'update_rate_formula'))) {
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = 'Security check failed. Please refresh the page and try saving the rate formula again.';
-        header('Location: ' . $cj_admin_home . '#rateFormulaSection');
+        header('Location: ' . $cj_view_url('rates') . '#rateFormulaSection');
         exit();
     }
 
@@ -326,7 +353,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rate_formula'
 
     $_SESSION['success_message'] = 'Rate counting formula saved. Shop prices now use the counted rate.';
     cj_log_activity($conn, 'update_rate_formula', cj_rate_formula_label($formula['gold'] ?? []) . ' (gold)');
-    header('Location: ' . $cj_admin_home . '#rateFormulaSection');
+    header('Location: ' . $cj_view_url('rates') . '#rateFormulaSection');
     exit();
 }
 
@@ -351,7 +378,7 @@ if (isset($_POST['add_item'])) {
     // Validate CSRF token
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
-        header('Location: ' . $cj_admin_home);
+        header('Location: ' . $cj_view_url('add-item'));
         exit();
     }
     try {
@@ -405,7 +432,7 @@ if (isset($_POST['add_item'])) {
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not add item: " . $e->getMessage();
     }
-    header('Location: ' . $cj_admin_home);
+    header('Location: ' . $cj_view_url('inventory'));
     exit();
 }
 
@@ -414,7 +441,7 @@ if (isset($_POST['update_item'])) {
     // Validate CSRF token
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
-        header('Location: ' . $cj_admin_home);
+        header('Location: ' . $cj_view_url('inventory'));
         exit();
     }
     try {
@@ -489,7 +516,7 @@ if (isset($_POST['update_item'])) {
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not update item: " . $e->getMessage();
     }
-    header('Location: ' . $cj_admin_home);
+    header('Location: ' . $cj_view_url('inventory'));
     exit();
 }
 
@@ -499,7 +526,7 @@ if (isset($_GET['delete'])) {
     // Validate CSRF token
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
-        header('Location: ' . $cj_admin_home);
+        header('Location: ' . $cj_view_url('inventory'));
         exit();
     }
     try {
@@ -520,7 +547,7 @@ if (isset($_GET['delete'])) {
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not delete item: " . $e->getMessage();
     }
-    header('Location: ' . $cj_admin_home);
+    header('Location: ' . $cj_view_url('inventory'));
     exit();
 }
 
@@ -529,7 +556,7 @@ if (isset($_GET['toggle_fav'])) {
     // Validate CSRF token
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
-        header('Location: ' . $cj_admin_home);
+        header('Location: ' . $cj_view_url('inventory'));
         exit();
     }
     try {
@@ -559,16 +586,14 @@ if (isset($_GET['toggle_fav'])) {
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not toggle favourite: " . $e->getMessage();
     }
-    header('Location: ' . $cj_admin_home);
+    $favRedirect = $cj_view_url('inventory', isset($_GET['page']) ? ['page' => intval($_GET['page'])] : []);
+    header('Location: ' . $favRedirect);
     exit();
 }
 
 // Handle Toggle Sold Out
 if (isset($_GET['toggle_sold'])) {
-    $redirectUrl = $cj_admin_home;
-    if (isset($_GET['page'])) {
-        $redirectUrl .= (str_contains($redirectUrl, '?') ? '&' : '?') . 'page=' . intval($_GET['page']);
-    }
+    $redirectUrl = $cj_view_url('inventory', isset($_GET['page']) ? ['page' => intval($_GET['page'])] : []);
     
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
         $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
@@ -713,7 +738,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_image
     if (!empty($errors)) {
         $_SESSION['error_message'] = "Some errors occurred during catalogue upload: " . implode("<br>", $errors);
     }
-    header('Location: ' . $cj_admin_home);
+    header('Location: ' . $cj_view_url('add-item'));
     exit();
 }
 
@@ -798,6 +823,29 @@ $ocrChk = @$conn->query("SELECT SUM(CASE WHEN ocr_status = 0 THEN 1 ELSE 0 END) 
 if ($ocrChk && ($ocrRow = $ocrChk->fetch_assoc())) {
     $cat_ocr_pending = (int)($ocrRow['p'] ?? 0);
 }
+$active_reels_count = 0;
+$reelsChk = @$conn->query("SELECT COUNT(*) AS c FROM jewellery_reels WHERE is_active = 1");
+if ($reelsChk && ($reelsRow = $reelsChk->fetch_assoc())) {
+    $active_reels_count = (int)($reelsRow['c'] ?? 0);
+}
+$pending_orders_overview = 0;
+$pendOrdChk = @$conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'");
+if ($pendOrdChk && ($pendOrdRow = $pendOrdChk->fetch_assoc())) {
+    $pending_orders_overview = (int)($pendOrdRow['c'] ?? 0);
+}
+
+$cjShellViewMeta = [
+    'overview'  => ['Store Overview', 'Live inventory, showroom rates, and quick workspace tools'],
+    'rates'     => ['Live Rates & Formula', 'Update daily gold, silver, copper rates & counting formulas'],
+    'add-item'  => ['Add Jewellery & OCR', 'Upload new stock pieces with AI OCR & bulk catalogue designs'],
+    'inventory' => ['Stock Inventory', 'Search, edit, toggle sold-out status, and manage favourites'],
+    'follow-us' => ['Follow Us & QR Codes', 'Showroom Google review link, Instagram, and printable QR codes'],
+    'analytics' => ['Visitor Analytics', 'Live visitor map, session duration, and popular pages'],
+];
+$cjShellPage     = $adminView;
+$cjShellTitle    = $cjShellViewMeta[$adminView][0] ?? 'Store Overview';
+$cjShellSubtitle = $cjShellViewMeta[$adminView][1] ?? 'ChandraKala Jewellers Store Studio';
+$cjShellEmbed    = !empty($cj_admin_embed);
 ?>
 
 <?php
@@ -813,7 +861,7 @@ if ($just_logged_in) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <?php include dirname(__DIR__) . '/includes/gtm-head.php'; ?>
-    <title>Store Admin — ChandraKala Jewellers</title>
+    <title><?= htmlspecialchars($cjShellTitle) ?> — ChandraKala Admin</title>
     <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -898,44 +946,9 @@ if ($just_logged_in) {
     </script>
     <?php endif; ?>
 
-    <!-- Header Section -->
-    <?php if (empty($cj_admin_embed)): ?>
-    <header class="admin-header bg-white shadow-sm border-b border-gray-100 py-4 px-4 sm:px-6 md:px-12 flex justify-between items-center sticky top-0 z-40">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src="/images/logo.png" alt="Jewellery Store Logo" class="h-10 w-auto shrink-0">
-            <div class="min-w-0">
-                <h1 class="text-base sm:text-xl font-bold text-gray-900 font-serif leading-tight truncate">ChandraKala Jewellers</h1>
-                <p class="text-[10px] sm:text-xs text-amber-600 font-medium tracking-wide">ADMIN PORTAL</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-            <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-            <?php
-            $cjPendingOrders = 0;
-            if ($poq = @$conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'")) {
-                $cjPendingOrders = (int)(($poq->fetch_assoc()['c']) ?? 0);
-            }
-            ?>
-            <a href="/admin/reels.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl">Reels</a>
-            <a href="/admin/orders.php" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">
-                Orders<?php if ($cjPendingOrders > 0): ?><span class="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold"><?= $cjPendingOrders ?></span><?php endif; ?>
-            </a>
-            <a href="/admin/customers.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
-            <a href="/admin/notifications.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
-            <span class="text-sm font-semibold text-gray-500 hidden md:inline">Welcome, <?= htmlspecialchars($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Admin') ?></span>
-            <a href="/admin/index.php?logout" class="logout-btn bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-4 sm:px-5 rounded-xl transition-colors duration-150 text-sm border border-red-100">Log Out</a>
-        </div>
-    </header>
-    <?php else: ?>
-    <div class="bg-amber-50 border-b border-amber-100 px-4 py-2 text-xs text-amber-800 font-semibold sticky top-0 z-40 flex items-center justify-between gap-2">
-        <span>Store Admin inside Control Center · <?= htmlspecialchars($_SESSION['display_name'] ?? 'Admin') ?>
-        (<?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?>)</span>
-        <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-    </div>
-    <?php endif; ?>
+    <!-- Unified Admin App Shell -->
+    <?php include dirname(__DIR__) . '/includes/admin-shell-start.php'; ?>
 
-    <main class="admin-main w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-        
         <!-- Alerts Display -->
         <?php
         if (isset($_SESSION['success_message'])) {
@@ -954,20 +967,7 @@ if ($just_logged_in) {
         }
         ?>
 
-        <nav class="admin-mobile-jump" aria-label="Quick sections">
-            <a href="/admin/reels.php">🎬 Reels</a>
-            <a href="/admin/orders.php">Orders</a>
-            <a href="/admin/customers.php">Customers</a>
-            <a href="#ratesSection">Rates</a>
-            <a href="#rateFormulaSection">Count rates</a>
-            <a href="#addItemSection">Add item</a>
-            <a href="#stockList">Stock</a>
-            <a href="#followUsSection">Follow Us</a>
-            <a href="/admin/notifications.php">Notify</a>
-            <a href="#visitorAnalytics">Visitors</a>
-            <a href="/admin/delete_c.php">Catalogue</a>
-        </nav>
-
+        <?php if ($adminView === 'overview'): ?>
         <?php
         require_once dirname(__DIR__) . '/includes/pwa-schema.php';
         cj_ensure_pwa_schema($conn);
@@ -1003,63 +1003,194 @@ if ($just_logged_in) {
         </section>
         <?php endif; ?>
 
-        <!-- KPI Dashboard (near rates) -->
-        <div class="admin-kpi-grid grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <a href="#stockList" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm block hover:border-emerald-200 hover:shadow-md transition-all duration-200 group">
-                <div class="flex items-center gap-4">
-                    <div class="icon-box w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-check-circle"></i></div>
+        <!-- KPI Overview Grid -->
+        <div class="admin-kpi-grid grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+            <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-emerald-200 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-check-circle"></i></div>
                     <div class="min-w-0">
-                        <p class="stat-label text-xs font-semibold text-gray-400 uppercase tracking-wider">Available Stock</p>
-                        <p class="stat-value text-2xl font-bold text-gray-900"><?= (int)$available_count ?></p>
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Available Stock</p>
+                        <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$available_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Pieces customers can still buy. Use this before updating rates so you price live inventory only.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Live pieces available for customers to order now.</p>
             </a>
-            <a href="#stockList" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm block hover:border-rose-200 hover:shadow-md transition-all duration-200 group">
-                <div class="flex items-center gap-4">
-                    <div class="icon-box w-12 h-12 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-ban"></i></div>
+
+            <a href="/admin/orders.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border <?= $pending_orders_overview > 0 ? 'border-rose-200' : 'border-gray-100' ?> shadow-sm block hover:border-amber-200 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl <?= $pending_orders_overview > 0 ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600' ?> flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-shopping-bag"></i></div>
                     <div class="min-w-0">
-                        <p class="stat-label text-xs font-semibold text-gray-400 uppercase tracking-wider">Sold Out</p>
-                        <p class="stat-value text-2xl font-bold text-gray-900"><?= (int)$sold_out_count ?></p>
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pending Orders</p>
+                        <p class="stat-value text-xl sm:text-2xl font-bold <?= $pending_orders_overview > 0 ? 'text-rose-600' : 'text-gray-900' ?>"><?= (int)$pending_orders_overview ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Marked sold on the website. Shows demand — restock or mark Available again when a piece returns.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Confirm sales &amp; toggle website sold-out status.</p>
             </a>
-            <a href="#rateFormulaSection" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-amber-200 hover:shadow-md transition-all duration-200 block">
-                <div class="flex items-center gap-4">
-                    <div class="icon-box w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-coins"></i></div>
+
+            <a href="<?= htmlspecialchars($cj_view_url('rates')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-amber-200 hover:shadow-md transition-all duration-200 block group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-coins"></i></div>
                     <div class="min-w-0">
-                        <p class="stat-label text-xs font-semibold text-gray-400 uppercase tracking-wider">Counted Rates</p>
-                        <p class="stat-value text-sm sm:text-base font-bold text-gray-900 leading-snug">
-                            Au ₹<?= number_format($counted_rate_metrics['gold']['counted'] ?? 0, 0) ?> ·
-                            Ag ₹<?= number_format($counted_rate_metrics['silver']['counted'] ?? 0, 0) ?> ·
-                            Cu ₹<?= number_format($counted_rate_metrics['copper']['counted'] ?? 0, 0) ?>
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Counted Rates</p>
+                        <p class="stat-value text-xs sm:text-sm font-bold text-gray-900 leading-snug">
+                            Au ₹<?= number_format($counted_rate_metrics['gold']['counted'] ?? 0, 0) ?>/g ·
+                            Ag ₹<?= number_format($counted_rate_metrics['silver']['counted'] ?? 0, 0) ?>/g
                         </p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Counted gram rates after the formula below (not the full board rate). These drive shop prices.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Active formula rates driving live shop prices.</p>
             </a>
-            <a href="/admin/delete_c.php" class="admin-stat admin-kpi bg-white p-5 rounded-xl border border-gray-100 shadow-sm block hover:border-sky-200 hover:shadow-md transition-all duration-200 group">
-                <div class="flex items-center gap-4">
-                    <div class="icon-box w-12 h-12 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-images"></i></div>
+
+            <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-rose-200 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-ban"></i></div>
                     <div class="min-w-0">
-                        <p class="stat-label text-xs font-semibold text-gray-400 uppercase tracking-wider">Catalogue Designs</p>
-                        <p class="stat-value text-2xl font-bold text-gray-900"><?= (int)$catalogue_count ?></p>
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Sold Out</p>
+                        <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$sold_out_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Custom design photos customers order on WhatsApp. More designs = more ready-to-order references.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Marked sold on site. Restock anytime from Inventory.</p>
+            </a>
+
+            <a href="/admin/reels.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-purple-200 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-film"></i></div>
+                    <div class="min-w-0">
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Video Reels</p>
+                        <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$active_reels_count ?></p>
+                    </div>
+                </div>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Upload videos, sync Instagram Reels &amp; view analytics.</p>
+            </a>
+
+            <a href="/admin/delete_c.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-sky-200 hover:shadow-md transition-all duration-200 group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-images"></i></div>
+                    <div class="min-w-0">
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Catalogue Designs</p>
+                        <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$catalogue_count ?></p>
+                    </div>
+                </div>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Ready-to-order custom catalogue &amp; sponsored reel cards.</p>
             </a>
         </div>
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 mb-4 -mt-4 sm:-mt-6">
-            <p>
-                Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 silver · <?= (int)$fav_count ?>/3 homepage favourites
-            </p>
-            <p class="inline-flex items-center gap-1.5 font-medium text-amber-700 bg-amber-50/80 border border-amber-200/70 px-2.5 py-1 rounded-full">
-                <i class="far fa-clock"></i>
-                <span id="cjAdminIstClock"><?= htmlspecialchars(cj_format_ist(time())) ?></span>
-            </p>
-        </div>
 
+        <!-- Quick Actions Launchpad -->
+        <section class="admin-card bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-gray-900 font-serif">Quick Workspace</h2>
+                    <p class="text-xs text-gray-500">Jump straight to any section — zero endless scrolling.</p>
+                </div>
+                <span class="text-[11px] font-semibold text-gray-500">
+                    Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 · <?= (int)$fav_count ?>/3 favs
+                </span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                <a href="<?= htmlspecialchars($cj_view_url('rates')) ?>" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fas fa-chart-line"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Update Rates</div><div class="text-[10px] text-gray-500 truncate">Gold, Silver &amp; Formula</div></div>
+                </a>
+                <a href="<?= htmlspecialchars($cj_view_url('add-item')) ?>" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="fas fa-plus"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Add Jewellery</div><div class="text-[10px] text-gray-500 truncate">AI OCR &amp; Catalogue</div></div>
+                </a>
+                <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0"><i class="fas fa-boxes"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Stock List</div><div class="text-[10px] text-gray-500 truncate"><?= (int)$total_items ?> items total</div></div>
+                </a>
+                <a href="/admin/orders.php" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"><i class="fas fa-receipt"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Orders</div><div class="text-[10px] text-gray-500 truncate"><?= (int)$pending_orders_overview ?> pending</div></div>
+                </a>
+                <a href="/admin/reels.php" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><i class="fas fa-film"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Reels Studio</div><div class="text-[10px] text-gray-500 truncate">Upload &amp; IG Sync</div></div>
+                </a>
+                <a href="/admin/customers.php" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><i class="fas fa-users"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Customers</div><div class="text-[10px] text-gray-500 truncate">Directory &amp; Staff</div></div>
+                </a>
+                <a href="/admin/notifications.php" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0"><i class="fas fa-bell"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Notifications</div><div class="text-[10px] text-gray-500 truncate">Broadcast Push</div></div>
+                </a>
+                <a href="<?= htmlspecialchars($cj_view_url('analytics')) ?>" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fas fa-chart-bar"></i></span>
+                    <div class="min-w-0"><div class="text-xs font-bold text-gray-900 truncate">Analytics</div><div class="text-[10px] text-gray-500 truncate">Visitors &amp; Live Map</div></div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Live Rates Snapshot & Recent Uploads -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+            <section class="admin-card bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between gap-2 pb-3 mb-4 border-b border-gray-100">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-900 font-serif">Today's Live Rates</h2>
+                        <p class="text-[11px] text-gray-500">
+                            <?= !empty($rate['updated_at']) ? 'Updated ' . htmlspecialchars(cj_format_ist($rate['updated_at'])) : 'Rates active' ?>
+                        </p>
+                    </div>
+                    <a href="<?= htmlspecialchars($cj_view_url('rates')) ?>" class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors">Edit Rates &rarr;</a>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <?php foreach (['gold', 'silver', 'silver_925', 'copper'] as $mKey):
+                        $m = $counted_rate_metrics[$mKey] ?? null;
+                        if (!$m) continue;
+                    ?>
+                        <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/70">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400"><?= htmlspecialchars($m['label']) ?> (<?= htmlspecialchars($m['unit']) ?>)</div>
+                            <div class="text-lg font-bold text-gray-900 mt-1">₹<?= number_format((float)$m['market'], 2) ?></div>
+                            <div class="text-[11px] text-amber-700 font-semibold mt-0.5">Counted: ₹<?= number_format((float)$m['counted'], 2) ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="mt-3 text-[11px] text-gray-500 flex items-center justify-between">
+                    <span>Making Charge: <strong><?= htmlspecialchars((string)($rate['making_charges_percent'] ?? 0)) ?>%</strong></span>
+                    <span>Apply to Silver: <strong><?= !empty($rate['apply_making_to_silver']) ? 'Yes' : 'No' ?></strong></span>
+                </div>
+            </section>
+
+            <section class="admin-card bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between gap-2 pb-3 mb-4 border-b border-gray-100">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-900 font-serif">Recently Uploaded Stock</h2>
+                        <p class="text-[11px] text-gray-500">Latest 5 pieces in your jewellery inventory</p>
+                    </div>
+                    <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors">View All &rarr;</a>
+                </div>
+                <?php $recentFive = array_slice($product_rows, 0, 5); ?>
+                <?php if (!$recentFive): ?>
+                    <p class="text-sm text-gray-500 py-8 text-center">No jewellery items uploaded yet.</p>
+                <?php else: ?>
+                    <div class="divide-y divide-gray-100">
+                        <?php foreach ($recentFive as $rf):
+                            $rfPrice = !empty($rf['use_manual_rates'])
+                                ? calculate_item_price_from_rates($rf['weight'], $rf['metal_type'], $manual_rates)
+                                : calculate_item_price_from_rates($rf['weight'], $rf['metal_type'], $current_rates);
+                        ?>
+                            <div class="py-2.5 flex items-center gap-3">
+                                <img src="<?= htmlspecialchars(cj_img_url($rf['image'], 96, 'uploads')) ?>" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-100 shrink-0" loading="lazy">
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs font-bold text-gray-900 truncate"><?= htmlspecialchars($rf['name']) ?></div>
+                                    <div class="text-[11px] text-gray-500"><?= htmlspecialchars((string)$rf['weight']) ?> g · <?= htmlspecialchars(ucfirst(str_replace('_', ' ', (string)$rf['metal_type']))) ?></div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-xs font-bold text-gray-900">₹<?= number_format(round($rfPrice), 0) ?></div>
+                                    <span class="text-[10px] font-bold <?= !empty($rf['is_sold_out']) ? 'text-rose-600' : 'text-emerald-600' ?>">
+                                        <?= !empty($rf['is_sold_out']) ? 'Sold Out' : 'Available' ?>
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($adminView === 'rates'): ?>
         <!-- Rates Management Section -->
         <div id="ratesSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8 scroll-mt-24">
             <!-- Standard rates card -->
@@ -1251,7 +1382,9 @@ if ($just_logged_in) {
                 <button type="submit" name="update_rate_formula" class="mt-6 w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition-colors duration-150 shadow-sm">Save Rate Counting Formula</button>
             </form>
         </div>
+        <?php endif; ?>
 
+        <?php if ($adminView === 'add-item'): ?>
         <!-- Middle split: Add item & catalogue upload -->
         <div id="addItemSection" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-8 scroll-mt-24">
             <!-- Add Jewellery Item -->
@@ -1435,18 +1568,35 @@ if ($just_logged_in) {
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
+        <?php if ($adminView === 'inventory'): ?>
         <!-- Jewellery Items Stock List -->
-        <div id="stockList" class="admin-stock-section admin-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 scroll-mt-24">
-            <h2 class="text-lg font-bold text-gray-900 p-6 font-serif border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-                <span><i class="fas fa-list text-amber-500 mr-1"></i> Jewellery Items Stock List</span>
-                <span class="text-xs font-sans font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full"><?= (int)$total_items ?> Total Products Uploaded</span>
-            </h2>
+        <div id="stockList" class="admin-stock-section admin-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8 scroll-mt-24">
+            <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h2 class="text-lg font-bold text-gray-900 font-serif"><i class="fas fa-list text-amber-500 mr-1"></i> Jewellery Items Stock List</h2>
+                    <span class="text-xs font-sans font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full"><?= (int)$total_items ?> Total</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="search" id="cjStockSearch" placeholder="Search name, metal, SKU..." class="px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-amber-500 focus:outline-none w-full sm:w-56">
+                    <select id="cjStockStatusFilter" class="px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl bg-gray-50 focus:border-amber-500 focus:outline-none">
+                        <option value="all">All Status</option>
+                        <option value="available">Available Only</option>
+                        <option value="sold">Sold Out Only</option>
+                        <option value="fav">Favourites</option>
+                    </select>
+                    <a href="<?= htmlspecialchars($cj_view_url('add-item')) ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm">
+                        <i class="fas fa-plus"></i> Add Item
+                    </a>
+                </div>
+            </div>
 
             <?php
             $csrf_tok = urlencode($_SESSION['csrf_token']);
             $has_products = count($product_rows) > 0;
-            $page_q = $page > 1 ? '&amp;page=' . (int)$page : '';
+            $view_q = '&amp;view=inventory' . (!empty($cj_admin_embed) ? '&amp;embed=1' : '');
+            $page_q = ($page > 1 ? '&amp;page=' . (int)$page : '') . $view_q;
             ?>
 
             <!-- Mobile card list -->
@@ -1459,7 +1609,7 @@ if ($just_logged_in) {
                         $metal_label = ucfirst(str_replace('_', ' ', $row['metal_type']));
                         $is_sold = !empty($row['is_sold_out']);
                     ?>
-                        <article class="stock-card<?= $is_sold ? ' is-sold-out' : '' ?>" style="animation-delay: <?= min($idx * 0.04, 0.4) ?>s">
+                        <article class="stock-card<?= $is_sold ? ' is-sold-out' : '' ?>" data-stock-row data-search="<?= htmlspecialchars(strtolower($row['name'] . ' ' . $metal_label . ' ' . ($row['sku'] ?? '') . ' ' . ($row['category'] ?? '')), ENT_QUOTES) ?>" data-sold="<?= $is_sold ? '1' : '0' ?>" data-fav="<?= !empty($row['is_favourite']) ? '1' : '0' ?>" style="animation-delay: <?= min($idx * 0.04, 0.4) ?>s">
                             <div class="stock-card-top">
                                 <img src="<?= htmlspecialchars(cj_img_url($row['image'], 160, 'uploads')) ?>" alt="" loading="lazy" decoding="async" width="80" height="80">
                                 <div class="stock-card-meta">
@@ -1519,7 +1669,7 @@ if ($just_logged_in) {
                                 $uploadedDateIst = !empty($row['created_at']) ? cj_format_ist($row['created_at'], 'd M Y', false) : '—';
                                 $uploadedTimeIst = !empty($row['created_at']) ? cj_format_ist($row['created_at'], 'h:i A', true) : '';
                             ?>
-                                <tr class="hover:bg-gray-50/50 transition-colors duration-150<?= $is_sold ? ' opacity-75' : '' ?>">
+                                <tr class="hover:bg-gray-50/50 transition-colors duration-150<?= $is_sold ? ' opacity-75' : '' ?>" data-stock-row data-search="<?= htmlspecialchars(strtolower($row['name'] . ' ' . $row['metal_type'] . ' ' . ($row['sku'] ?? '') . ' ' . ($row['category'] ?? '')), ENT_QUOTES) ?>" data-sold="<?= $is_sold ? '1' : '0' ?>" data-fav="<?= !empty($row['is_favourite']) ? '1' : '0' ?>">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <img class="h-10 w-10 rounded-lg object-cover border border-gray-100 shadow-sm" src="<?= htmlspecialchars(cj_img_url($row['image'], 80, 'uploads')) ?>" alt="Product photo" loading="lazy" decoding="async" width="40" height="40">
                                     </td>
@@ -1570,21 +1720,23 @@ if ($just_logged_in) {
                     </div>
                     <div class="pager-links flex gap-2 flex-wrap justify-center">
                         <?php if ($page > 1): ?>
-                            <a href="?page=<?= $page - 1 ?>" class="px-3.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-600 transition-colors">&larr; Prev</a>
+                            <a href="<?= htmlspecialchars($cj_view_url('inventory', ['page' => $page - 1])) ?>" class="px-3.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-600 transition-colors">&larr; Prev</a>
                         <?php endif; ?>
 
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <a href="?page=<?= $i ?>" class="px-3 py-1.5 rounded-lg border text-xs font-bold transition-all <?= $i == $page ? 'bg-amber-500 border-amber-500 text-white shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600' ?>"><?= $i ?></a>
+                            <a href="<?= htmlspecialchars($cj_view_url('inventory', ['page' => $i])) ?>" class="px-3 py-1.5 rounded-lg border text-xs font-bold transition-all <?= $i == $page ? 'bg-amber-500 border-amber-500 text-white shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600' ?>"><?= $i ?></a>
                         <?php endfor; ?>
 
                         <?php if ($page < $total_pages): ?>
-                            <a href="?page=<?= $page + 1 ?>" class="px-3.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-600 transition-colors">Next &rarr;</a>
+                            <a href="<?= htmlspecialchars($cj_view_url('inventory', ['page' => $page + 1])) ?>" class="px-3.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-600 transition-colors">Next &rarr;</a>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
+        <?php if ($adminView === 'follow-us'): ?>
         <?php
         if (!function_exists('cj_business_info')) {
             require_once dirname(__DIR__) . '/includes/seo.php';
@@ -1644,10 +1796,13 @@ if ($just_logged_in) {
                 </div>
             </div>
         </section>
+        <?php endif; ?>
 
+        <?php if ($adminView === 'analytics'): ?>
         <?php include dirname(__DIR__) . '/includes/visitor-analytics-admin.php'; ?>
+        <?php endif; ?>
 
-    </main>
+    <?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 
     <!-- Edit Item Modal -->
     <div id="editModal" class="modal">
@@ -2511,9 +2666,30 @@ if ($just_logged_in) {
         }
 
         // Auto-start background Catalogue OCR silently if any newly uploaded catalogue images are pending
-        <?php if ($cat_ocr_pending > 0): ?>
+        <?php if ($adminView === 'add-item' && $cat_ocr_pending > 0): ?>
         setTimeout(function () { startCatalogueOcrWorker(false); }, 1800);
         <?php endif; ?>
+
+        // Client-side instant search & filter on Stock Inventory page
+        (function initStockFilter() {
+            var qInput = document.getElementById('cjStockSearch');
+            var sSelect = document.getElementById('cjStockStatusFilter');
+            if (!qInput && !sSelect) return;
+            function applyStockFilter() {
+                var q = (qInput ? qInput.value : '').trim().toLowerCase();
+                var st = sSelect ? sSelect.value : 'all';
+                document.querySelectorAll('[data-stock-row]').forEach(function (el) {
+                    var hay = el.getAttribute('data-search') || '';
+                    var sold = el.getAttribute('data-sold') === '1';
+                    var fav = el.getAttribute('data-fav') === '1';
+                    var okText = !q || hay.indexOf(q) !== -1;
+                    var okStat = (st === 'all') || (st === 'available' && !sold) || (st === 'sold' && sold) || (st === 'fav' && fav);
+                    el.style.display = (okText && okStat) ? '' : 'none';
+                });
+            }
+            if (qInput) qInput.addEventListener('input', applyStockFilter);
+            if (sSelect) sSelect.addEventListener('change', applyStockFilter);
+        })();
 
         function closeEditModal() {
             editModal.style.display = 'none';

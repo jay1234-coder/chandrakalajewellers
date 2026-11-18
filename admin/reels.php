@@ -166,26 +166,13 @@ $igUsername = cj_setting('ig_username', '', $conn);
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
 
-<header class="admin-header bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
-        <div class="flex items-center gap-3">
-            <img src="/images/logo.png" alt="ChandraKala Jewellers" class="h-10 w-auto">
-            <div>
-                <h1 class="text-base sm:text-lg font-bold font-serif text-gray-900 leading-tight">ChandraKala Jewellers</h1>
-                <p class="text-[11px] text-amber-600 font-semibold tracking-wider uppercase">Video Reels &amp; Impressions Studio</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-            <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-            <a href="/reels" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl">Live Reels &nearr;</a>
-            <a href="/admin/index.php" class="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl">&larr; Store Admin</a>
-            <a href="/admin/orders.php" class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">Orders</a>
-            <a href="/admin/customers.php" class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">Customers</a>
-        </div>
-    </div>
-</header>
-
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<?php
+$cjShellPage     = 'reels';
+$cjShellTitle    = 'Video Reels Studio';
+$cjShellSubtitle = 'Upload reels, 1-click Instagram sync, impressions & order inquiries';
+$cjShellEmbed    = !empty($_GET['embed']);
+include dirname(__DIR__) . '/includes/admin-shell-start.php';
+?>
     <?php if ($msg !== ''): ?>
         <div class="mb-5 p-4 rounded-xl border text-xs sm:text-sm font-semibold <?= $msgType === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800' ?>">
             <?= htmlspecialchars($msg) ?>
@@ -194,16 +181,19 @@ $igUsername = cj_setting('ig_username', '', $conn);
 
     <!-- Top Controls: Tabs + Time Range Filter -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div class="flex items-center gap-2 bg-white reel-admin-panel border border-gray-200 p-1 rounded-xl shadow-sm">
-            <a href="?tab=reels&amp;range=<?= urlencode($range) ?>" class="px-4 py-2 text-xs font-bold rounded-lg <?= $tab === 'reels' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
-                🎬 Reels &amp; Analytics (<?= count($reelsList) ?>)
+        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 bg-white reel-admin-panel border border-gray-200 p-1 rounded-xl shadow-sm">
+            <a href="?tab=reels&amp;range=<?= urlencode($range) ?>" class="px-3.5 py-2 text-xs font-bold rounded-lg <?= $tab === 'reels' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
+                Reels &amp; Analytics (<?= count($reelsList) ?>)
             </a>
-            <a href="?tab=orders&amp;range=<?= urlencode($range) ?>" class="px-4 py-2 text-xs font-bold rounded-lg <?= $tab === 'orders' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
-                🛍️ Order Inquiries (<?= count($reelOrders) ?><?= $newOrdersCount > 0 ? " · {$newOrdersCount} new" : '' ?>)
+            <a href="?tab=orders&amp;range=<?= urlencode($range) ?>" class="px-3.5 py-2 text-xs font-bold rounded-lg <?= $tab === 'orders' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
+                Order Inquiries (<?= count($reelOrders) ?><?= $newOrdersCount > 0 ? " · {$newOrdersCount} new" : '' ?>)
             </a>
-            <a href="?tab=comments&amp;range=<?= urlencode($range) ?>" class="px-4 py-2 text-xs font-bold rounded-lg <?= $tab === 'comments' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
-                💬 Comments (<?= count($recentComments) ?>)
+            <a href="?tab=comments&amp;range=<?= urlencode($range) ?>" class="px-3.5 py-2 text-xs font-bold rounded-lg <?= $tab === 'comments' ? 'bg-amber-500 text-white' : 'text-gray-600' ?>">
+                Comments (<?= count($recentComments) ?>)
             </a>
+        </div>
+        <a href="/reels" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl">Live Reels &nearr;</a>
         </div>
 
         <div class="flex items-center gap-1.5 bg-white reel-admin-panel border border-gray-200 p-1 rounded-xl shadow-sm">
@@ -557,7 +547,7 @@ $igUsername = cj_setting('ig_username', '', $conn);
         <?php endif; ?>
     </section>
     <?php endif; ?>
-</main>
+<?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 
 <script>
 (function () {

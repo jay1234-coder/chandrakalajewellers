@@ -108,26 +108,14 @@ $homeLogout = cj_admin_home_href(null, true);
     <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
-<?php if (empty($embed)): ?>
-<header class="admin-header bg-white shadow-sm border-b border-gray-100 py-4 px-4 sm:px-6 flex justify-between items-center sticky top-0 z-40">
-    <div>
-        <h1 class="text-lg font-bold font-serif">Notification Manager</h1>
-        <p class="text-[10px] text-amber-600 font-semibold tracking-wide">PUSH · PWA · TEMPLATES</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-        <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-        <a href="<?= htmlspecialchars($home) ?>" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-xl text-sm border border-gray-200">Dashboard</a>
-        <a href="<?= htmlspecialchars($homeLogout) ?>" class="bg-red-50 text-red-600 font-semibold py-2 px-4 rounded-xl text-sm border border-red-100">Log Out</a>
-    </div>
-</header>
-<?php else: ?>
-<div class="bg-amber-50 border-b border-amber-100 px-4 py-2 text-xs text-amber-800 font-semibold flex items-center justify-between gap-2">
-    <span>Notifications inside Control Center · <?= htmlspecialchars($_SESSION['username'] ?? 'user') ?></span>
-    <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-</div>
-<?php endif; ?>
-
-<main class="admin-main w-full mx-auto p-4 sm:p-6 max-w-6xl">
+<?php
+$cjShellPage     = 'notifications';
+$cjShellTitle    = 'Push Notifications';
+$cjShellSubtitle = 'Send instant broadcasts, scheduled alerts & quick templates';
+$cjShellEmbed    = !empty($embed);
+$cjShellMaxWidth = '1180px';
+include dirname(__DIR__) . '/includes/admin-shell-start.php';
+?>
     <?php if ($message): ?>
         <div class="admin-alert mb-4 p-4 rounded-xl border <?= $message_type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800' ?>"><?= htmlspecialchars($message) ?></div>
     <?php endif; ?>
@@ -275,7 +263,7 @@ $homeLogout = cj_admin_home_href(null, true);
             <code>cron/daily-push.php?key=…</code> once per day in a browser (secret in <code>config/cron-secret.php</code>).
         </p>
     </section>
-</main>
+<?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 <script src="../js/pwa.js" defer></script>
 <script>
 document.getElementById('enablePushBtn')?.addEventListener('click', function () {

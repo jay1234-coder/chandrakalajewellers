@@ -146,25 +146,16 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
         }
     </style>
 </head>
-<body class="admin-body min-h-screen bg-gray-50 text-gray-800 flex flex-col">
+<body class="admin-body min-h-screen bg-gray-50 text-gray-800">
 <?php include dirname(__DIR__) . '/includes/gtm-body.php'; ?>
 
-    <header class="admin-header bg-white shadow-sm border-b border-gray-100 py-3 px-4 sm:py-4 sm:px-6 md:px-12 flex justify-between items-center sticky top-0 z-40 gap-3">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src="/images/logo.png" alt="Jewellery Store Logo" class="h-8 sm:h-10 w-auto shrink-0">
-            <div class="min-w-0">
-                <h1 class="text-sm sm:text-xl font-bold text-gray-900 font-serif leading-tight truncate">ChandraKala Jewellers</h1>
-                <p class="text-[10px] sm:text-xs text-amber-600 font-medium tracking-wide">CATALOGUE MANAGEMENT</p>
-            </div>
-        </div>
-        <div class="catalogue-header-actions shrink-0">
-            <a href="/admin/index.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-5 rounded-xl transition-colors duration-150 text-xs sm:text-sm border border-gray-200 whitespace-nowrap">
-                &larr; Dashboard
-            </a>
-        </div>
-    </header>
-
-    <main class="admin-main flex-grow w-full mx-auto px-3 py-4 sm:px-6 sm:py-8 md:py-12 max-w-7xl">
+<?php
+$cjShellPage     = 'catalogue';
+$cjShellTitle    = 'Catalogue Photos';
+$cjShellSubtitle = 'Manage custom catalogue designs & run AI OCR enrichment';
+$cjShellEmbed    = !empty($_GET['embed']);
+include dirname(__DIR__) . '/includes/admin-shell-start.php';
+?>
         <?php if ($message): ?>
             <div class="admin-alert mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl border flex items-start gap-2 text-sm
                 <?php echo ($message_type === 'success') ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'; ?>">
@@ -201,7 +192,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
             <div class="admin-card bg-white rounded-xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center text-gray-500 font-medium">
                 <i class="fas fa-image text-4xl text-gray-200 mb-3"></i>
                 <p>No images found in the catalogue to manage.</p>
-                <a href="/admin/index.php" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Upload photos in the Dashboard &rarr;</a>
+                <a href="/admin/index.php?view=add-item" class="inline-block mt-4 text-xs font-semibold text-amber-600 hover:underline">Upload photos in Add Jewellery &amp; Catalogue &rarr;</a>
             </div>
         <?php else: ?>
             <div class="catalogue-grid-admin">
@@ -232,7 +223,7 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
-    </main>
+    <?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 
     <script>
     (function () {
@@ -284,10 +275,5 @@ if ($result_fetch_all && $result_fetch_all->num_rows > 0) {
         <?php endif; ?>
     })();
     </script>
-
-    <footer class="bg-gray-900 text-gray-400 py-5 border-t border-gray-800 text-center text-xs mt-auto" style="padding-bottom: max(1.25rem, env(safe-area-inset-bottom));">
-        <p>&copy; <?php echo date('Y'); ?> ChandraKala Jewellers. All rights reserved.</p>
-        <p class="text-gray-500 mt-1">Image Stock Manager</p>
-    </footer>
 </body>
 </html>

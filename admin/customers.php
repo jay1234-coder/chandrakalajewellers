@@ -441,30 +441,13 @@ if ($currentRole === 'superadmin') {
 </head>
 <body class="admin-body min-h-screen bg-gray-50/60 font-sans text-gray-800">
 
-<?php if (!$embed): ?>
-<header class="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
-        <div class="flex items-center gap-3">
-            <img src="/images/logo.png" alt="ChandraKala Jewellers" class="h-10 w-auto">
-            <div>
-                <h1 class="text-base sm:text-lg font-bold font-serif text-gray-900 leading-tight">ChandraKala Jewellers</h1>
-                <p class="text-[11px] text-amber-600 font-semibold tracking-wider uppercase">User & Customer Directory</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-2 sm:gap-3">
-            <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-            <a href="/admin/index.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Store Admin</a>
-            <a href="/admin/orders.php" class="text-xs font-semibold text-gray-600 hover:text-amber-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">Orders</a>
-            <?php if ($currentRole === 'superadmin'): ?>
-                <a href="/admin/superadmin.php" class="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl transition-colors">Control Center</a>
-            <?php endif; ?>
-            <a href="/admin/index.php?logout" class="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl border border-red-100 transition-colors">Log Out</a>
-        </div>
-    </div>
-</header>
-<?php endif; ?>
-
-<main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+<?php
+$cjShellPage     = 'customers';
+$cjShellTitle    = 'Customers & Staff';
+$cjShellSubtitle = 'Registered shopper accounts, purchase history & staff directory';
+$cjShellEmbed    = !empty($embed);
+include dirname(__DIR__) . '/includes/admin-shell-start.php';
+?>
 
     <!-- Header & Navigation Tabs -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -747,7 +730,7 @@ if ($currentRole === 'superadmin') {
         </div>
     <?php endif; ?>
 
-</main>
+<?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
 
 <!-- Modal: Edit Customer Profile -->
 <div id="editCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
