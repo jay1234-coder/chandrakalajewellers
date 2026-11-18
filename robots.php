@@ -28,6 +28,12 @@ $aiBots = [
     'ClaudeBot',
     'Claude-Web',
     'PerplexityBot',
+    'Perplexity-User',
+    'DuckAssistBot',
+    'MistralAI-User',
+    'GrokBot',
+    'xAI-Bot',
+    'DeepSeekBot',
     'Bytespider',
     'CCBot',
     'FacebookBot',
@@ -37,6 +43,8 @@ $aiBots = [
     'cohere-ai',
     'Diffbot',
     'YouBot',
+    'WhatsApp',
+    'TelegramBot',
     'ia_archiver',
 ];
 
@@ -58,6 +66,7 @@ Allow: /jewellers-in-khedbrahma
 Allow: /gold-rate-khedbrahma
 Allow: /follow-us
 Allow: /llms.txt
+Allow: /llms-full.txt
 Allow: /ai.txt
 Allow: /agents.txt
 Allow: /humans.txt
@@ -88,7 +97,7 @@ Disallow: /cron/
 TXT;
 
 foreach ($aiBots as $bot) {
-    $out .= "\nUser-agent: {$bot}\nAllow: /\nAllow: /llms.txt\nAllow: /ai.txt\nAllow: /agents.txt\nAllow: /sitemap.xml\n";
+    $out .= "\nUser-agent: {$bot}\nAllow: /\nAllow: /llms.txt\nAllow: /llms-full.txt\nAllow: /ai.txt\nAllow: /agents.txt\nAllow: /sitemap.xml\n";
 }
 
 $out .= <<<TXT

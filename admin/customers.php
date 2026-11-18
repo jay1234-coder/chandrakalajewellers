@@ -519,7 +519,7 @@ if ($currentRole === 'superadmin') {
                                 $initial = mb_substr($c['name'] ?: 'C', 0, 1);
                                 $ordersCount = (int)$c['total_orders'];
                                 $spent = (float)$c['total_spent'];
-                                $joinDate = date('d M Y', strtotime($c['created_at']));
+                                $joinDate = cj_format_ist($c['created_at'] ?? '', 'd M Y, h:i A');
                                 $waUrl = 'https://wa.me/91' . preg_replace('/\D+/', '', $c['phone']);
                             ?>
                             <tr class="hover:bg-gray-50/60 transition-colors">
@@ -635,10 +635,10 @@ if ($currentRole === 'superadmin') {
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500">
-                                <?= date('d M Y', strtotime($s['created_at'])) ?>
+                                <?= htmlspecialchars(cj_format_ist($s['created_at'] ?? '', 'd M Y, h:i A')) ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500">
-                                <?= !empty($s['last_login_at']) ? date('d M Y, h:i A', strtotime($s['last_login_at'])) : '<span class="text-gray-300">Never</span>' ?>
+                                <?= !empty($s['last_login_at']) ? htmlspecialchars(cj_format_ist($s['last_login_at'], 'd M Y, h:i A')) : '<span class="text-gray-300">Never</span>' ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <div class="inline-flex items-center gap-1">

@@ -32,9 +32,11 @@ RewriteRule ^\.well-known/agents\.txt$ /agents.txt [L]
   RewriteRule (^|/)(debug\.log|composer\.(json|lock)|package(-lock)?\.json|\.env.*|\.git|.*\.(sql|bak|old|orig|swp|log))$ - [F,L]
 </IfModule>
 
-# Dynamic SEO files — always prefer PHP generators
+# Dynamic SEO & AI files — always prefer PHP generators
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 RewriteRule ^robots\.txt$ robots.php [L]
+RewriteRule ^llms\.txt$ llms.php [L]
+RewriteRule ^llms-full\.txt$ llms.php?full=1 [L]
 
 # Redirect browser to remove .php extension if present in the URL bar (GET requests only)
 # Exclude admin directory and utility scripts so admin routing is never broken

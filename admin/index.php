@@ -233,8 +233,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (
 
     $_SESSION['success_message'] = 'Standard rates updated successfully!';
     require_once dirname(__DIR__) . '/includes/push.php';
+    require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
     cj_notify_event($conn, 'rates_updated', $_SESSION['username'] ?? 'admin', null, false);
     cj_log_activity($conn, 'update_rates', "Gold {$gold}, Silver {$silver}, 925 {$silver925}, Copper {$copper}, making {$making}%");
+    cj_auto_ping_indexnow();
     header('Location: ' . $cj_admin_home . '#ratesSection');
     exit();
 }
@@ -396,8 +398,10 @@ if (isset($_POST['add_item'])) {
 
         $_SESSION['success_message'] = "Jewellery item added successfully!";
         require_once dirname(__DIR__) . '/includes/push.php';
+        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
         cj_notify_event($conn, 'new_product', $_SESSION['username'] ?? 'admin', 'New piece added: ' . $name);
         cj_log_activity($conn, 'add_item', $name . ' (' . $metal . ', ' . $weight . 'g)');
+        cj_auto_ping_indexnow(['https://chandrakalajewellers.in/product?id=' . $newId]);
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not add item: " . $e->getMessage();
     }
@@ -973,7 +977,7 @@ if ($just_logged_in) {
                     <article class="border border-gray-100 rounded-xl p-3 bg-gray-50/70">
                         <div class="flex justify-between gap-2 text-[11px] text-gray-400">
                             <span><?= htmlspecialchars($m['from_role']) ?></span>
-                            <span><?= htmlspecialchars(date('d M H:i', strtotime($m['created_at']))) ?></span>
+                            <span><?= htmlspecialchars(cj_format_ist($m['created_at'] ?? '')) ?></span>
                         </div>
                         <p class="font-semibold text-sm mt-1"><?= htmlspecialchars($m['subject']) ?></p>
                         <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap"><?= htmlspecialchars($m['body']) ?></p>
@@ -1030,15 +1034,26 @@ if ($just_logged_in) {
                 <p class="stat-purpose mt-3 text-[11px] leading-snug text-gray-500">Custom design photos customers order on WhatsApp. More designs = more ready-to-order references.</p>
             </a>
         </div>
-        <p class="text-xs text-gray-400 mb-4 -mt-4 sm:-mt-6">
-            Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 silver · <?= (int)$fav_count ?>/3 homepage favourites
-        </p>
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 mb-4 -mt-4 sm:-mt-6">
+            <p>
+                Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 silver · <?= (int)$fav_count ?>/3 homepage favourites
+            </p>
+            <p class="inline-flex items-center gap-1.5 font-medium text-amber-700 bg-amber-50/80 border border-amber-200/70 px-2.5 py-1 rounded-full">
+                <i class="far fa-clock"></i>
+                <span id="cjAdminIstClock"><?= htmlspecialchars(cj_format_ist(time())) ?></span>
+            </p>
+        </div>
 
         <!-- Rates Management Section -->
         <div id="ratesSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8 scroll-mt-24">
             <!-- Standard rates card -->
             <div class="admin-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 font-serif pb-2 border-b border-gray-100 flex items-center gap-2"><i class="fas fa-chart-line text-amber-500"></i> Standard Auto Rates</h2>
+                <div class="mb-4 pb-2 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-bold text-gray-900 font-serif flex items-center gap-2"><i class="fas fa-chart-line text-amber-500"></i> Standard Auto Rates</h2>
+                    <?php if (!empty($rate['updated_at'])): ?>
+                        <span class="text-[11px] font-medium text-gray-500"><i class="far fa-clock text-amber-500 mr-1"></i>Updated: <?= htmlspecialchars(cj_format_ist($rate['updated_at'])) ?></span>
+                    <?php endif; ?>
+                </div>
                 <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <input type="hidden" name="rate_action" value="update_rates">
@@ -1103,7 +1118,12 @@ if ($just_logged_in) {
 
             <!-- Manual rates card -->
             <div class="admin-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 font-serif pb-2 border-b border-gray-100 flex items-center gap-2"><i class="fas fa-sliders-h text-amber-500"></i> Manual Override Rates</h2>
+                <div class="mb-4 pb-2 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-bold text-gray-900 font-serif flex items-center gap-2"><i class="fas fa-sliders-h text-amber-500"></i> Manual Override Rates</h2>
+                    <?php if (!empty($manual_rate['updated_at'])): ?>
+                        <span class="text-[11px] font-medium text-gray-500"><i class="far fa-clock text-amber-500 mr-1"></i>Updated: <?= htmlspecialchars(cj_format_ist($manual_rate['updated_at'])) ?></span>
+                    <?php endif; ?>
+                </div>
                 <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <input type="hidden" name="rate_action" value="update_manual_rates">
@@ -1397,6 +1417,7 @@ if ($just_logged_in) {
                                 <div class="stock-card-meta">
                                     <h3><?= htmlspecialchars($row['name']) ?></h3>
                                     <p><?= htmlspecialchars($row['weight']) ?> g · <?= htmlspecialchars($metal_label) ?></p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5"><i class="far fa-clock mr-1"></i>Uploaded: <?= htmlspecialchars(cj_format_ist($row['created_at'] ?? '')) ?></p>
                                     <div class="stock-card-price mt-1">₹<?= number_format(round($display_price), 0) ?></div>
                                     <div class="stock-card-row mt-2">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold <?= $row['use_manual_rates'] ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-500' ?>">
@@ -1434,6 +1455,7 @@ if ($just_logged_in) {
                             <th scope="col" class="px-6 py-3.5 text-left">Weight</th>
                             <th scope="col" class="px-6 py-3.5 text-left">Metal</th>
                             <th scope="col" class="px-6 py-3.5 text-left">Calculated Price</th>
+                            <th scope="col" class="px-6 py-3.5 text-left">Uploaded (IST)</th>
                             <th scope="col" class="px-6 py-3.5 text-center">Status</th>
                             <th scope="col" class="px-6 py-3.5 text-center">Favourite</th>
                             <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
@@ -1446,6 +1468,8 @@ if ($just_logged_in) {
                                 $manual_price_val = calculate_item_price_from_rates($row['weight'], $row['metal_type'], $manual_rates);
                                 $display_price = $row['use_manual_rates'] ? $manual_price_val : $current_price;
                                 $is_sold = !empty($row['is_sold_out']);
+                                $uploadedDateIst = !empty($row['created_at']) ? cj_format_ist($row['created_at'], 'd M Y', false) : '—';
+                                $uploadedTimeIst = !empty($row['created_at']) ? cj_format_ist($row['created_at'], 'h:i A', true) : '';
                             ?>
                                 <tr class="hover:bg-gray-50/50 transition-colors duration-150<?= $is_sold ? ' opacity-75' : '' ?>">
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -1459,6 +1483,12 @@ if ($just_logged_in) {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">₹<?= number_format(round($display_price), 0) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs font-semibold text-gray-800"><?= htmlspecialchars($uploadedDateIst) ?></div>
+                                        <?php if ($uploadedTimeIst !== ''): ?>
+                                            <div class="text-[11px] text-gray-400"><?= htmlspecialchars($uploadedTimeIst) ?></div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <a href="?toggle_sold=<?= (int)$row['id'] ?>&amp;current=<?= $is_sold ? 1 : 0 ?>&amp;csrf_token=<?= $csrf_tok ?><?= $page_q ?>" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition-colors <?= $is_sold ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' ?>">
                                             <?= $is_sold ? 'Sold Out' : 'Available' ?>
@@ -1477,7 +1507,7 @@ if ($just_logged_in) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="px-6 py-8 text-center text-gray-500 font-medium">No jewellery items found. Add items to see them here!</td>
+                                <td colspan="9" class="px-6 py-8 text-center text-gray-500 font-medium">No jewellery items found. Add items to see them here!</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -2387,6 +2417,20 @@ if ($just_logged_in) {
         setTimeout(function () {
             if (window.CJPwa) window.CJPwa.subscribe('admin');
         }, 3500);
+        (function () {
+            var el = document.getElementById('cjAdminIstClock');
+            if (!el || typeof Intl === 'undefined' || !Intl.DateTimeFormat) return;
+            var fmt = new Intl.DateTimeFormat('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            });
+            function tick() {
+                el.textContent = fmt.format(new Date()).replace(/\bam\b/i, 'AM').replace(/\bpm\b/i, 'PM') + ' IST';
+            }
+            tick();
+            setInterval(tick, 1000);
+        })();
     </script>
 </body>
 </html>

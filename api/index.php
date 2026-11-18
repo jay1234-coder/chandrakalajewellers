@@ -45,6 +45,29 @@ while (strpos($path, 'admin/admin/') === 0) {
 
 $rootDir = dirname(__DIR__);
 
+// Dynamic SEO & AI Discovery endpoints (always live, never stale static copies)
+if ($path === 'robots.txt') {
+    chdir($rootDir);
+    require $rootDir . '/robots.php';
+    exit;
+}
+if ($path === 'sitemap.xml') {
+    chdir($rootDir);
+    require $rootDir . '/sitemap.php';
+    exit;
+}
+if ($path === 'llms.txt' || $path === '.well-known/llms.txt' || $path === 'llms-full.txt' || $path === '.well-known/llms-full.txt') {
+    if (strpos($path, 'llms-full.txt') !== false) {
+        $_GET['full'] = '1';
+    }
+    chdir($rootDir);
+    require $rootDir . '/llms.php';
+    exit;
+}
+if ($path === '.well-known/ai.txt' || $path === '.well-known/agents.txt') {
+    $path = basename($path);
+}
+
 // Handle static files if routed here
 if ($path !== '') {
     // Cloudinary redirects for media on serverless runtime

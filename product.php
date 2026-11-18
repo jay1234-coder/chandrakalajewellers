@@ -74,13 +74,7 @@ switch ($product['metal_type']) {
 $auto_price = calculate_price(
     $product['metal_type'],
     $product['weight'],
-    [
-        'gold_rate' => $rate['gold_rate'] ?? 0,
-        'silver_rate' => $rate['silver_rate'] ?? 0,
-        'silver_925_rate' => $rate['silver_925_rate'] ?? 0,
-        'making_charges' => $rate['making_charges_percent'] ?? 0,
-        'apply_making_to_silver' => $rate['apply_making_to_silver'] ?? 0
-    ]
+    $standard_rates
 );
 $rounded_auto_price = round($auto_price ?? 0);
 
@@ -129,10 +123,11 @@ if ($seoDesc === '') {
 $descLen = function_exists('mb_strlen') ? mb_strlen($seoDesc) : strlen($seoDesc);
 $descShort = function_exists('mb_substr') ? mb_substr($seoDesc, 0, 155) : substr($seoDesc, 0, 155);
 $seo = cj_merge_seo([
-    'title' => $product['name'] . ' | ' . $metal_display . ' Jewellery Khedbrahma',
+    'title' => $product['name'] . ' (' . $product['weight'] . 'g ' . $metal_display . ') | ChandraKala Jewellers Khedbrahma',
     'description' => $descShort . ($descLen > 155 ? '…' : ''),
-    'keywords' => $product['name'] . ', ' . $metal_display . ' jewellery Khedbrahma, buy ' . strtolower($metal_display) . ' jewellery Gujarat, ChandraKala Jewellers',
+    'keywords' => $product['name'] . ', ' . $metal_display . ' jewellery Khedbrahma, ' . $product['weight'] . 'g ' . strtolower($metal_display) . ', buy ' . strtolower($metal_display) . ' jewellery Sabarkantha Gujarat, 916 hallmark gold, ChandraKala Jewellers',
     'canonical' => $productUrl,
+    'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? ($product['created_at'] ?? null)),
     'og_type' => 'product',
     'og_image' => $productImage,
     'schema' => [
@@ -388,6 +383,9 @@ $seo = cj_merge_seo([
                 <?php if (trim((string) ($product['sku'] ?? '')) !== ''): ?>
                 <tr><th>SKU</th><td><?= htmlspecialchars($product['sku']) ?></td></tr>
                 <?php endif; ?>
+                <?php if (!empty($product['created_at'])): ?>
+                <tr><th>Listed On</th><td><?= htmlspecialchars(cj_format_ist($product['created_at'])) ?></td></tr>
+                <?php endif; ?>
             </table>
             <?php endif; ?>
 
@@ -402,6 +400,12 @@ $seo = cj_merge_seo([
                     <span class="price-current">Price not available</span>
                 <?php endif; ?>
             </div>
+            <?php
+            $activeRateUpdated = $is_manual_rate ? ($manual_rates['updated_at'] ?? null) : ($standard_rates['updated_at'] ?? null);
+            if (!empty($activeRateUpdated)):
+            ?>
+            <p style="font-size:12px;color:var(--text-secondary,#666);margin:-8px 0 0;">Live rate updated: <strong><?= htmlspecialchars(cj_format_ist($activeRateUpdated)) ?></strong></p>
+            <?php endif; ?>
 
             <div class="product-actions" style="margin-top: 20px;">
                 <?php if (!empty($product['is_sold_out'])): ?>

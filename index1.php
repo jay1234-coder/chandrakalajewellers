@@ -35,14 +35,16 @@ if (!function_exists('get_metal_name')) {
 $activePage = 'home';
 require_once 'includes/seo.php';
 $seo = cj_merge_seo([
-    'title' => 'ChandraKala Jewellers | Gold & Silver in Khedbrahma',
-    'description' => 'Family gold & silver jewellers in Khedbrahma. Shop 916 gold, silver & 925 designs with live rates on Civil Road, Sabarkantha. Call +91 9427080359.',
-    'keywords' => 'ChandraKala Jewellers, Chandrakala Jewellers, gold jewellery Khedbrahma, silver jewellery Khedbrahma, jewellers near me, 916 gold rate today Khedbrahma, gold shop Civil Road, silver jewellery Sabarkantha, hallmark gold Gujarat',
+    'title' => 'ChandraKala Jewellers | 916 Gold, Silver & Live Rates in Khedbrahma',
+    'description' => 'Family-owned 916 gold, pure silver & 925 sterling silver jewellers in Khedbrahma, Sabarkantha. Check today\'s live rates in IST, shop 60+ designs & 138+ custom catalogue pieces on Civil Road. Call +91 9427080359.',
     'canonical' => cj_abs_url('index1'),
+    'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [
         cj_local_business_schema(),
         cj_website_schema(),
-        cj_faq_schema(cj_default_faqs()),
+        cj_live_rates_schema($standard_rates, $conn),
+        cj_speakable_schema(cj_abs_url('index1'), ['h1', '.rate-box', '.section-sub']),
+        cj_faq_schema(cj_default_faqs($standard_rates)),
         cj_breadcrumb_schema([
             ['name' => 'Home', 'url' => cj_abs_url('index1')],
         ]),
@@ -94,6 +96,9 @@ $seo = cj_merge_seo([
         <?php if ($show_copper): ?>
             <p>COPPER 999 FINE: ₹<?= number_format($standard_rates['copper_rate'], 2) ?>/KG</p>
             <h5><b>Copper delivered to you in 4 or 4+ working days</b></h5>
+        <?php endif; ?>
+        <?php if (!empty($standard_rates['updated_at'])): ?>
+            <p class="rate-updated-ist" style="font-size:12px;opacity:0.8;margin-top:8px;letter-spacing:0.01em;">Updated: <?= htmlspecialchars(cj_format_ist($standard_rates['updated_at'])) ?></p>
         <?php endif; ?>
     </div>
     <?php endif; ?>

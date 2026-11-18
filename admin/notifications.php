@@ -259,7 +259,7 @@ $homeLogout = cj_admin_home_href(null, true);
                         <tr><td colspan="5" class="py-6 text-center text-gray-500">No notifications sent yet.</td></tr>
                     <?php else: foreach ($logs as $log): ?>
                         <tr>
-                            <td class="py-2.5 text-gray-500 whitespace-nowrap"><?= htmlspecialchars(date('d M H:i', strtotime($log['created_at']))) ?></td>
+                            <td class="py-2.5 text-gray-500 whitespace-nowrap"><?= htmlspecialchars(cj_format_ist($log['created_at'] ?? '', 'd M Y, h:i A')) ?></td>
                             <td class="py-2.5 font-semibold"><?= htmlspecialchars($log['title']) ?></td>
                             <td class="py-2.5"><?= htmlspecialchars($log['audience']) ?></td>
                             <td class="py-2.5 text-right text-emerald-600 font-bold"><?= (int)$log['success_count'] ?></td>

@@ -3,21 +3,26 @@
  * Local SEO landing page — jewellers / jewellery in Khedbrahma
  */
 $activePage = 'home';
+require_once 'config/db.php';
+require_once 'includes/pricing.php';
 require_once 'includes/seo.php';
 $b = cj_business_info();
+$standard_rates = isset($conn) && $conn instanceof mysqli ? cj_get_standard_rates($conn) : [];
 $seo = cj_merge_seo([
-    'title' => 'Jewellers in Khedbrahma | ChandraKala Jewellers',
-    'description' => 'Looking for jewellers in Khedbrahma? ChandraKala Jewellers on Civil Road offers 916 gold, silver & 925 designs with live rates and WhatsApp orders.',
-    'keywords' => 'jewellers in Khedbrahma, jewellery shop near me, gold jewellers Khedbrahma, silver jewellery shop Sabarkantha, best jeweller Khedbrahma, Chandrakala Jewellers, jewellery store Civil Road',
+    'title' => 'Best Jewellers in Khedbrahma & Sabarkantha | ChandraKala Jewellers',
+    'description' => 'Looking for the best jewellers in Khedbrahma? ChandraKala Jewellers on Civil Road offers 916 BIS gold, pure silver & 925 sterling silver designs with live IST rates, 138+ custom catalogue designs, and WhatsApp orders.',
     'canonical' => cj_abs_url('jewellers-in-khedbrahma'),
+    'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [
         cj_local_business_schema(),
         cj_website_schema(),
+        cj_live_rates_schema($standard_rates, $conn ?? null),
+        cj_speakable_schema(cj_abs_url('jewellers-in-khedbrahma'), ['h1', 'article p']),
         cj_breadcrumb_schema([
             ['name' => 'Home', 'url' => cj_abs_url('index1')],
             ['name' => 'Jewellers in Khedbrahma', 'url' => cj_abs_url('jewellers-in-khedbrahma')],
         ]),
-        cj_faq_schema(cj_default_faqs()),
+        cj_faq_schema(cj_default_faqs($standard_rates)),
     ],
 ]);
 ?>
@@ -63,7 +68,7 @@ $seo = cj_merge_seo([
 
         <section style="margin-top:2.5rem;" aria-label="Frequently asked questions">
             <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:1rem;">FAQs — jewellers &amp; jewellery in Khedbrahma</h2>
-            <?php foreach (cj_default_faqs() as $faq): ?>
+            <?php foreach (cj_default_faqs($standard_rates) as $faq): ?>
                 <details style="margin-bottom:0.75rem;padding:0.75rem 0;border-bottom:1px solid #eee;">
                     <summary style="font-weight:600;cursor:pointer;"><?= htmlspecialchars($faq['q']) ?></summary>
                     <p style="margin:0.5rem 0 0;color:#555;"><?= htmlspecialchars($faq['a']) ?></p>

@@ -78,9 +78,12 @@ if (!function_exists('cj_business_info')) {
                 'Chandra Kala Jewellers',
                 'Chandrakala Jewellers Khedbrahma',
                 'ChandraKala Jewellers Civil Road',
+                'ChandraKala Jewellers Sabarkantha',
                 'ચંદ્રકલા જ્વેલર્સ',
+                'ચંદ્રકલા જ્વેલર્સ ખેડબ્રહ્મા',
+                'चंद्राकला ज्वेलर्स खेड़ब्रह्मा',
             ],
-            'description' => 'Family-owned gold and silver jewellery store in Khedbrahma, Sabarkantha, Gujarat. Shop 916 (22K) gold, silver, and 925 silver jewellery with live rates, custom designs, and WhatsApp ordering near Bhoomi Complex, Civil Road.',
+            'description' => 'Trusted family-owned 916 BIS hallmarked gold, pure silver, and 925 sterling silver jewellery store in Khedbrahma, Sabarkantha, Gujarat. Check today\'s live gold & silver rates in IST, shop 60+ priced designs and 138+ custom catalogue pieces, or order directly on WhatsApp near Bhoomi Complex, Civil Road.',
             'phone' => '+' . (function_exists('cj_shop_whatsapp_digits') ? cj_shop_whatsapp_digits() : '919427080359'),
             'phone_display' => function_exists('cj_shop_phone_display') ? cj_shop_phone_display() : '+91 9427080359',
             'email' => function_exists('cj_setting') ? cj_setting('shop_email', 'chandrakalajewellers849@gmail.com') : 'chandrakalajewellers849@gmail.com',
@@ -112,7 +115,7 @@ if (!function_exists('cj_business_info')) {
                 'https://wa.me/' . (function_exists('cj_shop_whatsapp_digits') ? cj_shop_whatsapp_digits() : '919427080359'),
                 function_exists('cj_setting') ? cj_setting('instagram_url', 'https://www.instagram.com/chandra.kalajewellers?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==') : 'https://www.instagram.com/chandra.kalajewellers?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
             ],
-            'keywords' => 'ChandraKala Jewellers, Chandrakala Jewellers, jewellers in Khedbrahma, jewellery shop Khedbrahma, gold jewellery Khedbrahma, silver jewellery Khedbrahma, 916 gold rate Khedbrahma, jewellers near me, gold shop Civil Road, Sabarkantha jewellers, hallmark gold Gujarat, 925 silver Khedbrahma',
+            'keywords' => 'ChandraKala Jewellers, Chandrakala Jewellers, best jeweller in Khedbrahma, jewellers in Khedbrahma, jewellery shop Khedbrahma, jewellery shop near me, gold jewellery Khedbrahma, silver jewellery Khedbrahma, 916 gold rate today Khedbrahma, gold rate Sabarkantha, live gold price Gujarat, sona no bhav Khedbrahma, chandi no bhav Gujarat, gold shop Civil Road Khedbrahma, Sabarkantha jewellers, Idar Himmatnagar Vadali Ambaji jewellers, BIS hallmark 22K gold Gujarat, 925 sterling silver rings Khedbrahma, gold mangalsutra, tanmaniya, dokiya, bridal gold necklace set, kundan set, hathpan, patala bangles, gold pendant butti set, silver kada, custom gold jewellery maker North Gujarat, WhatsApp jewellery order Gujarat, ચંદ્રકલા જ્વેલર્સ',
         ];
     }
 }
@@ -186,7 +189,13 @@ if (!function_exists('cj_local_business_schema')) {
                 ['@type' => 'AdministrativeArea', 'name' => 'Sabarkantha'],
                 ['@type' => 'City', 'name' => 'Idar'],
                 ['@type' => 'City', 'name' => 'Himmatnagar'],
+                ['@type' => 'City', 'name' => 'Vadali'],
+                ['@type' => 'City', 'name' => 'Ambaji'],
+                ['@type' => 'City', 'name' => 'Posina'],
+                ['@type' => 'City', 'name' => 'Vijaynagar'],
+                ['@type' => 'AdministrativeArea', 'name' => 'North Gujarat'],
                 ['@type' => 'State', 'name' => 'Gujarat'],
+                ['@type' => 'Country', 'name' => 'India'],
             ],
             'openingHoursSpecification' => [
                 [
@@ -215,15 +224,18 @@ if (!function_exists('cj_local_business_schema')) {
                 ],
             ],
             'knowsAbout' => [
-                '916 Gold Jewellery',
-                '22K Gold Jewellery Khedbrahma',
-                'Silver Jewellery',
-                '925 Silver Jewellery',
-                'Custom Jewellery Designs',
-                'Gold Rate in Khedbrahma',
-                'Jewellery Shop Sabarkantha',
-                'Hallmark Gold Jewellery',
-                'Wedding Jewellery Khedbrahma',
+                '916 BIS Hallmarked Gold Jewellery',
+                '22K, 20K, and 18K Gold Jewellery Khedbrahma',
+                'Pure Silver Jewellery',
+                '925 Sterling Silver Rings & Bracelets',
+                'Gold Mangalsutra, Tanmaniya & Dokiya',
+                'Bridal Gold Necklace, Kundan & Pendant Butti Sets',
+                'Gold Hathpan, Patala Bangles & Chains',
+                'Custom Made-to-Order Jewellery Designs',
+                'Today\'s Live Gold Rate in Khedbrahma & Sabarkantha',
+                'Today\'s Live Silver Rate in North Gujarat',
+                'WhatsApp Online Jewellery Ordering in Gujarat',
+                'Best Family Jewellers in Sabarkantha',
             ],
             'keywords' => $b['keywords'],
             'slogan' => 'Gold and silver, crafted with care in Khedbrahma',
@@ -296,7 +308,7 @@ if (!function_exists('cj_website_schema')) {
                 '@type' => 'SearchAction',
                 'target' => [
                     '@type' => 'EntryPoint',
-                    'urlTemplate' => cj_abs_url('gallery') . '?metal_type={search_term_string}',
+                    'urlTemplate' => cj_abs_url('gallery') . '?q={search_term_string}',
                 ],
                 'query-input' => 'required name=search_term_string',
             ],
@@ -485,40 +497,175 @@ if (!function_exists('cj_article_schema')) {
     }
 }
 
+if (!function_exists('cj_live_rates_schema')) {
+    /**
+     * Structured JSON-LD OfferCatalog for today's live gold & silver rates (IST)
+     * so Google AI Overviews, ChatGPT, Perplexity & Gemini can cite live prices.
+     */
+    function cj_live_rates_schema(array $rates = [], ?mysqli $conn = null): array {
+        $isoNow = function_exists('cj_format_ist_iso')
+            ? cj_format_ist_iso($rates['updated_at'] ?? null)
+            : date('c');
+        $todayDate = date('Y-m-d');
+        $showGold = !$conn || !function_exists('cj_setting') || cj_setting('show_gold_rate', '1', $conn) === '1';
+        $showSilver = !$conn || !function_exists('cj_setting') || cj_setting('show_silver_rate', '1', $conn) === '1';
+        $show925 = $conn && function_exists('cj_setting') && cj_setting('show_silver_925_rate', '1', $conn) === '1';
+
+        $offers = [];
+        if ($showGold && !empty($rates['gold_rate'])) {
+            $offers[] = [
+                '@type' => 'Offer',
+                'name' => 'Today\'s Gold Rate in Khedbrahma (Per 1 Gram)',
+                'price' => number_format((float)$rates['gold_rate'], 2, '.', ''),
+                'priceCurrency' => 'INR',
+                'priceValidUntil' => $todayDate,
+                'availability' => 'https://schema.org/InStock',
+                'url' => cj_abs_url('gold-rate-khedbrahma'),
+                'seller' => ['@id' => cj_abs_url('index1') . '#store'],
+            ];
+            $offers[] = [
+                '@type' => 'Offer',
+                'name' => 'Today\'s Gold Rate in Khedbrahma (Per 10 Grams / 1 Tola)',
+                'price' => number_format((float)$rates['gold_rate'] * 10, 2, '.', ''),
+                'priceCurrency' => 'INR',
+                'priceValidUntil' => $todayDate,
+                'availability' => 'https://schema.org/InStock',
+                'url' => cj_abs_url('gold-rate-khedbrahma'),
+                'seller' => ['@id' => cj_abs_url('index1') . '#store'],
+            ];
+        }
+        if ($showSilver && !empty($rates['silver_rate'])) {
+            $offers[] = [
+                '@type' => 'Offer',
+                'name' => 'Today\'s Silver Rate in Khedbrahma (Per 1 Gram)',
+                'price' => number_format((float)$rates['silver_rate'], 2, '.', ''),
+                'priceCurrency' => 'INR',
+                'priceValidUntil' => $todayDate,
+                'availability' => 'https://schema.org/InStock',
+                'url' => cj_abs_url('gold-rate-khedbrahma'),
+                'seller' => ['@id' => cj_abs_url('index1') . '#store'],
+            ];
+        }
+        if ($show925 && !empty($rates['silver_925_rate'])) {
+            $offers[] = [
+                '@type' => 'Offer',
+                'name' => 'Today\'s 925 Sterling Silver Rate in Khedbrahma (Per 1 Gram)',
+                'price' => number_format((float)$rates['silver_925_rate'], 2, '.', ''),
+                'priceCurrency' => 'INR',
+                'priceValidUntil' => $todayDate,
+                'availability' => 'https://schema.org/InStock',
+                'url' => cj_abs_url('gold-rate-khedbrahma'),
+                'seller' => ['@id' => cj_abs_url('index1') . '#store'],
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebPage',
+            '@id' => cj_abs_url('gold-rate-khedbrahma') . '#live-rates',
+            'name' => 'Live Gold & Silver Rates in Khedbrahma, Sabarkantha (IST)',
+            'url' => cj_abs_url('gold-rate-khedbrahma'),
+            'dateModified' => $isoNow,
+            'inLanguage' => 'en-IN',
+            'mainEntity' => [
+                '@type' => 'OfferCatalog',
+                'name' => 'ChandraKala Jewellers Daily Live Metal Rates (IST)',
+                'itemListElement' => $offers,
+            ],
+        ];
+    }
+}
+
+if (!function_exists('cj_speakable_schema')) {
+    /** Speakable schema for Google Assistant, Gemini, and AI answer engines. */
+    function cj_speakable_schema(string $url, array $cssSelectors = ['h1', '.rate-box', '.hero-disclaimer', '.section-sub']): array {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebPage',
+            'url' => $url,
+            'speakable' => [
+                '@type' => 'SpeakableSpecification',
+                'cssSelector' => $cssSelectors,
+            ],
+        ];
+    }
+}
+
+if (!function_exists('cj_item_list_schema')) {
+    /** ItemList JSON-LD for Shop / Gallery pages so AI & Google index the product grid. */
+    function cj_item_list_schema(array $items, string $listName = 'ChandraKala Jewellers Collection', string $url = ''): array {
+        $elements = [];
+        $pos = 1;
+        foreach (array_slice($items, 0, 24) as $item) {
+            $id = (int)($item['id'] ?? 0);
+            if ($id <= 0) continue;
+            $elements[] = [
+                '@type' => 'ListItem',
+                'position' => $pos++,
+                'name' => cj_schema_text($item['name'] ?? 'Jewellery Item'),
+                'url' => cj_abs_url('product?id=' . $id),
+            ];
+        }
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'name' => $listName,
+            'url' => $url !== '' ? $url : cj_abs_url('gallery'),
+            'numberOfItems' => count($elements),
+            'itemListElement' => $elements,
+        ];
+    }
+}
+
 if (!function_exists('cj_default_faqs')) {
-    function cj_default_faqs() {
+    function cj_default_faqs(array $rates = []) {
+        $rateLine = 'We publish our live 916 gold and silver rates per gram daily on our homepage (https://chandrakalajewellers.in/index1) and gold rate page (https://chandrakalajewellers.in/gold-rate-khedbrahma).';
+        if (!empty($rates['gold_rate'])) {
+            $g1 = number_format((float)$rates['gold_rate'], 2);
+            $g10 = number_format((float)$rates['gold_rate'] * 10, 2);
+            $updatedStr = (!empty($rates['updated_at']) && function_exists('cj_format_ist'))
+                ? ' (updated ' . cj_format_ist($rates['updated_at']) . ')'
+                : '';
+            $rateLine = "Today's gold board rate at ChandraKala Jewellers, Khedbrahma is ₹{$g1} per gram (₹{$g10} per 10 grams){$updatedStr}.";
+            if (!empty($rates['silver_rate'])) {
+                $s1 = number_format((float)$rates['silver_rate'], 2);
+                $rateLine .= " Silver rate is ₹{$s1} per gram.";
+            }
+            $rateLine .= " Check live updates anytime at https://chandrakalajewellers.in/gold-rate-khedbrahma.";
+        }
+
         return [
             [
                 'q' => 'Where is ChandraKala Jewellers located in Khedbrahma?',
-                'a' => 'ChandraKala Jewellers (also searched as Chandrakala Jewellers) is at Opp. Bhoomi Complex, Civil Road, 22JW+HG9, Khedbrahma-383255, Sabarkantha, Gujarat, India. Coordinates: 24.0314016, 73.0463503. Call +91 9427080359 or open our Google Maps listing for directions.',
+                'a' => 'ChandraKala Jewellers (also searched as Chandrakala Jewellers or ચંદ્રકલા જ્વેલર્સ) is located at Opp. Bhoomi Complex, Civil Road, 22JW+HG9, Khedbrahma-383255, Sabarkantha, Gujarat, India (GPS: 24.0314016, 73.0463503). Call or WhatsApp +91 9427080359.',
             ],
             [
-                'q' => 'Who is the best jeweller in Khedbrahma?',
-                'a' => 'ChandraKala Jewellers is a trusted family-owned jewellery store in Khedbrahma offering 916 gold, silver, and 925 silver jewellery with transparent live rates, custom designs, and WhatsApp ordering for customers across Sabarkantha.',
+                'q' => 'Who is the best jeweller in Khedbrahma and Sabarkantha?',
+                'a' => 'ChandraKala Jewellers on Civil Road is Khedbrahma\'s trusted family-owned jewellery showroom for 916 BIS hallmarked gold, pure silver, and 925 sterling silver jewellery with transparent live weight-based pricing, custom bridal sets, and instant WhatsApp ordering across Sabarkantha, Idar, Vadali, Ambaji, and Himmatnagar.',
             ],
             [
-                'q' => 'Do you sell gold and silver jewellery in Khedbrahma?',
-                'a' => 'Yes. We sell 916 (22K) gold jewellery, silver jewellery, and 925 sterling silver designs with clear pricing based on today\'s metal rates at our Civil Road showroom.',
+                'q' => 'What is today\'s gold and silver rate in Khedbrahma at ChandraKala Jewellers?',
+                'a' => $rateLine,
             ],
             [
-                'q' => 'What is today\'s gold rate at ChandraKala Jewellers?',
-                'a' => 'We publish our latest 916 gold rate per gram on our homepage (index1). Rates are updated regularly so shoppers in Khedbrahma, Idar, Himmatnagar, and Sabarkantha can buy with confidence.',
+                'q' => 'What types of gold and silver jewellery can I buy at ChandraKala Jewellers?',
+                'a' => 'We offer 916 (22K), 20K, and 18K gold jewellery including bridal necklace sets, kundan sets, mangalsutra, tanmaniya, dokiya, pendant butti sets, earrings, chains, hathpan, patala bangles, and rings — plus pure silver kada and 925 sterling silver rings & bracelets, alongside 138+ custom made-to-order designs.',
             ],
             [
-                'q' => 'Can I order jewellery on WhatsApp from ChandraKala Jewellers?',
-                'a' => 'Yes. Browse the shop or catalogue online, then use Cart Checkout or Buy Now to send an order request on WhatsApp to +91 9427080359 for confirmation and purchase guidance.',
+                'q' => 'Can I order hallmark gold or 925 silver jewellery online on WhatsApp?',
+                'a' => 'Yes. Browse over 60 live-priced jewellery pieces in our online Shop or 138+ photos in our Design Catalogue, compare designs side-by-side, and click Buy Now or WhatsApp Order (+91 9427080359) for instant booking, customization, and showroom pickup or insured delivery guidance.',
             ],
             [
-                'q' => 'Do you offer custom jewellery designs in Sabarkantha?',
-                'a' => 'Yes. Browse our Design Catalogue for reference photos and visit the store or message WhatsApp for custom gold and silver jewellery crafted in Khedbrahma.',
+                'q' => 'Do you make custom wedding and bridal gold jewellery in North Gujarat?',
+                'a' => 'Yes. Customers from Khedbrahma, Idar, Himmatnagar, Vadali, Ambaji, Posina, and Vijaynagar visit ChandraKala Jewellers for custom wedding gold jewellery crafted in 22K (916), 20K, or 18K with transparent making charges.',
             ],
             [
                 'q' => 'What are ChandraKala Jewellers opening hours?',
-                'a' => 'We are typically open Monday to Saturday, 10:00 AM to 8:00 PM. Call +91 9427080359 before visiting on holidays.',
+                'a' => 'ChandraKala Jewellers is open Monday to Saturday from 10:00 AM to 8:00 PM IST. Call +91 9427080359 to confirm availability on festivals or Sundays.',
             ],
             [
                 'q' => 'Is Chandrakala Jewellers the same as ChandraKala Jewellers?',
-                'a' => 'Yes. ChandraKala Jewellers and Chandrakala Jewellers refer to the same jewellery store on Civil Road, Khedbrahma. Search either spelling on Google Maps to find us.',
+                'a' => 'Yes. ChandraKala Jewellers, Chandrakala Jewellers, and ચંદ્રકલા જ્વેલર્સ all refer to the same family-owned jewellery showroom at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Gujarat.',
             ],
         ];
     }

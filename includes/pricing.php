@@ -315,7 +315,8 @@ if (!function_exists('cj_get_standard_rates')) {
             'copper_rate' => (float)($rate['copper_rate'] ?? 0),
             'making_charges' => (float)($rate['making_charges_percent'] ?? 0),
             'making_charges_percent' => (float)($rate['making_charges_percent'] ?? 0),
-            'apply_making_to_silver' => !empty($rate['apply_making_to_silver']) ? 1 : 0
+            'apply_making_to_silver' => !empty($rate['apply_making_to_silver']) ? 1 : 0,
+            'updated_at' => $rate['updated_at'] ?? null,
         ];
         $memoryCache = $out;
         @file_put_contents($cacheFile, json_encode($out));
@@ -349,7 +350,8 @@ if (!function_exists('cj_get_manual_rates')) {
             'making_charges' => (float)($rate['manual_making_charges_percent'] ?? 0),
             'manual_making_charges_percent' => (float)($rate['manual_making_charges_percent'] ?? 0),
             'apply_making_to_silver' => !empty($rate['manual_apply_making_to_silver']) ? 1 : 0,
-            'manual_apply_making_to_silver' => !empty($rate['manual_apply_making_to_silver']) ? 1 : 0
+            'manual_apply_making_to_silver' => !empty($rate['manual_apply_making_to_silver']) ? 1 : 0,
+            'updated_at' => $rate['updated_at'] ?? null,
         ];
         $memoryCache = $out;
         @file_put_contents($cacheFile, json_encode($out));

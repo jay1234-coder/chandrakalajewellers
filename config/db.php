@@ -121,6 +121,53 @@ if (!function_exists('cj_get_db')) {
     }
 }
 
+if (!function_exists('cj_format_ist')) {
+    /**
+     * Format a database or unix timestamp in Indian Standard Time (Asia/Kolkata).
+     * Returns e.g. "17 Nov 2026, 07:13 PM IST".
+     */
+    function cj_format_ist($datetime, string $format = 'd M Y, h:i A', bool $withSuffix = true): string {
+        if ($datetime === null || $datetime === '' || $datetime === '0000-00-00 00:00:00') {
+            return '—';
+        }
+        try {
+            $ist = new DateTimeZone('Asia/Kolkata');
+            if (is_numeric($datetime)) {
+                $dt = new DateTime('@' . (int)$datetime);
+                $dt->setTimezone($ist);
+            } else {
+                // DB session runs in +05:30, so naive SQL strings are already IST.
+                $dt = new DateTime((string)$datetime, $ist);
+                $dt->setTimezone($ist);
+            }
+            return $dt->format($format) . ($withSuffix ? ' IST' : '');
+        } catch (Throwable $e) {
+            return (string)$datetime;
+        }
+    }
+}
+
+if (!function_exists('cj_format_ist_iso')) {
+    /** Format a datetime as ISO-8601 with +05:30 offset for Schema.org & Sitemaps. */
+    function cj_format_ist_iso($datetime = null): string {
+        try {
+            $ist = new DateTimeZone('Asia/Kolkata');
+            if ($datetime === null || $datetime === '' || $datetime === '0000-00-00 00:00:00') {
+                $dt = new DateTime('now', $ist);
+            } elseif (is_numeric($datetime)) {
+                $dt = new DateTime('@' . (int)$datetime);
+                $dt->setTimezone($ist);
+            } else {
+                $dt = new DateTime((string)$datetime, $ist);
+                $dt->setTimezone($ist);
+            }
+            return $dt->format('c');
+        } catch (Throwable $e) {
+            return date('c');
+        }
+    }
+}
+
 require_once __DIR__ . '/../includes/settings.php';
 require_once __DIR__ . '/../includes/catalog.php';
 require_once __DIR__ . '/../includes/customers.php';

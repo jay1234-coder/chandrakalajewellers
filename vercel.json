@@ -4,7 +4,7 @@
   "functions": {
     "api/**/*.php": {
       "runtime": "vercel-php@0.8.0",
-      "includeFiles": "{*.php,sw.js,admin/**,config/**,includes/**}"
+      "includeFiles": "{*.php,*.txt,sw.js,admin/**,config/**,includes/**}"
     }
   },
   "routes": [
@@ -13,8 +13,6 @@
     { "src": "^/admin/(css|js|images)/(.*)", "dest": "/admin/$1/$2" },
     { "src": "^/favicon\\.(ico|png|svg)$", "dest": "/favicon.$1" },
     { "src": "^/manifest\\.webmanifest$", "dest": "/manifest.webmanifest" },
-    { "src": "^/robots\\.txt$", "dest": "/robots.txt" },
-    { "src": "^/sitemap\\.xml$", "dest": "/sitemap.xml" },
     { "src": "^/api/ping(\\.php)?$", "dest": "/api/ping.php" },
     { "src": "^/(.*)$", "dest": "/api/index.php" }
   ]

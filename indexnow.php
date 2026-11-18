@@ -35,9 +35,20 @@ $urls = [
     'https://' . $host . '/follow-us',
     'https://' . $host . '/blog',
     'https://' . $host . '/llms.txt',
+    'https://' . $host . '/llms-full.txt',
     'https://' . $host . '/ai.txt',
     'https://' . $host . '/agents.txt',
+    'https://' . $host . '/sitemap.xml',
 ];
+
+if (isset($conn) && $conn instanceof mysqli && !$conn->connect_error) {
+    $pq = $conn->query('SELECT id FROM jewellery_items ORDER BY id DESC LIMIT 100');
+    if ($pq) {
+        while ($pr = $pq->fetch_assoc()) {
+            $urls[] = 'https://' . $host . '/product?id=' . (int)$pr['id'];
+        }
+    }
+}
 
 $payload = json_encode([
     'host' => $host,

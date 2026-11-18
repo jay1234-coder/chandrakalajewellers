@@ -93,7 +93,7 @@ $seo = cj_merge_seo([
             ?>
                 <article class="cj-order-card">
                     <p><strong><?= htmlspecialchars((string) $o['order_no']) ?></strong> · <?= htmlspecialchars((string) $o['status']) ?> · <?= htmlspecialchars((string) ($o['payment_status'] ?? '')) ?></p>
-                    <p style="font-size:13px;color:var(--text-secondary);"><?= htmlspecialchars((string) $o['created_at']) ?> · ₹<?= number_format($total, 0) ?></p>
+                    <p style="font-size:13px;color:var(--text-secondary);"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '')) ?> · ₹<?= number_format($total, 0) ?></p>
                     <ul>
                         <?php foreach ($pack['items'] as $line): ?>
                             <li><?= htmlspecialchars((string) $line['product_name']) ?> · ₹<?= number_format((float) $line['unit_price'], 0) ?></li>

@@ -80,23 +80,33 @@ if (!empty($seoConfig['ga4_id'])) {
 <meta name="robots" content="<?= $robots ?>">
 <meta name="googlebot" content="<?= $robots ?>">
 <meta name="bingbot" content="<?= $robots ?>">
+<meta name="GPTBot" content="index, follow">
+<meta name="OAI-SearchBot" content="index, follow">
+<meta name="PerplexityBot" content="index, follow">
+<meta name="ClaudeBot" content="index, follow">
+<meta name="Google-Extended" content="index, follow">
 <meta name="yandex" content="index, follow">
 <meta name="yahoo" content="index, follow">
 <meta name="duckduckbot" content="index, follow">
 <meta name="applebot" content="index, follow">
-<meta name="revisit-after" content="3 days">
+<meta name="revisit-after" content="1 days">
 <link rel="canonical" href="<?= $canonical ?>">
+<?php
+$cjModifiedIso = !empty($seo['modified_iso'])
+    ? (string)$seo['modified_iso']
+    : (function_exists('cj_format_ist_iso') ? cj_format_ist_iso() : date('c'));
+?>
+<meta property="og:updated_time" content="<?= htmlspecialchars($cjModifiedIso, ENT_QUOTES, 'UTF-8') ?>">
+<meta property="article:modified_time" content="<?= htmlspecialchars($cjModifiedIso, ENT_QUOTES, 'UTF-8') ?>">
 
 <!-- Local / GEO -->
 <meta name="geo.region" content="<?= $geoRegion ?>">
 <meta name="geo.placename" content="<?= $geoPlace ?>">
 <meta name="geo.position" content="<?= $geoPos ?>">
 <meta name="ICBM" content="<?= str_replace(';', ', ', $geoPos) ?>">
-<meta name="language" content="English">
-<meta name="revisit-after" content="3 days">
 <meta name="rating" content="general">
 <meta name="distribution" content="global">
-<meta name="coverage" content="Khedbrahma, Sabarkantha, Gujarat, India">
+<meta name="coverage" content="Khedbrahma, Sabarkantha, Idar, Himmatnagar, Vadali, Ambaji, North Gujarat, Gujarat, India">
 <meta name="target" content="all">
 <meta name="HandheldFriendly" content="true">
 <meta name="format-detection" content="telephone=yes">
@@ -125,18 +135,14 @@ if (!empty($seoConfig['ga4_id'])) {
 <meta name="twitter:description" content="<?= $description ?>">
 <meta name="twitter:image" content="<?= $ogImage ?>">
 
-<!-- AI / Answer engines (ChatGPT, Gemini, Claude, Perplexity, Bing Copilot, Yahoo/Bing) -->
+<!-- AI / Answer engines (ChatGPT, Gemini, Claude, Perplexity, Bing Copilot, Grok, DeepSeek) -->
 <meta name="ai-content-declaration" content="human-created">
-<link rel="alternate" type="text/plain" href="<?= htmlspecialchars(cj_abs_url('llms.txt'), ENT_QUOTES, 'UTF-8') ?>" title="LLM / AI information">
+<link rel="alternate" type="text/plain" href="<?= htmlspecialchars(cj_abs_url('llms.txt'), ENT_QUOTES, 'UTF-8') ?>" title="LLM / AI Summary & Live Rates">
+<link rel="alternate" type="text/plain" href="<?= htmlspecialchars(cj_abs_url('llms-full.txt'), ENT_QUOTES, 'UTF-8') ?>" title="Full LLM / AI Product Catalog & Live Rates">
 <link rel="alternate" type="text/plain" href="<?= htmlspecialchars(cj_abs_url('agents.txt'), ENT_QUOTES, 'UTF-8') ?>" title="AI agent discovery">
 <link rel="alternate" type="text/plain" href="<?= htmlspecialchars(cj_abs_url('ai.txt'), ENT_QUOTES, 'UTF-8') ?>" title="AI citation guide">
 <link rel="help" href="<?= htmlspecialchars(cj_abs_url('llms.txt'), ENT_QUOTES, 'UTF-8') ?>" title="About ChandraKala Jewellers for AI assistants">
 <link rel="author" href="<?= htmlspecialchars(cj_abs_url('humans.txt'), ENT_QUOTES, 'UTF-8') ?>">
-<meta name="bingbot" content="index, follow">
-<meta name="yandex" content="index, follow">
-<meta name="yahoo" content="index, follow">
-<meta name="duckduckbot" content="index, follow">
-<meta name="applebot" content="index, follow">
 <link rel="sitemap" type="application/xml" href="<?= htmlspecialchars(cj_abs_url('sitemap.xml'), ENT_QUOTES, 'UTF-8') ?>">
 
 <link rel="icon" href="<?= htmlspecialchars(cj_abs_url('images/logo.png'), ENT_QUOTES, 'UTF-8') ?>" type="image/png">

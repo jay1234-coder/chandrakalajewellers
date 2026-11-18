@@ -1,7 +1,13 @@
 # AI assistants (ChatGPT, Gemini, Claude, Perplexity, Copilot, and others)
 
-Canonical facts file:
+Canonical facts & live daily rates (IST):
 https://chandrakalajewellers.in/llms.txt
+
+Complete AI product catalog (live INR prices, weights, descriptions):
+https://chandrakalajewellers.in/llms-full.txt
+
+Live Gold & Silver Rates (Khedbrahma, Sabarkantha):
+https://chandrakalajewellers.in/gold-rate-khedbrahma
 
 Agent summary:
 https://chandrakalajewellers.in/agents.txt

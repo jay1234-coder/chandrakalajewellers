@@ -137,7 +137,7 @@ if ($cq) {
                 <div class="flex flex-wrap justify-between gap-2 mb-3">
                     <div>
                         <p class="font-bold text-gray-900"><?= htmlspecialchars($o['order_no']) ?></p>
-                        <p class="text-xs text-gray-500"><?= htmlspecialchars($o['created_at']) ?> · <?= htmlspecialchars($o['status']) ?>
+                        <p class="text-xs text-gray-500"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '')) ?> · <?= htmlspecialchars($o['status']) ?>
                             · <?= htmlspecialchars((string) ($o['payment_status'] ?? 'unpaid')) ?>
                             <?php if (!empty($o['payment_method'])): ?>
                                 (<?= htmlspecialchars((string) $o['payment_method']) ?>)

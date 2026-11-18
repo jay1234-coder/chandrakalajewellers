@@ -201,7 +201,12 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
     <main class="flex-grow container mx-auto px-4 py-8 md:py-12 max-w-3xl">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
 
-            <h2 class="text-2xl font-bold text-gray-900 mb-6 font-serif border-b border-gray-100 pb-4">Edit Jewellery Item</h2>
+            <div class="mb-6 border-b border-gray-100 pb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-2xl font-bold text-gray-900 font-serif">Edit Jewellery Item</h2>
+                <?php if (!empty($product['created_at'])): ?>
+                    <span class="text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Uploaded: <?= htmlspecialchars(cj_format_ist($product['created_at'])) ?></span>
+                <?php endif; ?>
+            </div>
 
             <?php if ($message): ?>
                 <?php if ($message_type === 'success'): ?>
