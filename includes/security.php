@@ -148,7 +148,7 @@ if (!function_exists('cj_send_security_headers')) {
 
         header('X-Content-Type-Options: nosniff');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        header('Permissions-Policy: accelerometer=(), camera=(), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(self), payment=(self), usb=(), interest-cohort=()');
+        header('Permissions-Policy: accelerometer=(), camera=(), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(self), payment=(self), usb=()');
         header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
         header('X-Permitted-Cross-Domain-Policies: none');
 

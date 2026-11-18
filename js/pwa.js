@@ -437,14 +437,6 @@
         if (worker) worker.postMessage(payload);
         else if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage(payload);
       } catch (e) {}
-      // Also warm browser HTTP cache safely (only same-origin & Cloudinary)
-      cleanUrls.slice(0, 40).forEach(function (u) {
-        try {
-          var parsed = new URL(u, location.href);
-          var isSame = (parsed.origin === location.origin);
-          fetch(parsed.href, { credentials: isSame ? 'same-origin' : 'omit', cache: 'force-cache' }).catch(function () {});
-        } catch (e) {}
-      });
     }
 
     sendToSw(pageUrls);

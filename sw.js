@@ -1,7 +1,7 @@
 /* ChandraKala PWA — offline pages + persistent image cache */
-const PAGE_CACHE = 'cj-pages-v14';
-const ASSET_CACHE = 'cj-assets-v14';
-const IMAGE_CACHE = 'cj-images-v14';
+const PAGE_CACHE = 'cj-pages-v15';
+const ASSET_CACHE = 'cj-assets-v15';
+const IMAGE_CACHE = 'cj-images-v15';
 const ALL_CACHES = [PAGE_CACHE, ASSET_CACHE, IMAGE_CACHE];
 
 const PRECACHE_PAGES = [
@@ -66,14 +66,19 @@ self.addEventListener('message', (event) => {
           try {
             const parsed = new URL(raw, self.location.origin);
             const isSameOrigin = (parsed.origin === self.location.origin);
+            // Never precache video streams into image cache
+            if (parsed.pathname.includes('/video/upload/') || /\.(mp4|webm|mov)(\?|$)/i.test(parsed.pathname)) continue;
+            // Use CORS mode for Cloudinary so cached responses are never opaque
             const req = new Request(parsed.href, {
-              mode: isSameOrigin ? 'same-origin' : 'no-cors',
+              mode: isSameOrigin ? 'same-origin' : 'cors',
               credentials: isSameOrigin ? 'same-origin' : 'omit'
             });
             const hit = await cache.match(req);
-            if (hit) continue;
+            if (hit && hit.type !== 'opaque') continue;
             const res = await fetch(req);
-            if (res && (res.ok || res.type === 'opaque')) await cache.put(req, res.clone());
+            if (res && res.ok && (res.type === 'basic' || res.type === 'cors')) {
+              await cache.put(req, res.clone());
+            }
           } catch (e) {}
         }
         if (event.source && event.source.postMessage) {
@@ -103,12 +108,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Images: cache-first (stay offline; no re-fetch when cached)
-  if (isImageRequest(url) || isCloudinary) {
+  // Never intercept video/audio Range streams so Reels stream & seek natively
+  if (
+    req.destination === 'video'
+    || req.destination === 'audio'
+    || req.headers.has('range')
+    || url.pathname.includes('/video/upload/')
+    || /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(url.pathname)
+  ) {
+    return;
+  }
+
+  // Images: cache-first (stay offline; never serve opaque response to non-no-cors request)
+  if (isImageRequest(url) || (isCloudinary && url.pathname.includes('/image/upload/'))) {
     event.respondWith(
       caches.open(IMAGE_CACHE).then(async (cache) => {
         const cached = await cache.match(req);
-        if (cached) return cached;
+        if (cached && !(cached.type === 'opaque' && req.mode !== 'no-cors')) {
+          return cached;
+        }
         try {
           const res = await fetch(req);
           if (res && res.ok && (res.type === 'basic' || res.type === 'cors')) {
@@ -116,7 +134,8 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         } catch (e) {
-          return cached || new Response('', { status: 204, statusText: 'No Content' });
+          if (cached && !(cached.type === 'opaque' && req.mode !== 'no-cors')) return cached;
+          return new Response('', { status: 504, statusText: 'Offline' });
         }
       })
     );
