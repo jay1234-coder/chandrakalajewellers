@@ -20,6 +20,10 @@ ini_set('log_errors', '1');
 
 cj_auth_bootstrap($conn);
 cj_admin_noindex_headers();
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+}
 
 // Secret code gate check (retained for backward compatibility with bookmark links)
 if (isset($_GET['secret'])) {
@@ -753,8 +757,8 @@ $total_items = $total_query->fetch_assoc()['count'] ?? 0;
 $total_pages = max(1, ceil($total_items / $limit));
 
 // Fetch Rates & Products (from jewellery_items for the list below)
-$rate_query = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-$rate = $rate_query->fetch_assoc() ?? [];
+$rate_query = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC, id DESC LIMIT 1");
+$rate = ($rate_query instanceof mysqli_result) ? ($rate_query->fetch_assoc() ?? []) : [];
 
 $products_result = $conn->query("SELECT * FROM jewellery_items ORDER BY id DESC LIMIT $limit OFFSET $offset");
 $product_rows = [];
@@ -765,9 +769,11 @@ if ($products_result) {
 }
 
 // Fetch manual rates for display
-$manual_rate_query_display = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC LIMIT 1");
-$manual_rate = $manual_rate_query_display->fetch_assoc() ?? [];
+$manual_rate_query_display = $conn->query("SELECT * FROM manual_rates ORDER BY updated_at DESC, id DESC LIMIT 1");
+$manual_rate = ($manual_rate_query_display instanceof mysqli_result) ? ($manual_rate_query_display->fetch_assoc() ?? []) : [];
 
+// Clear settings cache so KPIs always reflect live DB settings
+unset($GLOBALS['cj_settings_cache']);
 $rate_formula_map = cj_rate_formula_map();
 $rate_with_formula = $rate;
 $rate_with_formula['rate_formula'] = $rate_formula_map;
@@ -775,10 +781,10 @@ $manual_with_formula = $manual_rate;
 $manual_with_formula['rate_formula'] = $rate_formula_map;
 $counted_rate_metrics = [];
 $counted_metal_labels = [
-    'gold' => ['Gold', 'gold_rate', 'per 1g'],
-    'silver' => ['Silver', 'silver_rate', 'per 1g'],
-    'silver_925' => ['925 Silver', 'silver_925_rate', 'per 1g'],
-    'copper' => ['Copper', 'copper_rate', 'per 1kg'],
+    'gold' => ['Gold', 'gold_rate', 'per 1g', 'show_gold_rate'],
+    'silver' => ['Silver', 'silver_rate', 'per 1g', 'show_silver_rate'],
+    'silver_925' => ['925 Silver', 'silver_925_rate', 'per 1g', 'show_silver_925_rate'],
+    'copper' => ['Copper', 'copper_rate', 'per 1kg', 'show_copper_rate'],
 ];
 foreach ($counted_metal_labels as $metalKey => $meta) {
     $market = (float) ($rate[$meta[1]] ?? 0);
@@ -787,6 +793,7 @@ foreach ($counted_metal_labels as $metalKey => $meta) {
         'label' => $meta[0],
         'unit' => $meta[2],
         'field' => $meta[1],
+        'visible' => cj_setting($meta[3], '1', $conn) === '1',
         'market' => $market,
         'counted' => $counted,
         'formula' => cj_rate_formula_label($rate_formula_map[$metalKey] ?? []),
@@ -794,16 +801,16 @@ foreach ($counted_metal_labels as $metalKey => $meta) {
     ];
 }
 
-// Favorites count
+// Live KPI metrics directly from database
 $fav_query = $conn->query("SELECT COUNT(*) as count FROM jewellery_items WHERE is_favourite = 1");
-$fav_count = $fav_query->fetch_assoc()['count'] ?? 0;
+$fav_count = (int)(($fav_query instanceof mysqli_result ? ($fav_query->fetch_assoc()['count'] ?? 0) : 0));
 
 $sold_out_count = 0;
-$available_count = (int)$total_items;
-$sold_q = $conn->query("SELECT SUM(CASE WHEN is_sold_out = 1 THEN 1 ELSE 0 END) AS sold_out FROM jewellery_items");
+$available_count = 0;
+$sold_q = $conn->query("SELECT SUM(CASE WHEN is_sold_out = 1 THEN 1 ELSE 0 END) AS sold_out, SUM(CASE WHEN COALESCE(is_sold_out, 0) = 0 THEN 1 ELSE 0 END) AS available FROM jewellery_items");
 if ($sold_q && ($sold_row = $sold_q->fetch_assoc())) {
     $sold_out_count = (int)($sold_row['sold_out'] ?? 0);
-    $available_count = max(0, (int)$total_items - $sold_out_count);
+    $available_count = (int)($sold_row['available'] ?? 0);
 }
 $catalogue_count = 0;
 $cat_q = $conn->query("SELECT COUNT(*) AS c FROM products");
@@ -828,23 +835,46 @@ try {
     $cat_ocr_pending = 0;
 }
 $active_reels_count = 0;
+$reels_total_views = 0;
+$reels_total_impressions = 0;
 try {
-    $reelsChk = $conn->query("SELECT COUNT(*) AS c FROM video_reels WHERE is_active = 1");
+    $reelsChk = $conn->query("SELECT COUNT(*) AS c, COALESCE(SUM(views), 0) AS v, COALESCE(SUM(impressions), 0) AS imp FROM video_reels WHERE is_active = 1");
     if ($reelsChk && ($reelsRow = $reelsChk->fetch_assoc())) {
         $active_reels_count = (int)($reelsRow['c'] ?? 0);
+        $reels_total_views = (int)($reelsRow['v'] ?? 0);
+        $reels_total_impressions = (int)($reelsRow['imp'] ?? 0);
     }
 } catch (Throwable $e) {
     $active_reels_count = 0;
 }
 $pending_orders_overview = 0;
+$confirmed_orders_overview = 0;
+$total_orders_overview = 0;
 try {
-    $pendOrdChk = $conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'");
-    if ($pendOrdChk && ($pendOrdRow = $pendOrdChk->fetch_assoc())) {
-        $pending_orders_overview = (int)($pendOrdRow['c'] ?? 0);
+    if (function_exists('cj_expire_stale_orders')) {
+        cj_expire_stale_orders($conn);
+    }
+    $ordBreakdown = $conn->query("SELECT status, COUNT(*) AS c FROM orders GROUP BY status");
+    if ($ordBreakdown instanceof mysqli_result) {
+        while ($orow = $ordBreakdown->fetch_assoc()) {
+            $st = (string)($orow['status'] ?? '');
+            $cnt = (int)($orow['c'] ?? 0);
+            $total_orders_overview += $cnt;
+            if ($st === 'reserved') {
+                $pending_orders_overview = $cnt;
+            } elseif ($st === 'confirmed') {
+                $confirmed_orders_overview = $cnt;
+            }
+        }
     }
 } catch (Throwable $e) {
     $pending_orders_overview = 0;
 }
+$cj_fmt_rate = static function (float $val): string {
+    return (abs($val - round($val)) < 0.005)
+        ? number_format($val, 0)
+        : number_format($val, 2);
+};
 
 $cjShellViewMeta = [
     'overview'  => ['Store Overview', 'Live inventory, showroom rates, and quick workspace tools'],
@@ -1015,7 +1045,13 @@ if ($just_logged_in) {
         </section>
         <?php endif; ?>
 
-        <!-- KPI Overview Grid -->
+        <!-- KPI Overview Grid (All 6 Live DB Metrics) -->
+        <?php
+            $kpiGoldBoard   = (float)($rate['gold_rate'] ?? 0);
+            $kpiSilverBoard = (float)($rate['silver_rate'] ?? 0);
+            $kpiGoldCounted = (float)($counted_rate_metrics['gold']['counted'] ?? 0);
+            $kpi925Board    = (float)($rate['silver_925_rate'] ?? 0);
+        ?>
         <div class="admin-kpi-grid grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-emerald-200 hover:shadow-md transition-all duration-200 group">
                 <div class="flex items-center gap-3 sm:gap-4">
@@ -1025,7 +1061,7 @@ if ($just_logged_in) {
                         <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$available_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Live pieces available for customers to order now.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Live in shop out of <strong><?= (int)$total_items ?></strong> total items · <?= (int)$fav_count ?>/3 favourites.</p>
             </a>
 
             <a href="/admin/orders.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border <?= $pending_orders_overview > 0 ? 'border-rose-200' : 'border-gray-100' ?> shadow-sm block hover:border-amber-200 hover:shadow-md transition-all duration-200 group">
@@ -1036,21 +1072,22 @@ if ($just_logged_in) {
                         <p class="stat-value text-xl sm:text-2xl font-bold <?= $pending_orders_overview > 0 ? 'text-rose-600' : 'text-gray-900' ?>"><?= (int)$pending_orders_overview ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Confirm sales &amp; toggle website sold-out status.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500"><?= (int)$confirmed_orders_overview ?> confirmed · <?= (int)$total_orders_overview ?> total order<?= $total_orders_overview === 1 ? '' : 's' ?>.</p>
             </a>
 
             <a href="<?= htmlspecialchars($cj_view_url('rates')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-amber-200 hover:shadow-md transition-all duration-200 block group">
                 <div class="flex items-center gap-3 sm:gap-4">
                     <div class="icon-box w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg sm:text-xl shrink-0 group-hover:scale-105 transition-transform"><i class="fas fa-coins"></i></div>
                     <div class="min-w-0">
-                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Counted Rates</p>
+                        <p class="stat-label text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Live Rates (1g)</p>
                         <p class="stat-value text-xs sm:text-sm font-bold text-gray-900 leading-snug">
-                            Au ₹<?= number_format($counted_rate_metrics['gold']['counted'] ?? 0, 0) ?>/g ·
-                            Ag ₹<?= number_format($counted_rate_metrics['silver']['counted'] ?? 0, 0) ?>/g
+                            Gold ₹<?= $cj_fmt_rate($kpiGoldBoard) ?>/g · Silver ₹<?= $cj_fmt_rate($kpiSilverBoard) ?>/g
                         </p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Active formula rates driving live shop prices.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">
+                    Counted Gold: ₹<?= $cj_fmt_rate($kpiGoldCounted) ?>/g · 925 Silver: ₹<?= $cj_fmt_rate($kpi925Board) ?>/g.
+                </p>
             </a>
 
             <a href="<?= htmlspecialchars($cj_view_url('inventory')) ?>" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-rose-200 hover:shadow-md transition-all duration-200 group">
@@ -1061,7 +1098,7 @@ if ($just_logged_in) {
                         <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$sold_out_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Marked sold on site. Restock anytime from Inventory.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500"><?= $sold_out_count > 0 ? 'Marked sold on site · tap to restock.' : 'All ' . (int)$total_items . ' items currently available.' ?></p>
             </a>
 
             <a href="/admin/reels.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-purple-200 hover:shadow-md transition-all duration-200 group">
@@ -1072,7 +1109,7 @@ if ($just_logged_in) {
                         <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$active_reels_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Upload videos, sync Instagram Reels &amp; view analytics.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500"><?= number_format($reels_total_views) ?> views · <?= number_format($reels_total_impressions) ?> impressions.</p>
             </a>
 
             <a href="/admin/delete_c.php" class="admin-stat admin-kpi bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm block hover:border-sky-200 hover:shadow-md transition-all duration-200 group">
@@ -1083,7 +1120,7 @@ if ($just_logged_in) {
                         <p class="stat-value text-xl sm:text-2xl font-bold text-gray-900"><?= (int)$catalogue_count ?></p>
                     </div>
                 </div>
-                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500">Ready-to-order custom catalogue &amp; sponsored reel cards.</p>
+                <p class="stat-purpose mt-2.5 text-[11px] leading-snug text-gray-500"><?= $cat_ocr_pending > 0 ? ((int)$cat_ocr_pending . ' pending AI OCR enrichment.') : 'All designs enriched &amp; live in catalogue.' ?></p>
             </a>
         </div>
 
@@ -1152,9 +1189,12 @@ if ($just_logged_in) {
                         if (!$m) continue;
                     ?>
                         <div class="p-3 rounded-xl border border-gray-100 bg-gray-50/70">
-                            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400"><?= htmlspecialchars($m['label']) ?> (<?= htmlspecialchars($m['unit']) ?>)</div>
-                            <div class="text-lg font-bold text-gray-900 mt-1">₹<?= number_format((float)$m['market'], 2) ?></div>
-                            <div class="text-[11px] text-amber-700 font-semibold mt-0.5">Counted: ₹<?= number_format((float)$m['counted'], 2) ?></div>
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400"><?= htmlspecialchars($m['label']) ?> (<?= htmlspecialchars($m['unit']) ?>)</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full <?= !empty($m['visible']) ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-200 text-gray-500' ?>"><?= !empty($m['visible']) ? 'Live' : 'Hidden' ?></span>
+                            </div>
+                            <div class="text-lg font-bold text-gray-900 mt-1">₹<?= $cj_fmt_rate((float)$m['market']) ?></div>
+                            <div class="text-[11px] text-amber-700 font-semibold mt-0.5">Counted: ₹<?= $cj_fmt_rate((float)$m['counted']) ?></div>
                         </div>
                     <?php endforeach; ?>
                 </div>

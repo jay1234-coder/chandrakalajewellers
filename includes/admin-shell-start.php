@@ -28,7 +28,10 @@ $cjShellLogout   = function_exists('cj_admin_home_href') ? cj_admin_home_href(nu
 $cjShellPendingOrders = 0;
 if (isset($conn) && $conn instanceof mysqli) {
     try {
-        $poRes = $conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'");
+        if (function_exists('cj_expire_stale_orders')) {
+            cj_expire_stale_orders($conn);
+        }
+        $poRes = $conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved' AND (reserved_until IS NULL OR reserved_until > NOW())");
         if ($poRes instanceof mysqli_result) {
             $cjShellPendingOrders = (int)($poRes->fetch_assoc()['c'] ?? 0);
             $poRes->free();
