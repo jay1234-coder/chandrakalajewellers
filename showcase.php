@@ -39,16 +39,14 @@ $isLiked = $reel ? cj_reel_is_liked_by_visitor($conn, (int)$reel['id'], $visitor
 $reelComments = $reel ? cj_get_reel_comments($conn, (int)$reel['id'], 50) : [];
 $custSession = function_exists('cj_customer_session') ? cj_customer_session() : null;
 
-// Live Gold & Silver rates
-$rate = [];
-$rq = $conn->query("SELECT * FROM rates ORDER BY updated_at DESC LIMIT 1");
-if ($rq && $rq->num_rows > 0) {
-    $rate = $rq->fetch_assoc();
-}
-$rateGold24 = (float)($rate['gold_24k_rate'] ?? $rate['gold_rate'] ?? 0);
-$rateGold22 = (float)($rate['gold_22k_rate'] ?? $rate['gold_rate'] ?? 0);
-$rateSilver = (float)($rate['silver_rate'] ?? 0);
-$rateUpdatedIst = !empty($rate['updated_at']) ? cj_format_ist($rate['updated_at'], 'd M Y, h:i A') : cj_format_ist(null, 'd M Y, h:i A');
+// Live Gold & Silver rates (matches index1.php standard + manual rates)
+$rate = cj_get_standard_rates($conn);
+$manualRates = cj_get_manual_rates($conn);
+$rateGold24 = (float)($manualRates['gold_24k_rate'] ?? $rate['gold_rate'] ?? 0);
+$rateGold22 = (float)($manualRates['gold_22k_rate'] ?? $rate['gold_rate'] ?? 0);
+$rateSilver = (float)($manualRates['silver_rate'] ?? $rate['silver_rate'] ?? 0);
+$rateUpdatedAt = $manualRates['updated_at'] ?? $rate['updated_at'] ?? null;
+$rateUpdatedIst = !empty($rateUpdatedAt) ? cj_format_ist($rateUpdatedAt, 'd M Y, h:i A') : cj_format_ist(null, 'd M Y, h:i A');
 
 // Live IST Showroom Open Status (10:00 AM - 8:00 PM IST, Mon-Sun)
 $istHour = (int)date('G');
@@ -644,7 +642,9 @@ $seo = cj_merge_seo([
         </div>
         <div class="products-grid">
             <?php foreach ($shopPicks as $row):
-                $price = cj_calculate_item_price($row, $rate);
+                $price = (isset($row['manual_price']) && $row['manual_price'] !== null && (float)$row['manual_price'] > 0)
+                    ? (float)$row['manual_price']
+                    : cj_calculate_price((string)($row['metal_type'] ?? 'gold'), (float)($row['weight'] ?? 0), $rate);
                 $img = cj_img_url((string)$row['image'], 400);
             ?>
             <div class="product-card">
