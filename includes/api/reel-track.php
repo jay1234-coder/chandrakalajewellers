@@ -10,6 +10,27 @@ require_once dirname(__DIR__, 2) . '/includes/customers.php';
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['action'] ?? '') === 'comments') {
+    $rid = (int)($_GET['reel_id'] ?? 0);
+    if ($rid <= 0) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'comments' => []]);
+        exit;
+    }
+    $list = cj_get_reel_comments($conn, $rid, 40);
+    $formatted = array_map(static function ($c) {
+        return [
+            'id' => (int)$c['id'],
+            'customer_name' => (string)$c['customer_name'],
+            'rating' => (int)$c['rating'],
+            'comment' => (string)$c['comment'],
+            'time_ist' => function_exists('cj_format_ist') ? cj_format_ist($c['created_at'] ?? '') : (string)($c['created_at'] ?? ''),
+        ];
+    }, $list);
+    echo json_encode(['ok' => true, 'comments' => $formatted], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     echo json_encode(['ok' => false, 'error' => 'POST required.']);
@@ -44,9 +65,11 @@ if ($reelId <= 0 || $action === '') {
 
 $visitorHash = cj_reel_visitor_hash();
 
-// 1. Trackable Analytics Events (impression, view, click, whatsapp, call, directions, share)
-$allowedEvents = ['impression', 'view', 'click', 'whatsapp', 'call', 'directions', 'share'];
+// 1. Trackable Analytics Events (impression, view, watch, click, whatsapp, call, directions, share)
+$allowedEvents = ['impression', 'view', 'watch', 'click', 'whatsapp', 'call', 'directions', 'share'];
 if (in_array($action, $allowedEvents, true)) {
+    $watchMs = max(0, min(300000, (int)($payload['watch_ms'] ?? 0)));
+
     // Deduplicate impressions & views per visitor within 6 hours to keep counts genuine
     $shouldCount = true;
     if ($action === 'impression' || $action === 'view') {
@@ -67,9 +90,9 @@ if (in_array($action, $allowedEvents, true)) {
     }
 
     if ($shouldCount) {
-        $ev = $conn->prepare("INSERT INTO video_reel_events (reel_id, event_type, visitor_hash, created_at) VALUES (?, ?, ?, NOW())");
+        $ev = $conn->prepare("INSERT INTO video_reel_events (reel_id, event_type, visitor_hash, watch_ms, created_at) VALUES (?, ?, ?, ?, NOW())");
         if ($ev) {
-            $ev->bind_param('iss', $reelId, $action, $visitorHash);
+            $ev->bind_param('issi', $reelId, $action, $visitorHash, $watchMs);
             $ev->execute();
             $ev->close();
         }
@@ -78,6 +101,8 @@ if (in_array($action, $allowedEvents, true)) {
             $conn->query("UPDATE video_reels SET impressions = impressions + 1, views = GREATEST(views, impressions) WHERE id = {$reelId}");
         } elseif ($action === 'view') {
             $conn->query("UPDATE video_reels SET views = views + 1, impressions = GREATEST(impressions, views) WHERE id = {$reelId}");
+        } elseif ($action === 'watch' && $watchMs >= 500) {
+            $conn->query("UPDATE video_reels SET total_watch_ms = total_watch_ms + {$watchMs}, watch_sessions = watch_sessions + 1 WHERE id = {$reelId}");
         } elseif ($action === 'click') {
             $conn->query("UPDATE video_reels SET clicks = clicks + 1 WHERE id = {$reelId}");
         } elseif ($action === 'whatsapp') {

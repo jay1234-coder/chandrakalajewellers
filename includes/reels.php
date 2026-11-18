@@ -33,19 +33,42 @@ if (!function_exists('cj_ensure_reels_schema')) {
             comments_count INT UNSIGNED NOT NULL DEFAULT 0,
             order_clicks INT UNSIGNED NOT NULL DEFAULT 0,
             whatsapp_clicks INT UNSIGNED NOT NULL DEFAULT 0,
+            total_watch_ms BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            watch_sessions INT UNSIGNED NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY idx_reels_rank (is_active, views, impressions, id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Auto-migrate watch-time columns on existing video_reels tables
+        $vrCols = [];
+        if ($cr = @$conn->query("SHOW COLUMNS FROM video_reels")) {
+            while ($col = $cr->fetch_assoc()) $vrCols[$col['Field']] = true;
+        }
+        if (empty($vrCols['total_watch_ms'])) {
+            @$conn->query("ALTER TABLE video_reels ADD COLUMN total_watch_ms BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER whatsapp_clicks");
+        }
+        if (empty($vrCols['watch_sessions'])) {
+            @$conn->query("ALTER TABLE video_reels ADD COLUMN watch_sessions INT UNSIGNED NOT NULL DEFAULT 0 AFTER total_watch_ms");
+        }
 
         $conn->query("CREATE TABLE IF NOT EXISTS video_reel_events (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             reel_id INT UNSIGNED NOT NULL,
             event_type VARCHAR(24) NOT NULL,
             visitor_hash VARCHAR(64) NOT NULL DEFAULT '',
+            watch_ms INT UNSIGNED NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY idx_reel_ev_type_time (reel_id, event_type, created_at),
             KEY idx_reel_ev_dedup (reel_id, event_type, visitor_hash, created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $evCols = [];
+        if ($er = @$conn->query("SHOW COLUMNS FROM video_reel_events")) {
+            while ($col = $er->fetch_assoc()) $evCols[$col['Field']] = true;
+        }
+        if (empty($evCols['watch_ms'])) {
+            @$conn->query("ALTER TABLE video_reel_events ADD COLUMN watch_ms INT UNSIGNED NOT NULL DEFAULT 0 AFTER visitor_hash");
+        }
 
         $conn->query("CREATE TABLE IF NOT EXISTS video_reel_likes (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -418,5 +441,175 @@ if (!function_exists('cj_get_reel_analytics')) {
         }
 
         return $summary;
+    }
+}
+
+if (!function_exists('cj_reel_extract_style_tokens')) {
+    /** Extract jewellery interest tokens from internal admin notes for personalized matching. */
+    function cj_reel_extract_style_tokens(string $text): array
+    {
+        $text = strtolower(trim($text));
+        if ($text === '') return [];
+        $parts = preg_split('/[^a-z0-9]+/', $text) ?: [];
+        $stop = ['the', 'and', 'for', 'with', 'new', 'reel', 'video', 'shoot', 'jewellery', 'jewelry', 'design', 'from'];
+        $tokens = [];
+        foreach ($parts as $p) {
+            if (strlen($p) >= 3 && !in_array($p, $stop, true)) {
+                $tokens[] = $p;
+            }
+        }
+        return array_values(array_unique($tokens));
+    }
+}
+
+if (!function_exists('cj_get_personalized_reels')) {
+    /**
+     * Instagram-Style "For You" Recommendation + Controlled Randomization Engine.
+     * Learns from each visitor's impressions, watch duration, likes, comments & clicks:
+     *   - Builds visitor interest profile (preferred jewellery styles & reel durations)
+     *   - Boosts unseen reels matching their taste + high global watch engagement
+     *   - Applies anti-fatigue demotion to reels just seen recently
+     *   - Injects controlled randomization (epsilon-greedy jitter) so every visit feels fresh!
+     *
+     * @return list<array<string,mixed>>
+     */
+    function cj_get_personalized_reels(mysqli $conn, string $visitorHash, int $limit = 60): array
+    {
+        $all = cj_get_ranked_reels($conn, max(60, $limit), true, 'top');
+        if (count($all) <= 1) {
+            return $all;
+        }
+
+        // Index reels by ID & extract style tags
+        $byId = [];
+        $reelTokens = [];
+        foreach ($all as $r) {
+            $rid = (int)$r['id'];
+            $byId[$rid] = $r;
+            $reelTokens[$rid] = cj_reel_extract_style_tokens((string)($r['admin_note'] ?? ''));
+        }
+
+        // 1. Gather visitor's recent interaction signals (last 30 days)
+        $likedIds = [];
+        if ($st = $conn->prepare("SELECT reel_id FROM video_reel_likes WHERE visitor_hash = ?")) {
+            $st->bind_param('s', $visitorHash);
+            $st->execute();
+            $res = $st->get_result();
+            while ($row = $res->fetch_assoc()) $likedIds[(int)$row['reel_id']] = true;
+            $st->close();
+        }
+
+        $recentSeen = [];
+        $interestWeights = [];
+        $preferredDurationSum = 0.0;
+        $preferredDurationCount = 0;
+
+        if ($st = $conn->prepare(
+            "SELECT reel_id, event_type, watch_ms, TIMESTAMPDIFF(MINUTE, created_at, NOW()) AS mins_ago
+             FROM video_reel_events
+             WHERE visitor_hash = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             ORDER BY id DESC LIMIT 150"
+        )) {
+            $st->bind_param('s', $visitorHash);
+            $st->execute();
+            $res = $st->get_result();
+            while ($ev = $res->fetch_assoc()) {
+                $rid = (int)$ev['reel_id'];
+                $et = (string)$ev['event_type'];
+                $wms = (int)($ev['watch_ms'] ?? 0);
+                $minsAgo = (int)($ev['mins_ago'] ?? 9999);
+
+                // Anti-fatigue: remember recently seen reels in last 3 hours
+                if ($minsAgo <= 180 && ($et === 'impression' || $et === 'view' || $et === 'watch')) {
+                    $recentSeen[$rid] = min($recentSeen[$rid] ?? 9999, $minsAgo);
+                }
+
+                // Positive interest signal weight
+                $signal = 0.0;
+                if ($et === 'order' || $et === 'whatsapp') $signal = 8.0;
+                elseif ($et === 'click' || $et === 'share') $signal = 5.0;
+                elseif ($et === 'watch') {
+                    // Long watch (>4s) = strong interest; quick skip (<1.5s) = negative signal
+                    if ($wms >= 7000) $signal = 6.0;
+                    elseif ($wms >= 3500) $signal = 3.0;
+                    elseif ($wms > 0 && $wms < 1400) $signal = -2.0;
+                }
+
+                if ($signal !== 0.0 && !empty($reelTokens[$rid])) {
+                    foreach ($reelTokens[$rid] as $tok) {
+                        $interestWeights[$tok] = ($interestWeights[$tok] ?? 0.0) + $signal;
+                    }
+                }
+                if ($signal > 0 && isset($byId[$rid]) && (float)($byId[$rid]['duration'] ?? 0) > 0) {
+                    $preferredDurationSum += (float)$byId[$rid]['duration'];
+                    $preferredDurationCount++;
+                }
+            }
+            $st->close();
+        }
+
+        // Likes give strong interest boost to matching tags
+        foreach (array_keys($likedIds) as $lrid) {
+            if (!empty($reelTokens[$lrid])) {
+                foreach ($reelTokens[$lrid] as $tok) {
+                    $interestWeights[$tok] = ($interestWeights[$tok] ?? 0.0) + 6.5;
+                }
+            }
+        }
+
+        $avgPrefDur = $preferredDurationCount > 0 ? ($preferredDurationSum / $preferredDurationCount) : 0.0;
+
+        // 2. Score every reel: Global Momentum + Personalized Affinity + Freshness + Random Discovery
+        $maxViews = 1;
+        foreach ($all as $r) {
+            $maxViews = max($maxViews, (int)$r['display_views']);
+        }
+
+        $scored = [];
+        foreach ($all as $r) {
+            $rid = (int)$r['id'];
+            $r['is_liked'] = !empty($likedIds[$rid]);
+
+            // Global popularity & retention quality (0..30)
+            $viewRatio = ((int)$r['display_views']) / $maxViews;
+            $avgWatchSec = ((int)($r['watch_sessions'] ?? 0) > 0)
+                ? (((int)($r['total_watch_ms'] ?? 0) / (int)$r['watch_sessions']) / 1000.0)
+                : 0.0;
+            $globalScore = ($viewRatio * 18.0)
+                + min(8.0, $avgWatchSec * 0.8)
+                + min(6.0, ((int)$r['likes_count']) * 0.5 + ((int)$r['comments_count']) * 0.8);
+
+            // Personal interest affinity (can be positive or negative)
+            $affinity = 0.0;
+            foreach ($reelTokens[$rid] as $tok) {
+                if (isset($interestWeights[$tok])) {
+                    $affinity += $interestWeights[$tok] * 2.2;
+                }
+            }
+            $affinity = max(-15.0, min(35.0, $affinity));
+
+            if ($avgPrefDur > 0 && (float)($r['duration'] ?? 0) > 0) {
+                $diff = abs((float)$r['duration'] - $avgPrefDur);
+                if ($diff <= 6.0) $affinity += 3.5;
+            }
+
+            // Anti-fatigue penalty so recently swiped reels rotate back cleanly
+            $fatigue = 0.0;
+            if (isset($recentSeen[$rid])) {
+                $fatigue = $recentSeen[$rid] < 20 ? -18.0 : -9.0;
+            }
+
+            // Controlled random discovery jitter (0..26) so every session feels fresh & randomized
+            $randomJitter = (mt_rand(0, 2600) / 100.0);
+
+            $r['_algo_score'] = $globalScore + $affinity + $fatigue + $randomJitter;
+            $scored[] = $r;
+        }
+
+        usort($scored, static function ($a, $b) {
+            return $b['_algo_score'] <=> $a['_algo_score'];
+        });
+
+        return array_slice($scored, 0, $limit);
     }
 }

@@ -293,6 +293,8 @@ foreach ($reelOrders as $or) {
                 $ord = $pr ? (int)$pr['orders'] : (int)$r['order_clicks'];
                 $base = max($imp, $vw);
                 $ctr = $base > 0 ? round(($clk / $base) * 100, 1) : 0.0;
+                $ws = (int)($r['watch_sessions'] ?? 0);
+                $avgWatchSec = $ws > 0 ? round(((int)($r['total_watch_ms'] ?? 0) / $ws) / 1000, 1) : 0.0;
                 $istTime = cj_format_ist($r['created_at'] ?? '', 'd M Y, h:i A');
             ?>
             <div class="reel-admin-card bg-white rounded-2xl border <?= !empty($r['is_top_viewed']) ? 'border-amber-400' : 'border-gray-100' ?> shadow-sm overflow-hidden flex flex-col">
@@ -318,6 +320,7 @@ foreach ($reelOrders as $or) {
                     <div>
                         <div class="flex items-center justify-between gap-2 text-[11px] text-gray-500 mb-2">
                             <span title="Upload IST Date & Time">🕒 <?= htmlspecialchars($istTime) ?></span>
+                            <span title="Average Watch Time per Swipe" class="font-semibold text-amber-600">⏱ <?= $avgWatchSec ?>s avg</span>
                             <a href="/showcase?v=<?= $rid ?>" target="_blank" rel="noopener" class="text-amber-600 font-bold hover:underline">Open &nearr;</a>
                         </div>
 
