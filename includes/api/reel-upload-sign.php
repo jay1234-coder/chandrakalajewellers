@@ -120,11 +120,11 @@ if ($action === 'save') {
     $newId = (int)$stmt->insert_id;
     $stmt->close();
 
-    // Ping IndexNow for /reels freshness
+    // Ping IndexNow for instant Bing/ChatGPT/Yandex indexing of the new reel
     if (file_exists(dirname(__DIR__, 2) . '/includes/indexnow-helper.php')) {
         require_once dirname(__DIR__, 2) . '/includes/indexnow-helper.php';
-        if (function_exists('cj_ping_indexnow')) {
-            @cj_ping_indexnow(['https://chandrakalajewellers.in/reels', 'https://chandrakalajewellers.in/showcase?v=' . $newId]);
+        if (function_exists('cj_auto_ping_indexnow')) {
+            @cj_auto_ping_indexnow(['https://chandrakalajewellers.in/reels', 'https://chandrakalajewellers.in/showcase?v=' . $newId], true);
         }
     }
 
