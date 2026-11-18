@@ -70,9 +70,15 @@ if (!function_exists('cj_gallery_token_close')) {
         if ($a === '' || $b === '') {
             return false;
         }
-        // Prefix / contains for short jewellery stems
-        if (mb_strlen($a, 'UTF-8') >= 3 && (str_starts_with($b, $a) || str_starts_with($a, $b))) {
-            return true;
+        // Prefix match only for meaningful stems (min 4 chars and >=50% length ratio)
+        // so short words like "man" never falsely match "mangalsutra"
+        $la = mb_strlen($a, 'UTF-8');
+        $lb = mb_strlen($b, 'UTF-8');
+        if ($la >= 4 && $lb >= 4 && (str_starts_with($b, $a) || str_starts_with($a, $b))) {
+            $ratio = min($la, $lb) / max($la, $lb);
+            if ($ratio >= 0.50) {
+                return true;
+            }
         }
         if (function_exists('levenshtein')) {
             $la = strlen($a);
@@ -427,7 +433,7 @@ if (!function_exists('cj_catalogue_ai_search')) {
             $group = [$tok];
             foreach ($synMap as $key => $words) {
                 foreach ($words as $w) {
-                    if ($tok === $w || (mb_strlen($tok, 'UTF-8') >= 4 && cj_gallery_token_close($tok, $w))) {
+                    if ($tok === $w || (mb_strlen($tok, 'UTF-8') >= 4 && mb_strlen($w, 'UTF-8') >= 4 && cj_gallery_token_close($tok, $w))) {
                         $group = array_merge($group, $words);
                         $intents[] = ucfirst(str_replace('_', ' ', $key));
                         break;

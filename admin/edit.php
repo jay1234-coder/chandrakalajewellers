@@ -12,9 +12,11 @@ ini_set('log_errors', '1');
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/pricing.php';
 require_once dirname(__DIR__) . '/includes/img-helper.php';
+require_once dirname(__DIR__) . '/includes/catalog.php';
 
 cj_auth_bootstrap($conn);
 cj_require_role(['admin', 'superadmin'], 'admin');
+$productTypesList = cj_get_product_types($conn);
 
 
 $product = null;
@@ -42,14 +44,19 @@ if (isset($_GET['id'])) {
     } else {
         // Handle Update
         $id = intval($_POST['id']);
-        $name = $conn->real_escape_string($_POST['name']);
-        $desc = $conn->real_escape_string($_POST['description']);
+        $name = trim((string)($_POST['name'] ?? ''));
+        $category = trim((string)($_POST['category'] ?? ''));
+        $desc = trim((string)($_POST['description'] ?? ''));
         $weight = floatval($_POST['weight']);
-        $metal = $conn->real_escape_string($_POST['metal_type']);
-        $manual_price = ($_POST['manual_price'] !== '') ? floatval($_POST['manual_price']) : null;
+        $metal = trim((string)($_POST['metal_type'] ?? 'gold'));
+        $manual_price = (isset($_POST['manual_price']) && $_POST['manual_price'] !== '') ? floatval($_POST['manual_price']) : null;
         $is_fav = isset($_POST['is_fav']) ? 1 : 0;
-        $old_image = $conn->real_escape_string($_POST['old_image']);
+        $old_image = basename((string)($_POST['old_image'] ?? ''));
         $image = $old_image; // Default to old image
+        if ($category !== '') {
+            cj_add_product_type($conn, $category);
+            $productTypesList = cj_get_product_types($conn);
+        }
 
         // Handle new image upload
         if (isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK) {
@@ -113,10 +120,8 @@ if (isset($_GET['id'])) {
 
         // Only save changes if no errors have occurred so far
         if ($message_type !== 'error') {
-            $manual_price_sql = is_null($manual_price) ? "NULL" : $manual_price;
-
-            $stmt = $conn->prepare("UPDATE jewellery_items SET name = ?, image = ?, description = ?, weight = ?, metal_type = ?, manual_price = ?, is_favourite = ? WHERE id = ?");
-            $stmt->bind_param("sssdssii", $name, $image, $desc, $weight, $metal, $manual_price_sql, $is_fav, $id);
+            $stmt = $conn->prepare("UPDATE jewellery_items SET name = ?, category = ?, image = ?, description = ?, weight = ?, metal_type = ?, manual_price = ?, is_favourite = ? WHERE id = ?");
+            $stmt->bind_param("ssssdsdii", $name, $category, $image, $desc, $weight, $metal, $manual_price, $is_fav, $id);
 
             if ($stmt->execute()) {
                 $message = "Product updated successfully!";
@@ -178,6 +183,34 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
         }
 
         window.onload = calculatePrice;
+
+        async function cjEditAddProductType() {
+            const label = window.prompt('Enter new Jewellery Type name (e.g. Toe Ring, Maang Tikka, Kamarbandh):');
+            if (!label || !label.trim()) return;
+            const fd = new FormData();
+            fd.append('name', label.trim());
+            fd.append('csrf_token', <?= json_encode($_SESSION['csrf_token'] ?? '') ?>);
+            try {
+                const res = await fetch('/api/product-types.php', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    alert(data.error || 'Could not add type.');
+                    return;
+                }
+                const sel = document.getElementById('category');
+                const created = data.created?.name || label.trim();
+                let exists = Array.from(sel.options).some(o => o.value.toLowerCase() === created.toLowerCase());
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = created;
+                    opt.textContent = created;
+                    sel.appendChild(opt);
+                }
+                sel.value = created;
+            } catch (err) {
+                alert('Network error adding product type.');
+            }
+        }
     </script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
@@ -250,6 +283,29 @@ $rate = $rate_query->fetch_assoc() ?? []; // Initialize as empty array if no rat
                         <div>
                             <label for="manual_price" class="block text-xs font-semibold text-gray-500 uppercase mb-2">Manual Override Price (optional)</label>
                             <input type="number" name="manual_price" id="manual_price" value="<?= htmlspecialchars($product['manual_price'] ?? '') ?>" class="p-3 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all duration-200" step="0.01">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="category" class="block text-xs font-semibold text-gray-500 uppercase mb-2">Product Type / Category (For Storefront Filtration)</label>
+                            <div class="flex items-center gap-2">
+                                <select name="category" id="category" class="p-3 border border-gray-200 rounded-xl flex-1 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all duration-200">
+                                    <option value="">— Select Jewellery Type —</option>
+                                    <?php
+                                    $curCat = trim((string)($product['category'] ?? ''));
+                                    $seenCur = false;
+                                    foreach ($productTypesList as $pt):
+                                        $ptName = (string)$pt['name'];
+                                        $isSel = ($curCat !== '' && strcasecmp($curCat, $ptName) === 0);
+                                        if ($isSel) $seenCur = true;
+                                    ?>
+                                        <option value="<?= htmlspecialchars($ptName) ?>" <?= $isSel ? 'selected' : '' ?>><?= htmlspecialchars($ptName) ?></option>
+                                    <?php endforeach; ?>
+                                    <?php if ($curCat !== '' && !$seenCur): ?>
+                                        <option value="<?= htmlspecialchars($curCat) ?>" selected><?= htmlspecialchars($curCat) ?></option>
+                                    <?php endif; ?>
+                                </select>
+                                <button type="button" onclick="cjEditAddProductType()" title="Add a new jewellery type" class="px-4 py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl font-bold text-base transition-colors shrink-0">+</button>
+                            </div>
                         </div>
                     </div>
 

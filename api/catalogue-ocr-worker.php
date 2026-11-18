@@ -91,7 +91,10 @@ foreach ($rows as $row) {
 
     // Keep meaningful human names if not numeric/generic
     $origName = trim((string)$row['name']);
-    $isGenericName = ($origName === '' || preg_match('/^(?:\d{5,}|img[_\-\s]*\d+|photo[_\-\s]*\d+|jewellery[_\-\s]*[a-f0-9.]+|whatsapp.*|untitled.*)$/i', $origName));
+    $isGenericName = (
+        $origName === ''
+        || (bool)preg_match('/^(?:\d{5,}|img[_\-\s]*\d+|photo[_\-\s]*\d+|jewellery[_\-\s]*[a-f0-9.]+|whatsapp.*|untitled.*|[0-9a-f]{8}[\s\-_][0-9a-f]{4}[\s\-_][0-9a-f]{4}.*|[0-9a-f\s\-_]{14,})$/i', $origName)
+    );
     $hint = $isGenericName ? '' : $origName;
 
     $analysis = cj_analyze_jewellery_image($conn, $imgSrc, (string)($row['ocr_text'] ?? ''), $hint, $id);
