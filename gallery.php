@@ -286,7 +286,7 @@ $seo = cj_merge_seo([
     'title' => $seoTitleQ . ($filter_metal === 'all'
         ? 'Shop 916 Gold & Silver Jewellery in Khedbrahma | ChandraKala Jewellers'
         : $filterLabel . ' Jewellery in Khedbrahma | ChandraKala Jewellers'),
-    'description' => 'Browse ' . strtolower($filterLabel) . ' jewellery (' . (int)$total_items . ' live-priced designs) from ChandraKala Jewellers, Khedbrahma. Live metal rates in IST, hallmark 916 gold, pure silver & 925 sterling silver. Order online or visit Civil Road.',
+    'description' => 'Shop ' . (int)$total_items . ' live-priced ' . strtolower($filterLabel) . ' jewellery designs at ChandraKala Jewellers, Khedbrahma. Hallmark 916 gold & 925 silver with live IST rates.',
     'canonical' => cj_abs_url(gallery_url($filter_metal, $page > 1 ? $page : 1, $sort, $min_price, $max_price, $search_q)),
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [

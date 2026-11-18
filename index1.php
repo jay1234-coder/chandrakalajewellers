@@ -36,7 +36,7 @@ $activePage = 'home';
 require_once 'includes/seo.php';
 $seo = cj_merge_seo([
     'title' => 'ChandraKala Jewellers | 916 Gold, Silver & Live Rates in Khedbrahma',
-    'description' => 'Family-owned 916 gold, pure silver & 925 sterling silver jewellers in Khedbrahma, Sabarkantha. Check today\'s live rates in IST, shop 60+ designs & 138+ custom catalogue pieces on Civil Road. Call +91 9427080359.',
+    'description' => 'ChandraKala Jewellers, Khedbrahma: Shop 916 gold, pure silver & 925 sterling silver with live daily IST rates & 138+ custom designs. Call +91 9427080359.',
     'canonical' => cj_abs_url('index1'),
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [

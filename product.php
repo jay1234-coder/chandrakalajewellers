@@ -117,14 +117,15 @@ if ($schemaPrice <= 0 && $manualDbPrice > 0) {
 $schemaFallbackPrice = max((float)$rounded_auto_price, $manualDbPrice, (float)$final_price);
 
 $seoDesc = trim(preg_replace('/\s+/', ' ', strip_tags($product['description'] ?? '')));
-if ($seoDesc === '') {
-    $seoDesc = $product['name'] . ' — ' . $metal_display . ' jewellery from ChandraKala Jewellers, Khedbrahma.';
+$priceSnippet = $final_price > 0 ? ('₹' . number_format($final_price, 0)) : 'live showroom rate';
+$metaDescBuilt = "Buy {$product['name']} ({$product['weight']}g {$metal_display}, {$priceSnippet}) at ChandraKala Jewellers, Civil Road, Khedbrahma.";
+if ($seoDesc !== '') {
+    $metaDescBuilt .= ' ' . rtrim($seoDesc, '.') . '.';
 }
-$descLen = function_exists('mb_strlen') ? mb_strlen($seoDesc) : strlen($seoDesc);
-$descShort = function_exists('mb_substr') ? mb_substr($seoDesc, 0, 155) : substr($seoDesc, 0, 155);
+$metaDescBuilt .= ' Live IST rates & WhatsApp order.';
 $seo = cj_merge_seo([
     'title' => $product['name'] . ' (' . $product['weight'] . 'g ' . $metal_display . ') | ChandraKala Jewellers Khedbrahma',
-    'description' => $descShort . ($descLen > 155 ? '…' : ''),
+    'description' => $metaDescBuilt,
     'keywords' => $product['name'] . ', ' . $metal_display . ' jewellery Khedbrahma, ' . $product['weight'] . 'g ' . strtolower($metal_display) . ', buy ' . strtolower($metal_display) . ' jewellery Sabarkantha Gujarat, 916 hallmark gold, ChandraKala Jewellers',
     'canonical' => $productUrl,
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? ($product['created_at'] ?? null)),

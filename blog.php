@@ -34,7 +34,7 @@ $posts = [
 require_once 'includes/seo.php';
 $seo = cj_merge_seo([
     'title' => 'Jewellery Blog | ChandraKala Jewellers',
-    'description' => 'Jewellery care tips, gold buying guides and local advice from ChandraKala Jewellers in Khedbrahma, Sabarkantha, Gujarat.',
+    'description' => 'Read jewellery care tips, 916 hallmark gold buying guides & local shopping advice from ChandraKala Jewellers on Civil Road, Khedbrahma, Sabarkantha, Gujarat.',
     'keywords' => 'jewellery care tips, gold buying guide Khedbrahma, jewellers in Khedbrahma blog, silver care tips Gujarat, ChandraKala Jewellers',
     'canonical' => cj_abs_url('blog'),
     'schema' => [

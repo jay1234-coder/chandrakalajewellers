@@ -12,7 +12,10 @@ if (!isset($seo) || !is_array($seo)) {
 }
 
 $title = htmlspecialchars($seo['title'], ENT_QUOTES, 'UTF-8');
-$description = htmlspecialchars($seo['description'], ENT_QUOTES, 'UTF-8');
+$rawDescription = function_exists('cj_normalize_meta_description')
+    ? cj_normalize_meta_description((string)($seo['description'] ?? ''))
+    : (string)($seo['description'] ?? '');
+$description = htmlspecialchars($rawDescription, ENT_QUOTES, 'UTF-8');
 $keywords = htmlspecialchars($seo['keywords'], ENT_QUOTES, 'UTF-8');
 $canonical = htmlspecialchars($seo['canonical'], ENT_QUOTES, 'UTF-8');
 $robots = htmlspecialchars($seo['robots'], ENT_QUOTES, 'UTF-8');

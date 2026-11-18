@@ -4,7 +4,7 @@ require_once 'includes/seo.php';
 $b = cj_business_info();
 $seo = cj_merge_seo([
     'title' => 'About ChandraKala Jewellers | Khedbrahma Store',
-    'description' => 'About ChandraKala Jewellers — family gold & silver shop on Civil Road, Khedbrahma. 916 gold, silver, custom designs and honest live rates.',
+    'description' => 'About ChandraKala Jewellers — trusted family-owned 916 gold, pure silver & 925 sterling silver showroom on Civil Road, Khedbrahma, Sabarkantha, Gujarat.',
     'keywords' => 'about ChandraKala Jewellers, Chandrakala Jewellers Khedbrahma, family jewellers Sabarkantha, gold shop Civil Road history',
     'canonical' => cj_abs_url('about'),
     'schema' => [

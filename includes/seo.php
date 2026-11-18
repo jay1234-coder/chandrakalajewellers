@@ -142,9 +142,54 @@ if (!function_exists('cj_default_seo')) {
     }
 }
 
+if (!function_exists('cj_normalize_meta_description')) {
+    /**
+     * Guarantee every meta description sits cleanly in Bing & Google's 145-160 character sweet spot.
+     * Expands short descriptions with natural local store context and trims cleanly at word boundaries.
+     */
+    function cj_normalize_meta_description(string $desc, int $minLen = 145, int $maxLen = 160): string {
+        $text = trim((string)preg_replace('/\s+/u', ' ', strip_tags($desc)));
+        $lenFn = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
+        $subFn = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+
+        if ($lenFn($text) < $minLen) {
+            $suffixes = [
+                ' Shop 916 BIS gold, pure silver & 925 sterling silver with live IST rates at ChandraKala Jewellers, Civil Road, Khedbrahma, Gujarat.',
+                ' Order via WhatsApp at +91 9427080359 or visit Opp. Bhoomi Complex, Sabarkantha.',
+            ];
+            foreach ($suffixes as $suffix) {
+                if ($lenFn($text) >= $minLen) {
+                    break;
+                }
+                $sep = ($text !== '' && !preg_match('/[.!?]$/u', $text)) ? '.' : '';
+                // Avoid duplicating brand name if already present
+                $addition = (stripos($text, 'ChandraKala') !== false && stripos($suffix, 'ChandraKala') !== false)
+                    ? ' Explore 916 BIS gold, pure silver & 925 sterling silver with live IST rates on Civil Road, Khedbrahma, Sabarkantha, Gujarat.'
+                    : $suffix;
+                $text .= $sep . $addition;
+            }
+        }
+
+        if ($lenFn($text) > $maxLen) {
+            $cut = $subFn($text, 0, $maxLen - 1);
+            $lastSpace = function_exists('mb_strrpos') ? mb_strrpos($cut, ' ') : strrpos($cut, ' ');
+            if ($lastSpace !== false && $lastSpace >= $minLen - 15) {
+                $cut = $subFn($cut, 0, $lastSpace);
+            }
+            $text = rtrim($cut, " \t\n\r\0\x0B,;:-") . '.';
+        }
+
+        return $text;
+    }
+}
+
 if (!function_exists('cj_merge_seo')) {
     function cj_merge_seo(array $overrides = []) {
-        return array_merge(cj_default_seo(), $overrides);
+        $merged = array_merge(cj_default_seo(), $overrides);
+        if (isset($merged['description'])) {
+            $merged['description'] = cj_normalize_meta_description((string)$merged['description']);
+        }
+        return $merged;
     }
 }
 

@@ -84,7 +84,7 @@ if ($is_ajax) {
 
 $seo = cj_merge_seo([
     'title' => 'Custom Design Catalogue | ChandraKala Jewellers',
-    'description' => 'Browse custom gold & silver design photos from ChandraKala Jewellers in Khedbrahma. Select, compare, and order designs on WhatsApp with photo links.',
+    'description' => 'Explore 138+ custom 916 gold & silver jewellery design photos at ChandraKala Jewellers, Khedbrahma. Compare pieces side-by-side & order directly on WhatsApp.',
     'keywords' => 'custom gold jewellery designs Khedbrahma, silver design catalogue Gujarat, jewellery photo catalogue Sabarkantha',
     'canonical' => cj_abs_url('Catalogue'),
     'schema' => [
