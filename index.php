@@ -10,13 +10,15 @@ if (!empty($_SERVER['QUERY_STRING'])) {
 }
 
 $ua = strtolower((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
-$isBot = (bool) preg_match(
-    '/bot|crawl|spider|slurp|bingpreview|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|discordbot|googleother|gptbot|claudebot|bytespider|semrush|ahrefs|yandex|duckduck/i',
+$isBot = $ua === '' || (bool) preg_match(
+    '/bot|crawl|spider|slurp|bing|chatgpt|openai|oai-search|perplexity|anthropic|claude|cohere|mistral|grok|xai|deepseek|applebot|meta-external|google-extended|googleother|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|discord|bytespider|semrush|ahrefs|yandex|duckduck|curl|wget|python|node|axios|go-http|headless/i',
     $ua
 );
 
 if ($isBot) {
-    header('Location: https://chandrakalajewellers.in/index1' . (!empty($_SERVER['QUERY_STRING']) ? ('?' . $_SERVER['QUERY_STRING']) : ''), true, 301);
+    // Serve the full live homepage directly (200 OK) so ChatGPT-User, OAI-SearchBot,
+    // Bingbot, Googlebot, and Perplexity never hit a splash screen or redirect loop.
+    require __DIR__ . '/index1.php';
     exit;
 }
 
@@ -40,12 +42,14 @@ $canonical = 'https://chandrakalajewellers.in/index1';
     ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="refresh" content="3;url=<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>">
-    <meta name="robots" content="noindex, follow">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#b8972c">
     <link rel="canonical" href="<?= htmlspecialchars($canonical, ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="alternate" type="text/plain" href="https://chandrakalajewellers.in/llms.txt" title="LLM / AI Summary & Live Rates">
+    <link rel="alternate" type="text/plain" href="https://chandrakalajewellers.in/llms-full.txt" title="Full LLM / AI Product Catalog">
     <link rel="manifest" href="manifest.webmanifest">
-    <title>ChandraKala Jewellers — Welcome</title>
-    <meta name="description" content="Welcome to ChandraKala Jewellers — gold, silver &amp; 925 jewellery in Khedbrahma, Gujarat.">
+    <title>ChandraKala Jewellers | 916 Gold, Silver &amp; Live Rates in Khedbrahma</title>
+    <meta name="description" content="ChandraKala Jewellers — Trusted family-owned 916 BIS gold, pure silver &amp; 925 sterling silver jewellery store at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Sabarkantha, Gujarat. Call +91 9427080359.">
     <?php include __DIR__ . '/includes/gtm-head.php'; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
