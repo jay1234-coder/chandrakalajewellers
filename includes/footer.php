@@ -10,6 +10,7 @@
                 <li><a href="index1">Home</a></li>
                 <li><a href="gallery">Shop</a></li>
                 <li><a href="Catalogue">Design Catalogue</a></li>
+                <li><a href="reels">Jewellery Reels</a></li>
                 <li><a href="blog">Blog</a></li>
                 <li><a href="jewellers-in-khedbrahma">Jewellers in Khedbrahma</a></li>
                 <li><a href="gold-rate-khedbrahma">Gold Rate Khedbrahma</a></li>

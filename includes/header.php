@@ -25,6 +25,7 @@ if (!isset($activePage)) {
                 <a href="index1" class="<?= $activePage === 'home' ? 'active-link' : '' ?>">Home</a>
                 <a href="gallery" class="<?= $activePage === 'shop' ? 'active-link' : '' ?>">Shop</a>
                 <a href="Catalogue" class="<?= $activePage === 'catalogue' ? 'active-link' : '' ?>">Catalogue</a>
+                <a href="reels" class="<?= $activePage === 'reels' ? 'active-link' : '' ?>">Reels</a>
                 <a href="about" class="<?= $activePage === 'about' ? 'active-link' : '' ?>">About</a>
                 <a href="contact" class="<?= $activePage === 'contact' ? 'active-link' : '' ?>">Contact</a>
                 <a href="blog" class="<?= $activePage === 'blog' ? 'active-link' : '' ?>">Blog</a>

@@ -11,6 +11,7 @@ error_reporting(E_ALL);
 ini_set('log_errors', '1');
 require_once 'includes/img-helper.php';
 require_once 'includes/pricing.php';
+require_once 'includes/reels.php';
 
 if ($conn->connect_error) {
     die("Database Connection Failed: " . $conn->connect_error);
@@ -181,6 +182,26 @@ $seo = cj_merge_seo([
         <a href="gallery" class="btn btn-secondary">View Full Collection (60+ Designs) &rarr;</a>
     </div>
 </section>
+
+<?php
+$cjReelsList = cj_get_ranked_reels($conn, 7, true, 'top');
+if (!empty($cjReelsList)):
+    $cjReelsContext = 'home';
+?>
+<section id="reels-showcase" class="hot-favourites-section reveal cj-lazy-section" style="margin-top:42px;margin-bottom:44px;">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:18px;">
+        <div>
+            <p style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--primary-gold-dark);margin:0 0 4px;">Live Showroom Cinema</p>
+            <h2 class="section-heading" style="margin:0;text-align:left;">Sparkle in Motion</h2>
+        </div>
+        <a href="/reels" style="font-size:13px;font-weight:700;color:var(--primary-gold-dark);text-decoration:none;">Explore All Reels &rarr;</a>
+    </div>
+    <?php include __DIR__ . '/includes/reels-bento.php'; ?>
+    <div class="back-btn-container" style="margin-top:20px;">
+        <a href="/reels" class="btn btn-secondary">Watch Full Reels Showcase &rarr;</a>
+    </div>
+</section>
+<?php endif; ?>
 
 <section id="about" class="about-section reveal cj-lazy-section">
     <div class="about-grid">

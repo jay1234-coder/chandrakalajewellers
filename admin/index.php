@@ -910,6 +910,7 @@ if ($just_logged_in) {
         </div>
         <div class="flex items-center gap-2 sm:gap-4 shrink-0">
             <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
+            <a href="/admin/reels.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl">🎬 Reels</a>
             <a href="/admin/orders.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Orders</a>
             <a href="/admin/customers.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
             <a href="/admin/notifications.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
@@ -946,6 +947,7 @@ if ($just_logged_in) {
         ?>
 
         <nav class="admin-mobile-jump" aria-label="Quick sections">
+            <a href="/admin/reels.php">🎬 Reels</a>
             <a href="/admin/orders.php">Orders</a>
             <a href="/admin/customers.php">Customers</a>
             <a href="#ratesSection">Rates</a>

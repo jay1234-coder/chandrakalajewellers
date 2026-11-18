@@ -30,6 +30,7 @@ $urls = [
     ['loc' => cj_abs_url('gallery?metal_type=silver'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.90'],
     ['loc' => cj_abs_url('gallery?metal_type=silver_925'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.90'],
     ['loc' => cj_abs_url('Catalogue'), 'lastmod' => $nowIso, 'changefreq' => 'weekly', 'priority' => '0.88'],
+    ['loc' => cj_abs_url('reels'), 'lastmod' => $nowIso, 'changefreq' => 'daily', 'priority' => '0.90'],
     ['loc' => cj_abs_url('about'), 'lastmod' => $nowIso, 'changefreq' => 'monthly', 'priority' => '0.85'],
     ['loc' => cj_abs_url('contact'), 'lastmod' => $nowIso, 'changefreq' => 'monthly', 'priority' => '0.85'],
     ['loc' => cj_abs_url('follow-us'), 'lastmod' => $nowIso, 'changefreq' => 'monthly', 'priority' => '0.80'],
