@@ -112,6 +112,11 @@ $newOrdersCount = 0;
 foreach ($reelOrders as $or) {
     if (($or['status'] ?? '') === 'new') $newOrdersCount++;
 }
+
+require_once dirname(__DIR__) . '/includes/settings.php';
+$igHasToken = cj_setting('ig_access_token', '', $conn) !== '';
+$igUserId = cj_setting('ig_user_id', '', $conn);
+$igUsername = cj_setting('ig_username', '', $conn);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -272,6 +277,77 @@ foreach ($reelOrders as $or) {
         </div>
 
         <div id="reelUploadQueue" class="mt-4 space-y-2"></div>
+    </section>
+
+    <!-- 1-Click Instagram Business Sync & Direct Video URL Importer -->
+    <section class="reel-admin-panel bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm mb-6">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+                <h2 class="text-lg font-bold font-serif text-gray-900">1-Click Sync from Your Instagram Business Account</h2>
+                <p class="text-xs text-gray-500">Pull your own Instagram Reels via Meta's 100% free Graph API and import them permanently to Cloudinary (or paste any direct MP4 / Google Drive link).</p>
+            </div>
+            <?php if ($igHasToken && $igUserId !== ''): ?>
+                <span id="igConnBadge" class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                    Connected<?= $igUsername !== '' ? (' · @' . htmlspecialchars($igUsername)) : (' · ID ' . htmlspecialchars($igUserId)) ?>
+                </span>
+            <?php else: ?>
+                <span id="igConnBadge" class="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                    Not Connected Yet
+                </span>
+            <?php endif; ?>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <!-- Left: Connect Meta Token -->
+            <div class="reel-stat-chip p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <div class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Step A · Connect Meta Graph Token (Free ₹0)</div>
+                <div class="space-y-2.5">
+                    <input type="password" id="igTokenInput" autocomplete="off" placeholder="<?= $igHasToken ? 'Saved token hidden — paste new token to update' : 'Paste Meta Graph Access Token (EAA... or IG...)' ?>" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl">
+                    <div class="flex flex-wrap gap-2">
+                        <input type="text" id="igUserIdInput" value="<?= htmlspecialchars($igUserId) ?>" placeholder="IG Business Account ID (optional — auto-detected)" class="flex-1 min-w-[180px] text-xs p-2.5 border border-gray-200 rounded-xl">
+                        <button type="button" id="igSaveConnBtn" class="px-4 py-2.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-sm">Save &amp; Connect</button>
+                    </div>
+                    <div id="igConnStatus" class="text-xs font-semibold"></div>
+                </div>
+                <details class="mt-3 text-[11px] text-gray-500">
+                    <summary class="cursor-pointer font-bold text-amber-700">How to get your free Meta token (4 quick steps)</summary>
+                    <ol class="list-decimal pl-4 mt-2 space-y-1">
+                        <li>Switch <strong>@chandra.kalajewellers</strong> to a free <strong>Professional (Business)</strong> account in Instagram app &amp; link it to your Facebook Page.</li>
+                        <li>Open <strong>developers.facebook.com</strong> → Create App (Business type) → Add <strong>Instagram</strong> product.</li>
+                        <li>Open <strong>Tools → Graph API Explorer</strong> → Select your app → Permissions: <code>instagram_basic</code>, <code>pages_show_list</code>, <code>pages_read_engagement</code> → Click <strong>Generate Access Token</strong>.</li>
+                        <li>Paste the token above and click <strong>Save &amp; Connect</strong> (your IG Account ID is auto-detected!).</li>
+                    </ol>
+                </details>
+            </div>
+
+            <!-- Right: Paste Direct Video URL (MP4 / Google Drive / Dropbox) -->
+            <div class="reel-stat-chip p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <div class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Or Paste Any Direct Video Link (Zero Upload Needed)</div>
+                <div class="space-y-2.5">
+                    <input type="url" id="directVidUrl" placeholder="https://... (.mp4, .mov, Google Drive, or Dropbox link)" class="w-full text-xs p-2.5 border border-gray-200 rounded-xl">
+                    <div class="flex flex-wrap gap-2">
+                        <input type="text" id="directVidNote" maxlength="200" placeholder="Optional SEO note (e.g. Bridal Gold Necklace)" class="flex-1 min-w-[160px] text-xs p-2.5 border border-gray-200 rounded-xl">
+                        <button type="button" id="directImportBtn" class="px-4 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm">Import URL</button>
+                    </div>
+                    <div id="directImportStatus" class="text-xs font-semibold"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step B: Fetch & 1-Click Import Instagram Reels -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-100">
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="igFetchBtn" class="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-sm">
+                    Fetch My Instagram Reels
+                </button>
+                <button type="button" id="igImportAllBtn" class="hidden px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm">
+                    Import All New Reels
+                </button>
+            </div>
+            <span id="igFetchStatus" class="text-xs font-semibold text-gray-500"></span>
+        </div>
+
+        <div id="igReelsGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-4"></div>
     </section>
 
     <!-- Uploaded Reels Grid with IST Timestamp & Impressions Breakdown -->
@@ -599,6 +675,173 @@ foreach ($reelOrders as $or) {
             pctEl.textContent = '❌ ' + (err.message || 'Upload failed');
             return false;
         }
+    }
+
+    // ---- 1-Click Instagram Business Sync & Direct Video URL Importer ----
+    const igSaveBtn = document.getElementById('igSaveConnBtn');
+    const igFetchBtn = document.getElementById('igFetchBtn');
+    const igImportAllBtn = document.getElementById('igImportAllBtn');
+    const igGrid = document.getElementById('igReelsGrid');
+    const igConnStatus = document.getElementById('igConnStatus');
+    const igFetchStatus = document.getElementById('igFetchStatus');
+    const igConnBadge = document.getElementById('igConnBadge');
+    const directImportBtn = document.getElementById('directImportBtn');
+    const directImportStatus = document.getElementById('directImportStatus');
+    let fetchedIgReels = [];
+
+    if (igSaveBtn) {
+        igSaveBtn.addEventListener('click', async () => {
+            igConnStatus.style.color = '#d97706';
+            igConnStatus.textContent = 'Verifying token with Meta...';
+            const fd = new FormData();
+            fd.append('csrf_token', csrfToken);
+            fd.append('action', 'save_config');
+            fd.append('ig_access_token', (document.getElementById('igTokenInput')?.value || '').trim());
+            fd.append('ig_user_id', (document.getElementById('igUserIdInput')?.value || '').trim());
+            try {
+                const res = await fetch('/api/reel-ig-sync.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+                const d = await res.json();
+                if (!res.ok || !d.ok) throw new Error(d.error || 'Verification failed.');
+                igConnStatus.style.color = '#059669';
+                igConnStatus.textContent = d.message;
+                if (d.ig_user_id && document.getElementById('igUserIdInput')) {
+                    document.getElementById('igUserIdInput').value = d.ig_user_id;
+                }
+                if (igConnBadge) {
+                    igConnBadge.textContent = 'Connected' + (d.ig_username ? ' · @' + d.ig_username : ' · ID ' + d.ig_user_id);
+                    igConnBadge.className = 'text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full';
+                }
+                if (document.getElementById('igTokenInput')) document.getElementById('igTokenInput').value = '';
+            } catch (e) {
+                igConnStatus.style.color = '#dc2626';
+                igConnStatus.textContent = e.message || 'Could not connect.';
+            }
+        });
+    }
+
+    async function importOneIgReel(item, btnEl) {
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Importing...'; }
+        const fd = new FormData();
+        fd.append('csrf_token', csrfToken);
+        fd.append('action', 'import_one');
+        fd.append('video_url', item.media_url);
+        fd.append('ig_media_id', item.ig_media_id);
+        fd.append('admin_note', item.caption || '');
+        try {
+            const res = await fetch('/api/reel-ig-sync.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+            const d = await res.json();
+            if (!res.ok || !d.ok) throw new Error(d.error || 'Import failed');
+            item.imported = true;
+            if (btnEl) {
+                btnEl.textContent = 'Imported #' + d.id;
+                btnEl.className = 'w-full mt-2 py-1.5 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200';
+            }
+            return true;
+        } catch (e) {
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Retry Import'; }
+            alert('Import error: ' + (e.message || 'Failed'));
+            return false;
+        }
+    }
+
+    if (igFetchBtn) {
+        igFetchBtn.addEventListener('click', async () => {
+            igFetchStatus.textContent = 'Fetching reels from Instagram...';
+            igGrid.innerHTML = '';
+            igGrid.classList.add('hidden');
+            igImportAllBtn.classList.add('hidden');
+            const fd = new FormData();
+            fd.append('csrf_token', csrfToken);
+            fd.append('action', 'fetch_reels');
+            try {
+                const res = await fetch('/api/reel-ig-sync.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+                const d = await res.json();
+                if (!res.ok || !d.ok) throw new Error(d.error || 'Could not fetch Instagram reels.');
+                fetchedIgReels = d.reels || [];
+                if (!fetchedIgReels.length) {
+                    igFetchStatus.textContent = 'No video reels found on this Instagram account.';
+                    return;
+                }
+                const newCnt = fetchedIgReels.filter(r => !r.imported).length;
+                igFetchStatus.textContent = 'Found ' + fetchedIgReels.length + ' Instagram reels (' + newCnt + ' new to import).';
+                if (newCnt > 0) igImportAllBtn.classList.remove('hidden');
+
+                fetchedIgReels.forEach((item) => {
+                    const card = document.createElement('div');
+                    card.className = 'reel-stat-chip p-2 rounded-xl border border-gray-200 bg-gray-50 flex flex-col justify-between';
+                    const imgHtml = item.thumbnail_url
+                        ? '<img src="' + item.thumbnail_url.replace(/"/g, '&quot;') + '" alt="" class="w-full aspect-[9/14] object-cover rounded-lg bg-gray-900 mb-2">'
+                        : '<div class="w-full aspect-[9/14] rounded-lg bg-gray-900 text-white flex items-center justify-center text-xs mb-2">Video Reel</div>';
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.dataset.igImportBtn = item.ig_media_id;
+                    if (item.imported) {
+                        btn.disabled = true;
+                        btn.textContent = 'Imported #' + item.local_reel_id;
+                        btn.className = 'w-full mt-2 py-1.5 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    } else {
+                        btn.textContent = 'Import to Website';
+                        btn.className = 'w-full mt-2 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white';
+                        btn.addEventListener('click', () => importOneIgReel(item, btn));
+                    }
+                    card.innerHTML = imgHtml + '<div class="text-[10px] text-gray-500 truncate"></div><div class="text-[10px] text-gray-400 mt-0.5"></div>';
+                    card.querySelectorAll('div')[0].textContent = item.caption || 'Instagram Reel';
+                    card.querySelectorAll('div')[1].textContent = item.posted_ist || '';
+                    card.appendChild(btn);
+                    igGrid.appendChild(card);
+                });
+                igGrid.classList.remove('hidden');
+            } catch (e) {
+                igFetchStatus.textContent = 'Error: ' + (e.message || 'Fetch failed.');
+            }
+        });
+    }
+
+    if (igImportAllBtn) {
+        igImportAllBtn.addEventListener('click', async () => {
+            const pending = fetchedIgReels.filter(r => !r.imported);
+            if (!pending.length) return;
+            igImportAllBtn.disabled = true;
+            let done = 0;
+            for (const item of pending) {
+                igFetchStatus.textContent = 'Importing ' + (done + 1) + ' of ' + pending.length + ' to Cloudinary...';
+                const btn = igGrid.querySelector('[data-ig-import-btn="' + item.ig_media_id + '"]');
+                const ok = await importOneIgReel(item, btn);
+                if (ok) done++;
+            }
+            igImportAllBtn.disabled = false;
+            igFetchStatus.textContent = 'Imported ' + done + ' new reels! Reloading studio...';
+            if (done > 0) setTimeout(() => window.location.reload(), 1100);
+        });
+    }
+
+    if (directImportBtn) {
+        directImportBtn.addEventListener('click', async () => {
+            const url = (document.getElementById('directVidUrl')?.value || '').trim();
+            const note = (document.getElementById('directVidNote')?.value || '').trim();
+            if (!url) { alert('Please paste a direct video URL first.'); return; }
+            directImportBtn.disabled = true;
+            directImportStatus.style.color = '#d97706';
+            directImportStatus.textContent = 'Importing video directly to Cloudinary...';
+            const fd = new FormData();
+            fd.append('csrf_token', csrfToken);
+            fd.append('action', 'import_one');
+            fd.append('video_url', url);
+            fd.append('admin_note', note);
+            try {
+                const res = await fetch('/api/reel-ig-sync.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+                const d = await res.json();
+                if (!res.ok || !d.ok) throw new Error(d.error || 'Import failed.');
+                directImportStatus.style.color = '#059669';
+                directImportStatus.textContent = d.message;
+                setTimeout(() => window.location.reload(), 900);
+            } catch (e) {
+                directImportStatus.style.color = '#dc2626';
+                directImportStatus.textContent = e.message || 'Could not import URL.';
+            } finally {
+                directImportBtn.disabled = false;
+            }
+        });
     }
 })();
 </script>

@@ -50,6 +50,10 @@ if (!function_exists('cj_ensure_reels_schema')) {
         if (empty($vrCols['watch_sessions'])) {
             @$conn->query("ALTER TABLE video_reels ADD COLUMN watch_sessions INT UNSIGNED NOT NULL DEFAULT 0 AFTER total_watch_ms");
         }
+        if (empty($vrCols['ig_media_id'])) {
+            @$conn->query("ALTER TABLE video_reels ADD COLUMN ig_media_id VARCHAR(80) NOT NULL DEFAULT '' AFTER public_id");
+            @$conn->query("ALTER TABLE video_reels ADD KEY idx_reels_ig_media (ig_media_id)");
+        }
 
         $conn->query("CREATE TABLE IF NOT EXISTS video_reel_events (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -248,6 +252,81 @@ if (!function_exists('cj_cloudinary_destroy_video')) {
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         return $resp !== false && $code >= 200 && $code < 300;
+    }
+}
+
+if (!function_exists('cj_cloudinary_upload_remote_video')) {
+    /**
+     * Tell Cloudinary to fetch a remote video URL (e.g., official Meta Graph API media_url
+     * or direct .mp4 link) directly server-to-server — bypasses Vercel's 4.5MB limit completely!
+     *
+     * @return array{ok:bool,secure_url?:string,public_id?:string,width?:int,height?:int,duration?:float,error?:string}
+     */
+    function cj_cloudinary_upload_remote_video(string $remoteUrl, ?string $publicId = null, string $folder = 'chandrakala/reels'): array
+    {
+        $remoteUrl = trim($remoteUrl);
+        if ($remoteUrl === '' || !preg_match('#^https?://#i', $remoteUrl)) {
+            return ['ok' => false, 'error' => 'Valid https:// video URL required.'];
+        }
+        if (!function_exists('cj_cloudinary_config')) {
+            return ['ok' => false, 'error' => 'Cloudinary helper unavailable.'];
+        }
+        $cfg = cj_cloudinary_config();
+        if (empty($cfg['cloud_name']) || empty($cfg['api_key']) || empty($cfg['api_secret'])) {
+            return ['ok' => false, 'error' => 'Cloudinary credentials missing.'];
+        }
+
+        $ts = time();
+        $pid = $publicId ?: ('ig_reel_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3)));
+        $params = [
+            'folder' => $folder,
+            'public_id' => $pid,
+            'timestamp' => $ts,
+        ];
+        ksort($params);
+        $toSign = '';
+        foreach ($params as $k => $v) {
+            $toSign .= $k . '=' . $v . '&';
+        }
+        $sig = sha1(rtrim($toSign, '&') . $cfg['api_secret']);
+
+        $url = 'https://api.cloudinary.com/v1_1/' . rawurlencode($cfg['cloud_name']) . '/video/upload';
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [
+                'file' => $remoteUrl,
+                'api_key' => $cfg['api_key'],
+                'timestamp' => (string)$ts,
+                'folder' => $folder,
+                'public_id' => $pid,
+                'signature' => $sig,
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 55,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $resp = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($resp === false || $err !== '') {
+            return ['ok' => false, 'error' => 'Cloudinary fetch error: ' . $err];
+        }
+        $data = json_decode((string)$resp, true);
+        if ($code >= 200 && $code < 300 && !empty($data['secure_url'])) {
+            return [
+                'ok' => true,
+                'secure_url' => (string)$data['secure_url'],
+                'public_id' => (string)($data['public_id'] ?? ($folder . '/' . $pid)),
+                'width' => (int)($data['width'] ?? 0),
+                'height' => (int)($data['height'] ?? 0),
+                'duration' => (float)($data['duration'] ?? 0),
+            ];
+        }
+        $msg = (string)($data['error']['message'] ?? ('Cloudinary HTTP ' . $code));
+        return ['ok' => false, 'error' => $msg];
     }
 }
 

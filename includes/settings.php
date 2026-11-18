@@ -57,6 +57,9 @@ if (!function_exists('cj_settings_defaults')) {
             'recs_limit' => '6',
             'rate_formula_json' => '{"gold":[{"op":"*","value":0.9166},{"op":"/","value":1.03}],"silver":[],"silver_925":[],"copper":[]}',
             'price_cache_stamp' => '',
+            'ig_access_token' => '',
+            'ig_user_id' => '',
+            'ig_username' => '',
         ];
     }
 }
@@ -65,7 +68,7 @@ if (!function_exists('cj_settings_secret_keys')) {
     /** @return list<string> */
     function cj_settings_secret_keys(): array
     {
-        return ['razorpay_key_secret', 'razorpay_webhook_secret', 'smtp_pass'];
+        return ['razorpay_key_secret', 'razorpay_webhook_secret', 'smtp_pass', 'ig_access_token'];
     }
 }
 
