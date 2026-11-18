@@ -78,8 +78,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $templates = [];
-$r = $conn->query('SELECT * FROM push_templates WHERE is_active = 1 ORDER BY id ASC');
-if ($r) while ($row = $r->fetch_assoc()) $templates[] = $row;
+$seenTemplateSlugs = [];
+$r = $conn->query('SELECT * FROM push_templates WHERE is_active = 1 ORDER BY id ASC LIMIT 50');
+if ($r) {
+    while ($row = $r->fetch_assoc()) {
+        $slugKey = (string)($row['slug'] ?? '');
+        if ($slugKey !== '' && isset($seenTemplateSlugs[$slugKey])) continue;
+        if ($slugKey !== '') $seenTemplateSlugs[$slugKey] = true;
+        $templates[] = $row;
+    }
+}
 
 $logs = [];
 $r = $conn->query('SELECT * FROM push_logs ORDER BY id DESC LIMIT 30');
@@ -101,11 +109,11 @@ $homeLogout = cj_admin_home_href(null, true);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Notification Manager — ChandraKala</title>
-    <link rel="stylesheet" href="../css/tailwind.min.css?v=9">
+    <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="/admin/manifest.webmanifest">
 </head>
 <body class="admin-body bg-gray-50 text-gray-800 min-h-screen">
 <?php
@@ -264,7 +272,7 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
         </p>
     </section>
 <?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
-<script src="../js/pwa.js" defer></script>
+<script src="/js/pwa.js?v=12" defer></script>
 <script>
 document.getElementById('enablePushBtn')?.addEventListener('click', function () {
     var role = <?= json_encode($_SESSION['role'] ?? 'admin') ?>;

@@ -125,6 +125,14 @@ if (!function_exists('cj_ensure_pwa_schema')) {
             $conn->query("ALTER TABLE push_queue ADD COLUMN last_constant_sent_at DATETIME DEFAULT NULL AFTER constant_time");
         }
 
+        $existingSlugs = [];
+        $slugRes = @$conn->query('SELECT slug FROM push_templates');
+        if ($slugRes instanceof mysqli_result) {
+            while ($sr = $slugRes->fetch_assoc()) {
+                $existingSlugs[(string)$sr['slug']] = true;
+            }
+            $slugRes->free();
+        }
         $templates = [
             ['welcome_pwa', 'Welcome to ChandraKala Jewellers', 'Thanks for installing our app. Browse gold, silver & 925 designs anytime.', 'customer', 'index1'],
             ['daily_customer', 'Fresh jewellery picks for you', 'Open ChandraKala Jewellers to check today\'s gold & silver designs.', 'customer', 'gallery'],
@@ -134,12 +142,17 @@ if (!function_exists('cj_ensure_pwa_schema')) {
             ['product_updated', 'A favourite design was updated', 'Product details changed — open the shop to see the latest.', 'customer', 'gallery'],
             ['engage_pwa', 'Your jewellery app misses you', 'Come back to ChandraKala Jewellers for live rates and new designs.', 'customer', 'index1'],
         ];
-        $stmt = $conn->prepare('INSERT IGNORE INTO push_templates (slug, title, body, audience, url_path) VALUES (?,?,?,?,?)');
-        foreach ($templates as $t) {
-            $stmt->bind_param('sssss', $t[0], $t[1], $t[2], $t[3], $t[4]);
-            $stmt->execute();
+        $missingTemplates = array_values(array_filter($templates, static fn($t) => empty($existingSlugs[$t[0]])));
+        if ($missingTemplates) {
+            $stmt = $conn->prepare('INSERT IGNORE INTO push_templates (slug, title, body, audience, url_path) VALUES (?,?,?,?,?)');
+            if ($stmt) {
+                foreach ($missingTemplates as $t) {
+                    $stmt->bind_param('sssss', $t[0], $t[1], $t[2], $t[3], $t[4]);
+                    $stmt->execute();
+                }
+                $stmt->close();
+            }
         }
-        $stmt->close();
 
         // Seed admin users if table empty (3 family accounts — both store admins share role=admin)
         $c = $conn->query('SELECT COUNT(*) AS c FROM admin_users');
