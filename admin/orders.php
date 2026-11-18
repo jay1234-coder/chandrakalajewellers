@@ -21,9 +21,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $id = (int) ($_POST['order_id'] ?? 0);
     $action = (string) ($_POST['order_action'] ?? '');
-    if ($action === 'confirm' && $id > 0 && cj_confirm_order($conn, $id)) {
-        $_SESSION['success_message'] = 'Order confirmed. Piece stays sold.';
-        cj_log_activity($conn, 'order_confirm', 'Order #' . $id);
+    if ($action === 'confirm' && $id > 0) {
+        $markSoldOut = !isset($_POST['mark_sold_out']) || (string)$_POST['mark_sold_out'] === '1';
+        if (cj_confirm_order($conn, $id, $markSoldOut)) {
+            $_SESSION['success_message'] = $markSoldOut
+                ? 'Order confirmed & marked as Sold Out on the website.'
+                : 'Order confirmed. Piece kept available on the website.';
+            cj_log_activity($conn, 'order_confirm', 'Order #' . $id . ($markSoldOut ? ' (Marked Sold Out)' : ' (Kept Available)'));
+        } else {
+            $_SESSION['error_message'] = 'Could not confirm that order.';
+        }
+    } elseif ($action === 'toggle_sold_out' && $id > 0) {
+        $markSold = (string)($_POST['sold_state'] ?? '1') === '1' ? 1 : 0;
+        $pids = [];
+        $piSt = $conn->prepare('SELECT DISTINCT product_id FROM order_items WHERE order_id = ?');
+        if ($piSt) {
+            $piSt->bind_param('i', $id);
+            $piSt->execute();
+            $piRes = $piSt->get_result();
+            while ($pr = $piRes->fetch_assoc()) {
+                if ((int)$pr['product_id'] > 0) $pids[] = (int)$pr['product_id'];
+            }
+            $piSt->close();
+        }
+        if (!empty($pids)) {
+            $in = implode(',', $pids);
+            $conn->query("UPDATE jewellery_items SET is_sold_out = {$markSold}, reserved_until = NULL WHERE id IN ({$in})");
+            $_SESSION['success_message'] = $markSold ? 'Item(s) marked as Sold Out on the website.' : 'Item(s) marked as Available on the website.';
+            cj_log_activity($conn, 'order_stock_toggle', 'Order #' . $id . ($markSold ? ' -> Sold Out' : ' -> Available'));
+        }
     } elseif ($action === 'cancel' && $id > 0 && cj_release_order_stock($conn, $id, 'cancelled')) {
         $_SESSION['success_message'] = 'Order cancelled. Piece is available again.';
         cj_log_activity($conn, 'order_cancel', 'Order #' . $id);
@@ -66,13 +92,18 @@ while ($row = $res->fetch_assoc()) {
 $stmt->close();
 
 $itemsByOrder = [];
+$itemStockMap = [];
 if ($orders) {
     $oids = array_map(static function ($o) { return (int) $o['id']; }, $orders);
     $in = implode(',', $oids);
-    $ir = $conn->query("SELECT * FROM order_items WHERE order_id IN ($in)");
+    $ir = $conn->query("SELECT oi.*, ji.is_sold_out FROM order_items oi LEFT JOIN jewellery_items ji ON ji.id = oi.product_id WHERE oi.order_id IN ($in)");
     if ($ir) {
         while ($it = $ir->fetch_assoc()) {
-            $itemsByOrder[(int) $it['order_id']][] = $it;
+            $oidKey = (int) $it['order_id'];
+            $itemsByOrder[$oidKey][] = $it;
+            if (!empty($it['is_sold_out'])) {
+                $itemStockMap[$oidKey] = true;
+            }
         }
     }
 }
@@ -161,19 +192,40 @@ if ($cq) {
                         <li><?= htmlspecialchars($line['product_name']) ?> · <?= htmlspecialchars((string) $line['weight']) ?> g · ₹<?= number_format((float) $line['unit_price'], 0) ?></li>
                     <?php endforeach; ?>
                 </ul>
-                <?php if ($o['status'] === 'reserved'): ?>
+                <?php if ($o['status'] === 'reserved'):
+                    $itemTitles = array_map(static fn($l) => (string)$l['product_name'], $lines);
+                    $itemsSummary = implode(', ', $itemTitles);
+                ?>
                     <form method="post" class="mt-4 flex flex-wrap gap-2">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="order_id" value="<?= $oid ?>">
                         <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
-                        <button name="order_action" value="confirm" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg">Confirm sale</button>
+                        <button type="button"
+                                onclick="openConfirmSaleModal(<?= $oid ?>, <?= htmlspecialchars(json_encode((string)$o['order_no']), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode($itemsSummary), ENT_QUOTES, 'UTF-8') ?>)"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg">Confirm sale</button>
                         <?php if (($o['payment_status'] ?? '') !== 'paid'): ?>
                         <button name="order_action" value="cancel" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-4 py-2 rounded-lg border border-gray-200" onclick="return confirm('Release this piece back to the shop?');">Cancel / release</button>
                         <?php endif; ?>
                     </form>
                     <?php if (!empty($o['reserved_until'])): ?>
-                        <p class="text-[11px] text-gray-400 mt-2">Held until <?= htmlspecialchars($o['reserved_until']) ?></p>
+                        <p class="text-[11px] text-gray-400 mt-2">Held until <?= htmlspecialchars(cj_format_ist($o['reserved_until'])) ?></p>
                     <?php endif; ?>
+                <?php elseif ($o['status'] === 'confirmed'):
+                    $isMarkedSold = !empty($itemStockMap[$oid]);
+                ?>
+                    <form method="post" class="mt-3 flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                        <input type="hidden" name="order_id" value="<?= $oid ?>">
+                        <input type="hidden" name="order_action" value="toggle_sold_out">
+                        <input type="hidden" name="sold_state" value="<?= $isMarkedSold ? '0' : '1' ?>">
+                        <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
+                        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full <?= $isMarkedSold ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' ?>">
+                            <?= $isMarkedSold ? 'Website Status: Sold Out' : 'Website Status: Still Available' ?>
+                        </span>
+                        <button type="submit" class="text-[11px] font-semibold px-3 py-1 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700">
+                            <?= $isMarkedSold ? 'Mark Available Again' : 'Mark as Sold Out' ?>
+                        </button>
+                    </form>
                 <?php endif; ?>
                 <?php if (function_exists('cj_admin_can_refund') && cj_admin_can_refund() && cj_order_can_refund($o)): ?>
                     <form method="post" class="mt-3 flex flex-wrap gap-2 items-center">
@@ -191,5 +243,55 @@ if ($cq) {
         </div>
     <?php endif; ?>
 </main>
+
+<!-- Confirm Sale: Ask Admin Whether to Mark Sold Out on Website -->
+<div id="cjConfirmSaleModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);">
+    <div class="bg-white border border-gray-200 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-start gap-2 mb-3">
+            <div>
+                <h3 class="text-lg font-bold font-serif text-gray-900">Confirm Sale</h3>
+                <p id="cjCsOrderNo" class="text-xs font-semibold text-amber-600"></p>
+            </div>
+            <button type="button" onclick="closeConfirmSaleModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <p class="text-xs sm:text-sm text-gray-600 mb-2">Do you want to mark the ordered item(s) as <strong>Sold Out</strong> on the website?</p>
+        <p id="cjCsItems" class="text-xs font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl p-2.5 mb-5"></p>
+        <form method="post" id="cjConfirmSaleForm" class="space-y-2.5">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <input type="hidden" name="order_id" id="cjCsOrderId" value="0">
+            <input type="hidden" name="order_action" value="confirm">
+            <input type="hidden" name="mark_sold_out" id="cjCsMarkSold" value="1">
+            <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
+            <button type="button" onclick="submitConfirmSale(1)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-colors">
+                Yes — Confirm Sale &amp; Mark Sold Out
+            </button>
+            <button type="button" onclick="submitConfirmSale(0)" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-colors">
+                No — Confirm Sale &amp; Keep Available on Site
+            </button>
+            <button type="button" onclick="closeConfirmSaleModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs py-2 px-4 rounded-xl transition-colors">
+                Cancel
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+function openConfirmSaleModal(orderId, orderNo, itemsText) {
+    document.getElementById('cjCsOrderId').value = String(orderId);
+    document.getElementById('cjCsOrderNo').textContent = orderNo || ('Order #' + orderId);
+    document.getElementById('cjCsItems').textContent = itemsText || 'Ordered jewellery item(s)';
+    var m = document.getElementById('cjConfirmSaleModal');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+}
+function closeConfirmSaleModal() {
+    var m = document.getElementById('cjConfirmSaleModal');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+}
+function submitConfirmSale(markSoldOut) {
+    document.getElementById('cjCsMarkSold').value = markSoldOut ? '1' : '0';
+    document.getElementById('cjConfirmSaleForm').submit();
+}
+</script>
 </body>
 </html>

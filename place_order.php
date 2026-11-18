@@ -15,9 +15,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     exit;
 }
 
-$sessionToken = (string) ($_SESSION['csrf_token'] ?? '');
-$postedToken = (string) ($_POST['csrf_token'] ?? '');
-if ($sessionToken === '' || $postedToken === '' || !hash_equals($sessionToken, $postedToken)) {
+if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
     http_response_code(403);
     echo json_encode(['ok' => false, 'message' => 'Invalid checkout request. Please refresh and try again.']);
     exit;

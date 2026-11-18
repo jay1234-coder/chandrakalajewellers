@@ -43,7 +43,7 @@ if (!function_exists('cj_push_audience_clause')) {
             return "audience IN ('customer','all')";
         }
         if ($audience === 'admin') {
-            return "audience IN ('admin','all')";
+            return "audience IN ('admin','superadmin','all')";
         }
         if ($audience === 'superadmin') {
             return "audience IN ('superadmin','all')";

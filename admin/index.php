@@ -910,8 +910,16 @@ if ($just_logged_in) {
         </div>
         <div class="flex items-center gap-2 sm:gap-4 shrink-0">
             <?php include dirname(__DIR__) . '/includes/admin-theme-toggle.php'; ?>
-            <a href="/admin/reels.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl">🎬 Reels</a>
-            <a href="/admin/orders.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Orders</a>
+            <?php
+            $cjPendingOrders = 0;
+            if ($poq = @$conn->query("SELECT COUNT(*) AS c FROM orders WHERE status = 'reserved'")) {
+                $cjPendingOrders = (int)(($poq->fetch_assoc()['c']) ?? 0);
+            }
+            ?>
+            <a href="/admin/reels.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-3 py-2 rounded-xl">Reels</a>
+            <a href="/admin/orders.php" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">
+                Orders<?php if ($cjPendingOrders > 0): ?><span class="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold"><?= $cjPendingOrders ?></span><?php endif; ?>
+            </a>
             <a href="/admin/customers.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Customers</a>
             <a href="/admin/notifications.php" class="hidden sm:inline-flex text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded-xl">Notifications</a>
             <span class="text-sm font-semibold text-gray-500 hidden md:inline">Welcome, <?= htmlspecialchars($_SESSION['display_name'] ?? $_SESSION['username'] ?? 'Admin') ?></span>

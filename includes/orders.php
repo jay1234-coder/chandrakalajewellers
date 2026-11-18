@@ -179,7 +179,7 @@ if (!function_exists('cj_release_order_stock')) {
 }
 
 if (!function_exists('cj_confirm_order')) {
-    function cj_confirm_order(mysqli $conn, int $orderId): bool
+    function cj_confirm_order(mysqli $conn, int $orderId, bool $markSoldOut = true): bool
     {
         if ($orderId <= 0) {
             return false;
@@ -199,15 +199,45 @@ if (!function_exists('cj_confirm_order')) {
                 return false;
             }
 
-            $keep = $conn->prepare(
-                'UPDATE jewellery_items
-                 SET is_sold_out = 1, reserved_until = NULL
-                 WHERE reserved_order_id = ?'
-            );
-            if ($keep) {
-                $keep->bind_param('i', $orderId);
-                $keep->execute();
-                $keep->close();
+            // Collect ordered item IDs so we update stock reliably even if item was not pre-locked
+            $pids = [];
+            $piStmt = $conn->prepare('SELECT DISTINCT product_id FROM order_items WHERE order_id = ?');
+            if ($piStmt) {
+                $piStmt->bind_param('i', $orderId);
+                $piStmt->execute();
+                $piRes = $piStmt->get_result();
+                while ($pr = $piRes->fetch_assoc()) {
+                    $pid = (int)($pr['product_id'] ?? 0);
+                    if ($pid > 0) $pids[] = $pid;
+                }
+                $piStmt->close();
+            }
+
+            if ($markSoldOut) {
+                if (!empty($pids)) {
+                    $in = implode(',', $pids);
+                    $conn->query("UPDATE jewellery_items SET is_sold_out = 1, reserved_order_id = {$orderId}, reserved_until = NULL WHERE id IN ({$in})");
+                } else {
+                    $keep = $conn->prepare('UPDATE jewellery_items SET is_sold_out = 1, reserved_until = NULL WHERE reserved_order_id = ?');
+                    if ($keep) {
+                        $keep->bind_param('i', $orderId);
+                        $keep->execute();
+                        $keep->close();
+                    }
+                }
+            } else {
+                // Admin confirmed sale but chose to keep design available on website
+                if (!empty($pids)) {
+                    $in = implode(',', $pids);
+                    $conn->query("UPDATE jewellery_items SET is_sold_out = 0, reserved_order_id = NULL, reserved_until = NULL WHERE id IN ({$in})");
+                } else {
+                    $rel = $conn->prepare('UPDATE jewellery_items SET is_sold_out = 0, reserved_order_id = NULL, reserved_until = NULL WHERE reserved_order_id = ?');
+                    if ($rel) {
+                        $rel->bind_param('i', $orderId);
+                        $rel->execute();
+                        $rel->close();
+                    }
+                }
             }
 
             $status = 'confirmed';
@@ -566,7 +596,7 @@ if (!function_exists('cj_place_order')) {
                     continue;
                 }
                 $row = $locked[$id];
-                if (!empty($row['is_sold_out']) || !empty($row['reserved_order_id'])) {
+                if (!empty($row['is_sold_out'])) {
                     $unavailable[] = (string) $row['name'];
                     continue;
                 }
@@ -638,10 +668,11 @@ if (!function_exists('cj_place_order')) {
                 'INSERT INTO order_items (order_id, product_id, product_name, metal_type, weight, unit_price, qty)
                  VALUES (?, ?, ?, ?, ?, ?, 1)'
             );
+            // Keep item visible/available on storefront until Admin confirms sale & chooses Sold Out
             $lockStmt = $conn->prepare(
                 'UPDATE jewellery_items
-                 SET is_sold_out = 1, reserved_order_id = ?, reserved_until = ?
-                 WHERE id = ? AND is_sold_out = 0 AND reserved_order_id IS NULL'
+                 SET reserved_order_id = ?, reserved_until = ?
+                 WHERE id = ? AND is_sold_out = 0'
             );
             if (!$itemStmt || !$lockStmt) {
                 throw new RuntimeException('Could not reserve items.');
@@ -660,17 +691,30 @@ if (!function_exists('cj_place_order')) {
                 $pid = $line['product_id'];
                 $lockStmt->bind_param('isi', $orderId, $until, $pid);
                 $lockStmt->execute();
-                if ($lockStmt->affected_rows !== 1) {
-                    throw new RuntimeException('Piece was taken by another customer: ' . $line['product_name']);
-                }
             }
             $itemStmt->close();
             $lockStmt->close();
             $conn->commit();
 
+            // Notify Admin immediately that a new order has arrived!
+            try {
+                if (file_exists(__DIR__ . '/push.php')) {
+                    require_once __DIR__ . '/push.php';
+                    $firstTitle = (string)($lines[0]['product_name'] ?? 'Jewellery Item');
+                    $extraCnt = count($lines) > 1 ? (' +' . (count($lines) - 1) . ' more') : '';
+                    $amtFmt = number_format(round((float)$grandTotal), 0);
+                    $pushTitle = "New Order {$orderNo} Arrived!";
+                    $pushBody = "{$name} ({$phone}) ordered {$firstTitle}{$extraCnt} · ₹{$amtFmt}. Open Orders to confirm sale.";
+                    $qid = cj_queue_push($conn, $pushTitle, $pushBody, 'admin', 'admin/orders.php', 'system');
+                    if ($qid > 0) {
+                        @cj_dispatch_push_queue($conn, $qid);
+                    }
+                }
+            } catch (Throwable $ignorePush) {}
+
             return [
                 'ok' => true,
-                'message' => 'Order reserved.',
+                'message' => 'Order received! Redirecting to WhatsApp confirmation.',
                 'order_no' => $orderNo,
                 'order_id' => $orderId,
                 'next' => $paymentMethod === 'razorpay' ? 'pay' : 'success',

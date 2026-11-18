@@ -102,6 +102,36 @@ if (!function_exists('cj_ensure_reels_schema')) {
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY idx_reel_orders (reel_id, status, id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Sponsored Photo Reel Ads (Gallery Shop & Catalogue items shown as endless Reels)
+        $conn->query("CREATE TABLE IF NOT EXISTS reel_ad_stats (
+            item_key VARCHAR(40) PRIMARY KEY,
+            impressions INT UNSIGNED NOT NULL DEFAULT 0,
+            likes_count INT UNSIGNED NOT NULL DEFAULT 0,
+            comments_count INT UNSIGNED NOT NULL DEFAULT 0,
+            clicks INT UNSIGNED NOT NULL DEFAULT 0,
+            whatsapp_clicks INT UNSIGNED NOT NULL DEFAULT 0,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $conn->query("CREATE TABLE IF NOT EXISTS reel_ad_likes (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            item_key VARCHAR(40) NOT NULL,
+            visitor_hash VARCHAR(64) NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_reel_ad_like (item_key, visitor_hash),
+            KEY idx_reel_ad_likes_key (item_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $conn->query("CREATE TABLE IF NOT EXISTS reel_ad_comments (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            item_key VARCHAR(40) NOT NULL,
+            customer_name VARCHAR(120) NOT NULL,
+            rating TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            comment TEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_reel_ad_comments_key (item_key, id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }
 
@@ -708,5 +738,188 @@ if (!function_exists('cj_reel_video_object_schema')) {
                 'target' => $pageUrl,
             ],
         ];
+    }
+}
+
+if (!function_exists('cj_get_sponsored_ad_slides')) {
+    /**
+     * Build randomized Sponsored Photo Reel Ads from Gallery Shop (`jewellery_items`)
+     * and Design Catalogue (`products`) so the Reels feed NEVER runs out!
+     *
+     * @return list<array<string,mixed>>
+     */
+    function cj_get_sponsored_ad_slides(mysqli $conn, string $visitorHash, int $limit = 30, array $excludeKeys = []): array
+    {
+        cj_ensure_reels_schema($conn);
+        require_once __DIR__ . '/img-helper.php';
+        require_once __DIR__ . '/pricing.php';
+
+        $stdRates = cj_get_standard_rates($conn);
+        $manRates = cj_get_manual_rates($conn);
+        $metalNames = ['gold' => '916 Gold', 'silver' => 'Pure Silver', 'silver_925' => '925 Silver'];
+
+        // Preload ad stats & visitor likes in 2 fast queries
+        $statsMap = [];
+        if ($sr = @$conn->query("SELECT item_key, impressions, likes_count, comments_count, clicks FROM reel_ad_stats")) {
+            while ($s = $sr->fetch_assoc()) {
+                $statsMap[(string)$s['item_key']] = $s;
+            }
+        }
+        $likedMap = [];
+        if ($lst = $conn->prepare("SELECT item_key FROM reel_ad_likes WHERE visitor_hash = ?")) {
+            $lst->bind_param('s', $visitorHash);
+            $lst->execute();
+            $lr = $lst->get_result();
+            while ($l = $lr->fetch_assoc()) $likedMap[(string)$l['item_key']] = true;
+            $lst->close();
+        }
+
+        $excl = array_flip($excludeKeys);
+        $shopSlides = [];
+        $catSlides = [];
+
+        // 1. Available Shop Gallery Items (priced, ready to buy)
+        $sq = @$conn->query("SELECT id, name, category, metal_type, weight, image, manual_price, use_manual_rates FROM jewellery_items WHERE COALESCE(is_sold_out, 0) = 0 AND image IS NOT NULL AND image != '' ORDER BY RAND() LIMIT 40");
+        if ($sq) {
+            while ($row = $sq->fetch_assoc()) {
+                $pid = (int)$row['id'];
+                $key = 'shop:' . $pid;
+                if (isset($excl[$key])) continue;
+                $ratesUse = !empty($row['use_manual_rates']) ? $manRates : $stdRates;
+                $price = (isset($row['manual_price']) && $row['manual_price'] !== null && (float)$row['manual_price'] > 0)
+                    ? (float)$row['manual_price']
+                    : cj_calculate_price((string)($row['metal_type'] ?? 'gold'), (float)($row['weight'] ?? 0), $ratesUse);
+                $st = $statsMap[$key] ?? [];
+                $metalLbl = $metalNames[$row['metal_type'] ?? ''] ?? 'Jewellery';
+                $imgUrl = cj_img_url((string)$row['image'], 900, 'uploads');
+                $thumbUrl = cj_img_url((string)$row['image'], 200, 'uploads');
+                $productUrl = '/product?id=' . $pid;
+                $priceFmt = '₹' . number_format(round($price));
+
+                $shopSlides[] = [
+                    'kind' => 'shop_ad',
+                    'item_key' => $key,
+                    'id' => $pid,
+                    'title' => (string)$row['name'],
+                    'subtitle' => $metalLbl . (!empty($row['weight']) ? (' · ' . (float)$row['weight'] . 'g') : '') . ' · ' . $priceFmt,
+                    'badge_text' => 'Sponsored · ' . ($row['category'] ?: $metalLbl),
+                    'cta_label' => 'Shop Now · ' . $priceFmt,
+                    'target_url' => $productUrl,
+                    'share_url' => (function_exists('cj_abs_url') ? cj_abs_url('product?id=' . $pid) : ('https://chandrakalajewellers.in/product?id=' . $pid)),
+                    'image_url' => $imgUrl,
+                    'thumb_url' => $thumbUrl,
+                    'display_views' => max(1, (int)($st['impressions'] ?? 0)),
+                    'likes_count' => (int)($st['likes_count'] ?? 0),
+                    'comments_count' => (int)($st['comments_count'] ?? 0),
+                    'is_liked' => !empty($likedMap[$key]),
+                    'wa_text' => "Namaste ChandraKala Jewellers! I saw {$row['name']} ({$priceFmt}) in your Reels Ad and want to buy / enquire.\nProduct Link: https://chandrakalajewellers.in/product?id={$pid}",
+                ];
+            }
+        }
+
+        // 2. Custom Design Catalogue Items
+        $cq = @$conn->query("SELECT id, name, category, image_filename FROM products WHERE image_filename IS NOT NULL AND image_filename != '' ORDER BY RAND() LIMIT 40");
+        if ($cq) {
+            while ($row = $cq->fetch_assoc()) {
+                $cid = (int)$row['id'];
+                $key = 'cat:' . $cid;
+                if (isset($excl[$key])) continue;
+                $st = $statsMap[$key] ?? [];
+                $catLbl = trim((string)($row['category'] ?? '')) ?: 'Custom Design';
+                $title = trim((string)($row['name'] ?? '')) ?: ("Handcrafted Design #{$cid}");
+                $imgUrl = cj_img_url((string)$row['image_filename'], 900, 'catalogue');
+                $thumbUrl = cj_img_url((string)$row['image_filename'], 200, 'catalogue');
+                $searchQ = preg_replace('/\s*#\d+$/', '', $title);
+                $targetUrl = '/Catalogue?q=' . rawurlencode($searchQ ?: $catLbl);
+
+                $catSlides[] = [
+                    'kind' => 'cat_ad',
+                    'item_key' => $key,
+                    'id' => $cid,
+                    'title' => $title,
+                    'subtitle' => $catLbl . ' · Custom Crafted in 916 Gold / Silver',
+                    'badge_text' => 'Sponsored · ' . $catLbl,
+                    'cta_label' => 'View Design & Order',
+                    'target_url' => $targetUrl,
+                    'share_url' => (function_exists('cj_abs_url') ? cj_abs_url('Catalogue?q=' . rawurlencode($searchQ ?: $catLbl)) : ('https://chandrakalajewellers.in' . $targetUrl)),
+                    'image_url' => $imgUrl,
+                    'thumb_url' => $thumbUrl,
+                    'display_views' => max(1, (int)($st['impressions'] ?? 0)),
+                    'likes_count' => (int)($st['likes_count'] ?? 0),
+                    'comments_count' => (int)($st['comments_count'] ?? 0),
+                    'is_liked' => !empty($likedMap[$key]),
+                    'wa_text' => "Namaste ChandraKala Jewellers! I saw Catalogue Design \"{$title}\" (#{$cid}) in your Reels Ad and want to order it.\nLink: https://chandrakalajewellers.in{$targetUrl}",
+                ];
+            }
+        }
+
+        // Alternate Shop Product Ads & Catalogue Design Ads
+        $merged = [];
+        $maxLen = max(count($shopSlides), count($catSlides));
+        for ($i = 0; $i < $maxLen; $i++) {
+            if (isset($shopSlides[$i])) $merged[] = $shopSlides[$i];
+            if (isset($catSlides[$i])) $merged[] = $catSlides[$i];
+            if (count($merged) >= $limit) break;
+        }
+        return array_slice($merged, 0, $limit);
+    }
+}
+
+if (!function_exists('cj_build_endless_reels_feed')) {
+    /**
+     * Interleave Personalized Video Reels with Sponsored Gallery & Catalogue Photo Ads:
+     * Starts with real Video Reels, inserts a Sponsored Ad every 2 videos, and continues
+     * seamlessly with shuffled Shop & Catalogue Ads so the feed NEVER runs out!
+     *
+     * @return list<array<string,mixed>>
+     */
+    function cj_build_endless_reels_feed(mysqli $conn, string $visitorHash, int $startVideoId = 0, int $initialSlides = 28): array
+    {
+        $videos = cj_get_personalized_reels($conn, $visitorHash, 60);
+        if ($startVideoId > 0 && count($videos) > 1) {
+            foreach ($videos as $k => $v) {
+                if ((int)$v['id'] === $startVideoId) {
+                    $picked = $videos[$k];
+                    unset($videos[$k]);
+                    array_unshift($videos, $picked);
+                    $videos = array_values($videos);
+                    break;
+                }
+            }
+        }
+        foreach ($videos as &$v) {
+            $v['kind'] = 'video';
+            $v['item_key'] = 'vid:' . (int)$v['id'];
+        }
+        unset($v);
+
+        $ads = cj_get_sponsored_ad_slides($conn, $visitorHash, $initialSlides);
+
+        $feed = [];
+        $vIdx = 0;
+        $aIdx = 0;
+        $vCount = count($videos);
+        $aCount = count($ads);
+
+        // Pattern: 2 videos -> 1 Sponsored Ad while videos remain, then keep streaming Ads!
+        while (count($feed) < $initialSlides && ($vIdx < $vCount || $aIdx < $aCount)) {
+            if ($vIdx < $vCount) {
+                $feed[] = $videos[$vIdx++];
+            }
+            if ($vIdx < $vCount && count($feed) < $initialSlides) {
+                $feed[] = $videos[$vIdx++];
+            }
+            if ($aIdx < $aCount && count($feed) < $initialSlides) {
+                $feed[] = $ads[$aIdx++];
+            }
+            // Once initial videos are done, keep adding Ads seamlessly
+            if ($vIdx >= $vCount) {
+                while ($aIdx < $aCount && count($feed) < $initialSlides) {
+                    $feed[] = $ads[$aIdx++];
+                }
+            }
+        }
+
+        return $feed;
     }
 }
