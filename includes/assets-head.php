@@ -99,6 +99,7 @@ body {
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preload" href="css/style.css?v=<?= $cjAssetVer ?>" as="style">
 <link rel="stylesheet" href="css/style.css?v=<?= $cjAssetVer ?>">
 <link rel="stylesheet" href="css/tailwind.min.css?v=<?= $cjAssetVer ?>">

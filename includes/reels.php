@@ -723,6 +723,42 @@ if (!function_exists('cj_get_personalized_reels')) {
     }
 }
 
+if (!function_exists('cj_get_prefetch_reels')) {
+    /**
+     * Fast retrieval of top-ranked reels for zero-lag background pre-buffering.
+     * Returns compact metadata for client-side GPU warming and Cache API preloading.
+     *
+     * @return list<array<string,mixed>>
+     */
+    function cj_get_prefetch_reels(mysqli $conn, string $visitorHash = '', int $limit = 2): array
+    {
+        $limit = max(1, min(10, $limit));
+        $reels = ($visitorHash !== '' && function_exists('cj_get_personalized_reels'))
+            ? cj_get_personalized_reels($conn, $visitorHash, $limit)
+            : cj_get_ranked_reels($conn, $limit, true, 'top');
+
+        $out = [];
+        foreach (array_slice($reels, 0, $limit) as $r) {
+            $rid = (int)$r['id'];
+            $out[] = [
+                'id' => $rid,
+                'item_key' => 'vid:' . $rid,
+                'title' => (string)(!empty($r['admin_note']) ? $r['admin_note'] : ('Jewellery Reel #' . $rid)),
+                'video_url' => cj_reel_hd_url($r),
+                'preview_url' => cj_reel_preview_url($r),
+                'poster_url' => cj_reel_poster_url($r, 540),
+                'width' => (int)($r['width'] ?? 1080),
+                'height' => (int)($r['height'] ?? 1920),
+                'duration' => (float)($r['duration'] ?? 0.0),
+                'likes_count' => (int)($r['likes_count'] ?? 0),
+                'views_fmt' => cj_format_reel_count(max((int)($r['views'] ?? 0), (int)($r['impressions'] ?? 0))),
+                'is_top_viewed' => !empty($r['is_top_viewed']),
+            ];
+        }
+        return $out;
+    }
+}
+
 if (!function_exists('cj_reel_seo_title')) {
     /** SEO-only title for Google Video Search, Sitemap & VideoObject JSON-LD (never overlaid on video). */
     function cj_reel_seo_title(array $reel): string

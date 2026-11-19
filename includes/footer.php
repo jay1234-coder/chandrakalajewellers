@@ -74,3 +74,4 @@ $cjShopFlags = [
 <script src="js/main.js?v=10" defer></script>
 <script src="js/visitor-analytics.js?v=10" defer></script>
 <script src="js/pwa.js?v=12" defer></script>
+<script src="js/reels-prefetch.js?v=1" defer></script>

@@ -135,7 +135,7 @@ html, body {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
 
-/* Vertical Snap-Scroll Feed */
+/* Vertical Snap-Scroll Feed (GPU Composited Layer) */
 .cj-ig-feed {
     width: 100%;
     height: 100dvh;
@@ -144,6 +144,8 @@ html, body {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    overscroll-behavior-y: contain;
+    contain: paint layout;
 }
 .cj-ig-feed::-webkit-scrollbar { display: none; }
 
@@ -157,6 +159,12 @@ html, body {
     justify-content: center;
     position: relative;
     padding: 0;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 @media (min-width: 769px) {
     .cj-ig-slide { padding: 58px 16px 24px; }
@@ -169,6 +177,11 @@ html, body {
     background: #0b0d14;
     overflow: hidden;
     isolation: isolate;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: strict;
 }
 @media (min-width: 769px) {
     .cj-ig-frame {
@@ -190,6 +203,10 @@ html, body {
     display: block;
     background: #0b0d14;
     cursor: pointer;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 /* Sponsored Photo Ad Canvas (Ambient Blur + Ken Burns Motion) */
@@ -200,7 +217,8 @@ html, body {
     height: calc(100% + 48px);
     object-fit: cover;
     filter: blur(26px) brightness(0.42) saturate(1.15);
-    transform: scale(1.1);
+    transform: translate3d(0, 0, 0) scale(1.1);
+    -webkit-transform: translate3d(0, 0, 0) scale(1.1);
     pointer-events: none;
 }
 .cj-ig-ad-stage {
@@ -223,10 +241,12 @@ html, body {
     box-shadow: 0 20px 54px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(240, 215, 140, 0.25);
     animation: cjAdKenBurns 11s ease-in-out infinite alternate;
     will-change: transform;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
 }
 @keyframes cjAdKenBurns {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.065); }
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    100% { transform: translate3d(0, 0, 0) scale(1.065); }
 }
 
 .cj-ig-frame::after {
@@ -306,10 +326,14 @@ html, body {
     font-family: inherit;
     padding: 2px 4px;
     -webkit-tap-highlight-color: transparent;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     transition: transform 0.16s cubic-bezier(.22,1,.36,1), opacity 0.16s ease;
 }
-.cj-ig-rail-btn:hover { opacity: 0.92; transform: scale(1.06); }
-.cj-ig-rail-btn:active { transform: scale(0.86); }
+.cj-ig-rail-btn:hover { opacity: 0.92; transform: translate3d(0, 0, 0) scale(1.06); }
+.cj-ig-rail-btn:active { transform: translate3d(0, 0, 0) scale(0.86); }
 .cj-ig-rail-svg {
     width: 28px;
     height: 28px;
@@ -713,9 +737,11 @@ html, body {
             <div class="cj-ig-frame">
                 <?php if ($isVideo): ?>
                     <video class="cj-ig-video"
+                           <?= $idx === 0 ? 'src="' . htmlspecialchars((string)$slide['hd_url'], ENT_QUOTES, 'UTF-8') . '" data-hydrated="1"' : '' ?>
                            data-src="<?= htmlspecialchars((string)$slide['hd_url'], ENT_QUOTES, 'UTF-8') ?>"
                            <?php if (!empty($slide['poster_thumb'])): ?>poster="<?= htmlspecialchars((string)$slide['poster_thumb'], ENT_QUOTES, 'UTF-8') ?>"<?php endif; ?>
                            muted
+                           autoplay
                            loop
                            playsinline
                            webkit-playsinline
@@ -943,13 +969,85 @@ html, body {
         activeStartMs = 0;
     }
 
-    function hydrateVideo(v) {
-        if (!v || v.dataset.hydrated === '1') return;
-        var src = v.getAttribute('data-src');
+    var CACHE_NAME = 'cj-reels-v1';
+
+    function hydrateVideo(v, playImmediately) {
+        if (!v) return;
+        var src = v.getAttribute('data-src') || v.getAttribute('src');
         if (!src) return;
+
+        var startPlay = function () {
+            if (playImmediately) {
+                v.muted = globalMuted;
+                v.play().catch(function () {
+                    v.muted = true;
+                    v.play().catch(function () {});
+                });
+            }
+        };
+
+        if (v.dataset.hydrated === '1') {
+            startPlay();
+            return;
+        }
         v.dataset.hydrated = '1';
-        v.src = src;
-        try { v.load(); } catch (e) {}
+
+        // Check if video is already preloaded in Cache API from background prefetch
+        if ('caches' in window) {
+            caches.open(CACHE_NAME).then(function (cache) {
+                return cache.match(src).then(function (res) {
+                    if (res) {
+                        return res.blob().then(function (blob) {
+                            var blobUrl = URL.createObjectURL(blob);
+                            v.src = blobUrl;
+                            v.preload = 'auto';
+                            try { v.load(); } catch (e) {}
+                            startPlay();
+                        });
+                    } else {
+                        if (!v.src) v.src = src;
+                        v.preload = 'auto';
+                        try { v.load(); } catch (e) {}
+                        startPlay();
+                    }
+                });
+            }).catch(function () {
+                if (!v.src) v.src = src;
+                v.preload = 'auto';
+                try { v.load(); } catch (e) {}
+                startPlay();
+            });
+        } else {
+            if (!v.src) v.src = src;
+            v.preload = 'auto';
+            try { v.load(); } catch (e) {}
+            startPlay();
+        }
+    }
+
+    // Hardware GPU Decoder Lifecycle: Keep active decoders to max 2 on mobile GPU
+    function manageHardwareDecoders(currentIdx) {
+        var slides = feed.querySelectorAll('.cj-ig-slide');
+        slides.forEach(function (slide) {
+            var vid = slide.querySelector('video');
+            if (!vid) return;
+            var sIdx = Number(slide.getAttribute('data-ig-slide') || 0);
+            var dist = Math.abs(sIdx - currentIdx);
+
+            if (dist === 0) {
+                // Active slide: full GPU composited decode & playback
+                vid.preload = 'auto';
+            } else if (dist === 1) {
+                // Adjacent slide: pre-hydrated to frame 0, paused
+                hydrateVideo(vid, false);
+                vid.preload = 'auto';
+                try { vid.pause(); } catch (e) {}
+            } else if (dist >= 3) {
+                // Distant slides: pause & set preload none to free hardware decoders
+                try { vid.pause(); } catch (e) {}
+                vid.preload = 'none';
+            }
+        });
     }
 
     function syncSoundUI() {
@@ -1054,18 +1152,9 @@ html, body {
                 activeStartMs = Date.now();
                 seenKeys.add(key);
 
-                // Hydrate current & next video slide cleanly
-                hydrateVideo(vid);
-                var nextSlide = slide.nextElementSibling;
-                if (nextSlide) hydrateVideo(nextSlide.querySelector('video'));
-
-                if (vid) {
-                    vid.muted = globalMuted;
-                    vid.play().catch(function () {
-                        vid.muted = true;
-                        vid.play().catch(function () {});
-                    });
-                }
+                // Manage GPU hardware decoders across feed & start active video
+                manageHardwareDecoders(idx);
+                hydrateVideo(vid, true);
 
                 // Trigger infinite feed loader when nearing bottom
                 maybeLoadMoreSlides(idx);
@@ -1194,6 +1283,18 @@ html, body {
     }
 
     feed.querySelectorAll('.cj-ig-slide').forEach(bindSlide);
+
+    // Immediate 0ms GPU warmup for Slide 0 and Slide 1
+    var firstSlide = feed.querySelector('.cj-ig-slide[data-ig-slide="0"]');
+    if (firstSlide) {
+        var firstVid = firstSlide.querySelector('video');
+        if (firstVid) hydrateVideo(firstVid, true);
+        var secondSlide = feed.querySelector('.cj-ig-slide[data-ig-slide="1"]');
+        if (secondSlide) {
+            var secondVid = secondSlide.querySelector('video');
+            if (secondVid) hydrateVideo(secondVid, false);
+        }
+    }
 
     if (scrollHint) {
         scrollHint.addEventListener('click', function () {
