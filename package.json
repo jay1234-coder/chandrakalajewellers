@@ -5,7 +5,7 @@
   "description": "ChandraKala Jewellers — Next.js + TypeScript Modern Stack alongside Core PHP Engine",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/sync-public.js",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
