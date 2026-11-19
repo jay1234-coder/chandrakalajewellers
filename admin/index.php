@@ -210,6 +210,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_GET['action']) && $_GET['act
 }
 // --- END NEW LOGIC ---
 
+// Handle Clear Add Item Draft (Session + Local sync)
+if (isset($_GET['action']) && $_GET['action'] === 'clear_add_item_draft') {
+    unset($_SESSION['add_item_draft'], $_SESSION['add_item_error'], $_SESSION['add_item_field_errors']);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+    header('Location: ' . $cj_view_url('add-item'));
+    exit;
+}
+
 cj_ensure_rates_schema($conn);
 
 // Handle Rate Update before any page rendering / fragile queries
@@ -381,51 +393,89 @@ $manual_rates = ($manual_rate_query instanceof mysqli_result) ? ($manual_rate_qu
 if (isset($_POST['add_item'])) {
     // Validate CSRF token
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
-        $_SESSION['error_message'] = "Security CSRF validation failed. Action aborted.";
+        $_SESSION['add_item_error'] = "Security CSRF validation failed. Action aborted.";
+        $_SESSION['add_item_draft'] = $_POST;
         header('Location: ' . $cj_view_url('add-item'));
         exit();
     }
-    try {
-        $name = $conn->real_escape_string($_POST['name']);
-        $desc = $conn->real_escape_string($_POST['description']);
-        $weight = floatval($_POST['weight']);
-        $metal = $conn->real_escape_string($_POST['metal_type']);
-        $is_fav = isset($_POST['is_fav']) ? 1 : 0;
-        $is_sold_out = isset($_POST['is_sold_out']) ? 1 : 0;
-        // --- EDITED: Get image from hidden field instead of FILES ---
-        $image = $conn->real_escape_string($_POST['image_filename'] ?? '');
-        // --- END EDITED ---
 
-        // --- NEW LOGIC ---
-        $use_manual_rates = isset($_POST['use_manual_rates']) ? 1 : 0;
-        $specs = cj_item_specs_from_post();
-        
-        // Calculate the price based on the checkbox
+    $name = trim((string)($_POST['name'] ?? ''));
+    $desc = trim((string)($_POST['description'] ?? ''));
+    $weight = floatval($_POST['weight'] ?? 0);
+    $metal = strtolower(trim((string)($_POST['metal_type'] ?? 'gold')));
+    $specs = cj_item_specs_from_post();
+    $category = trim((string)($specs['category'] ?? ''));
+    $image = trim((string)($_POST['image_filename'] ?? ''));
+    $tags = trim((string)($_POST['tags'] ?? ''));
+    $is_fav = isset($_POST['is_fav']) ? 1 : 0;
+    $is_sold_out = isset($_POST['is_sold_out']) ? 1 : 0;
+    $use_manual_rates = isset($_POST['use_manual_rates']) ? 1 : 0;
+
+    // Strict validation for mandatory fields
+    $fieldErrors = [];
+    if ($name === '') {
+        $fieldErrors['name'] = 'Item Name is required.';
+    }
+    if (!in_array($metal, ['gold', 'silver', 'silver_925'], true)) {
+        $fieldErrors['metal_type'] = 'Please select a valid Metal Type (Gold, Silver, or Silver 92.5).';
+    }
+    if ($weight <= 0) {
+        $fieldErrors['weight'] = 'Weight must be greater than 0 grams.';
+    }
+    if ($desc === '') {
+        $fieldErrors['description'] = 'Product Description is required. Please describe the piece.';
+    }
+    if ($category === '') {
+        $fieldErrors['category'] = 'Jewellery Type / Category is required.';
+    }
+    if ($image === '') {
+        $fieldErrors['image'] = 'Item Image is required. Please upload or scan a photo.';
+    }
+
+    if (!empty($fieldErrors)) {
+        $_SESSION['add_item_draft'] = $_POST;
+        $_SESSION['add_item_field_errors'] = $fieldErrors;
+        $_SESSION['add_item_error'] = implode(' · ', array_values($fieldErrors));
+        header('Location: ' . $cj_view_url('add-item'));
+        exit();
+    }
+
+    try {
         $rates_to_use = $use_manual_rates ? $manual_rates : $current_rates;
         $manual_price = calculate_item_price_from_rates($weight, $metal, $rates_to_use);
-        // --- END NEW LOGIC ---
 
         $fav_count_query = $conn->query("SELECT COUNT(*) as total FROM jewellery_items WHERE is_favourite = 1");
         if (!$fav_count_query) {
             throw new RuntimeException("Database error counting favourites: " . $conn->error);
         }
-        $fav_count = $fav_count_query->fetch_assoc()['total'];
+        $fav_count = (int)$fav_count_query->fetch_assoc()['total'];
         if ($is_fav && $fav_count >= 3) {
             $is_fav = 0;
         }
 
-        $tags = $conn->real_escape_string(trim((string)($_POST['tags'] ?? '')));
+        $purity = $specs['purity'];
+        $stone = $specs['stone'];
+        $sku = $specs['sku'];
+        $dims = $specs['dimensions'];
 
-        // --- UPDATED INSERT STATEMENT ---
-        $sql = "INSERT INTO jewellery_items (name, image, description, weight, metal_type, manual_price, is_favourite, is_sold_out, use_manual_rates, purity, stone, category, sku, dimensions, tags)
-                      VALUES ('$name', '$image', '$desc', $weight, '$metal', $manual_price, $is_fav, $is_sold_out, $use_manual_rates, '" . $conn->real_escape_string($specs['purity']) . "', '" . $conn->real_escape_string($specs['stone']) . "', '" . $conn->real_escape_string($specs['category']) . "', '" . $conn->real_escape_string($specs['sku']) . "', '" . $conn->real_escape_string($specs['dimensions']) . "', '$tags')";
-        
-        if (!$conn->query($sql)) {
-            throw new RuntimeException("Database insertion failed: " . $conn->error . " (Query: " . $sql . ")");
+        $stmt = $conn->prepare("INSERT INTO jewellery_items (name, image, description, weight, metal_type, manual_price, is_favourite, is_sold_out, use_manual_rates, purity, stone, category, sku, dimensions, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new RuntimeException("Database error preparing statement: " . $conn->error);
         }
-        $newId = (int) $conn->insert_id;
+        $stmt->bind_param('sssdsiiisssssss', $name, $image, $desc, $weight, $metal, $manual_price, $is_fav, $is_sold_out, $use_manual_rates, $purity, $stone, $category, $sku, $dims, $tags);
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            throw new RuntimeException("Database insertion failed: " . $err);
+        }
+        $newId = (int) $stmt->insert_id;
+        $stmt->close();
+
         cj_refresh_item_cached_price($conn, $newId);
         cj_save_extra_image_uploads($conn, $newId);
+
+        // Clear draft on successful addition
+        unset($_SESSION['add_item_draft'], $_SESSION['add_item_field_errors'], $_SESSION['add_item_error']);
 
         $_SESSION['success_message'] = "Jewellery item added successfully!";
         require_once dirname(__DIR__) . '/includes/push.php';
@@ -433,11 +483,15 @@ if (isset($_POST['add_item'])) {
         cj_notify_event($conn, 'new_product', $_SESSION['username'] ?? 'admin', 'New piece added: ' . $name);
         cj_log_activity($conn, 'add_item', $name . ' (' . $metal . ', ' . $weight . 'g)');
         cj_auto_ping_indexnow(['https://chandrakalajewellers.in/product?id=' . $newId]);
+
+        header('Location: ' . $cj_view_url('inventory'));
+        exit();
     } catch (Throwable $e) {
-        $_SESSION['error_message'] = "Could not add item: " . $e->getMessage();
+        $_SESSION['add_item_draft'] = $_POST;
+        $_SESSION['add_item_error'] = "Could not add item: " . $e->getMessage();
+        header('Location: ' . $cj_view_url('add-item'));
+        exit();
     }
-    header('Location: ' . $cj_view_url('inventory'));
-    exit();
 }
 
 // Handle Item Update (for jewellery_items table)
@@ -466,7 +520,7 @@ if (isset($_POST['update_item'])) {
         // Calculate the price based on the checkbox
         $rates_to_use = $use_manual_rates ? $manual_rates : $current_rates;
         $manual_price = calculate_item_price_from_rates($weight, $metal, $rates_to_use);
-        // --- END NEW LOGIC ---
+        // --- END RATES CALC ---
         
         // --- EDITED: Check for new image filename from hidden field ---
         if (isset($_POST['edit_image_filename']) && !empty($_POST['edit_image_filename'])) {
@@ -998,6 +1052,9 @@ if ($just_logged_in) {
                     <svg class="h-5 w-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="font-medium">' . htmlspecialchars($_SESSION['success_message']) . '</span>
                   </div>';
+            if (strpos((string)$_SESSION['success_message'], 'added successfully') !== false) {
+                echo '<script>try{localStorage.removeItem("cj_admin_add_item_draft");}catch(e){}</script>';
+            }
             unset($_SESSION['success_message']);
         }
         if (isset($_SESSION['error_message'])) {
@@ -1437,12 +1494,51 @@ if ($just_logged_in) {
         <?php endif; ?>
 
         <?php if ($adminView === 'add-item'): ?>
+        <?php
+        $addItemDraft = $_SESSION['add_item_draft'] ?? [];
+        $addItemError = $_SESSION['add_item_error'] ?? '';
+        $addItemFieldErrors = $_SESSION['add_item_field_errors'] ?? [];
+        unset($_SESSION['add_item_error'], $_SESSION['add_item_field_errors']);
+
+        $draftName = (string)($addItemDraft['name'] ?? '');
+        $draftMetal = strtolower((string)($addItemDraft['metal_type'] ?? 'gold'));
+        $draftWeight = (string)($addItemDraft['weight'] ?? '');
+        $draftDesc = (string)($addItemDraft['description'] ?? '');
+        $draftCategory = (string)($addItemDraft['category'] ?? '');
+        $draftTags = (string)($addItemDraft['tags'] ?? '');
+        $draftPurity = (string)($addItemDraft['purity'] ?? '');
+        $draftStone = (string)($addItemDraft['stone'] ?? '');
+        $draftDims = (string)($addItemDraft['dimensions'] ?? '');
+        $draftSku = (string)($addItemDraft['sku'] ?? '');
+        $draftUseManual = !empty($addItemDraft['use_manual_rates']);
+        $draftFav = !empty($addItemDraft['is_fav']);
+        $draftSoldOut = !empty($addItemDraft['is_sold_out']);
+        $draftImage = (string)($addItemDraft['image_filename'] ?? '');
+        ?>
         <!-- Middle split: Add item & catalogue upload -->
         <div id="addItemSection" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-8 scroll-mt-24">
             <!-- Add Jewellery Item -->
             <div class="admin-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 font-serif pb-2 border-b border-gray-100"><i class="fas fa-plus-circle text-amber-500 mr-1"></i> Add New Jewellery Item</h2>
-                <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>" enctype="multipart/form-data">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-4 border-b border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-900 font-serif"><i class="fas fa-plus-circle text-amber-500 mr-1"></i> Add New Jewellery Item</h2>
+                    <span class="text-xs text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">
+                        <span class="text-rose-500 font-bold">*</span> Mandatory fields
+                    </span>
+                </div>
+
+                <?php if (!empty($addItemDraft)): ?>
+                    <div id="draft_restore_banner" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+                        <span><i class="fas fa-history text-amber-600 mr-1.5"></i> Form draft preserved from previous attempt. Selected metal: <strong><?= htmlspecialchars(ucfirst($draftMetal)) ?></strong>.</span>
+                        <button type="button" onclick="clearAddItemDraft()" class="text-amber-800 underline font-semibold hover:text-amber-950">Discard Draft</button>
+                    </div>
+                <?php else: ?>
+                    <div id="local_draft_banner" class="hidden mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+                        <span id="local_draft_text"><i class="fas fa-save text-amber-600 mr-1.5"></i> Auto-saved draft restored from your last edit.</span>
+                        <button type="button" onclick="clearAddItemDraft()" class="text-amber-800 underline font-semibold hover:text-amber-950">Discard Draft</button>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>" enctype="multipart/form-data" id="add_item_form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <?php if (!empty($cj_admin_embed)): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
                     
@@ -1464,115 +1560,156 @@ if ($just_logged_in) {
 
                     <div class="admin-form-grid grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label for="name" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Item Name</label>
-                            <input type="text" id="name" name="name" list="name_suggestions" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" required>
+                            <label for="name" class="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                                Item Name <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                            </label>
+                            <input type="text" id="name" name="name" list="name_suggestions" value="<?= htmlspecialchars($draftName) ?>" class="w-full p-2.5 border <?= !empty($addItemFieldErrors['name']) ? 'border-rose-400 bg-rose-50/20 ring-1 ring-rose-300' : 'border-gray-200' ?> rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" placeholder="e.g. Handcrafted Silver Kada" oninput="autoSaveDraft()" required>
+                            <?php if (!empty($addItemFieldErrors['name'])): ?>
+                                <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['name']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
-                            <label for="metal_type" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Metal Type</label>
-                            <select id="metal_type" name="metal_type" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" onchange="calculatePrice('add')" required>
-                                <option value="gold">Gold</option>
-                                <option value="silver">Silver</option>
-                                <option value="silver_925">Silver 92.5</option>
+                            <label for="metal_type" class="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                                Metal Type <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                            </label>
+                            <select id="metal_type" name="metal_type" class="w-full p-2.5 border <?= !empty($addItemFieldErrors['metal_type']) ? 'border-rose-400 bg-rose-50/20' : 'border-gray-200' ?> rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none bg-white font-medium" onchange="calculatePrice('add'); autoSaveDraft();" required>
+                                <option value="gold" <?= $draftMetal === 'gold' ? 'selected' : '' ?>>Gold</option>
+                                <option value="silver" <?= $draftMetal === 'silver' ? 'selected' : '' ?>>Silver</option>
+                                <option value="silver_925" <?= $draftMetal === 'silver_925' ? 'selected' : '' ?>>Silver 92.5</option>
                             </select>
+                            <?php if (!empty($addItemFieldErrors['metal_type'])): ?>
+                                <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['metal_type']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
-                            <label for="weight" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Weight (g)</label>
-                            <input type="number" step="0.01" id="weight" name="weight" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" oninput="calculatePrice('add')" required>
+                            <label for="weight" class="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                                Weight in Grams (g) <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                            </label>
+                            <input type="number" step="0.01" id="weight" name="weight" value="<?= htmlspecialchars($draftWeight) ?>" class="w-full p-2.5 border <?= !empty($addItemFieldErrors['weight']) ? 'border-rose-400 bg-rose-50/20' : 'border-gray-200' ?> rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" oninput="calculatePrice('add'); autoSaveDraft();" placeholder="e.g. 12.50" required>
+                            <?php if (!empty($addItemFieldErrors['weight'])): ?>
+                                <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['weight']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <label for="description" class="block text-xs font-semibold text-gray-500 uppercase">Description</label>
+                                <label for="description" class="block text-xs font-semibold text-gray-600 uppercase">
+                                    Description <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                                </label>
                                 <?php if (cj_setting('gemini_api_key', '') !== ''): ?>
                                     <button type="button" id="ai-generate-btn" class="text-[10px] text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 focus:outline-none" onclick="generateAIDescription(false)"><i class="fas fa-magic"></i> AI Generate</button>
                                 <?php endif; ?>
                             </div>
-                            <textarea id="description" name="description" rows="2" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" required></textarea>
+                            <textarea id="description" name="description" rows="2" class="w-full p-2.5 border <?= !empty($addItemFieldErrors['description']) ? 'border-rose-400 bg-rose-50/20 ring-1 ring-rose-300' : 'border-gray-200' ?> rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" placeholder="Handcrafted finish, occasion, purity details..." oninput="autoSaveDraft()" required><?= htmlspecialchars($draftDesc) ?></textarea>
+                            <?php if (!empty($addItemFieldErrors['description'])): ?>
+                                <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['description']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
-                            <label for="tags" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Search Tags / Keywords (comma separated)</label>
-                            <input type="text" id="tags" name="tags" placeholder="e.g. handmade, wedding gift, chandi" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label for="purity" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Purity (optional)</label>
-                            <input type="text" id="purity" name="purity" placeholder="e.g. 22K / 916" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label for="category" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Type / Category</label>
+                            <label for="category" class="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                                Type / Category <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                            </label>
                             <div class="flex items-center gap-1.5">
-                                <select id="category" name="category" data-product-type-select class="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none">
+                                <select id="category" name="category" data-product-type-select class="w-full p-2.5 border <?= !empty($addItemFieldErrors['category']) ? 'border-rose-400 bg-rose-50/20' : 'border-gray-200' ?> rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" onchange="autoSaveDraft()" required>
                                     <option value="">-- Select Jewellery Type --</option>
                                     <?php foreach ($product_types as $ptype): ?>
-                                        <option value="<?= htmlspecialchars($ptype, ENT_QUOTES) ?>"><?= htmlspecialchars($ptype) ?></option>
+                                        <option value="<?= htmlspecialchars($ptype, ENT_QUOTES) ?>" <?= $draftCategory === $ptype ? 'selected' : '' ?>><?= htmlspecialchars($ptype) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <button type="button" onclick="openAddTypeQuick('category')" title="Add New Jewellery Type" aria-label="Add New Jewellery Type" class="shrink-0 w-10 h-10 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center justify-center shadow-sm transition-colors cursor-pointer">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
+                            <?php if (!empty($addItemFieldErrors['category'])): ?>
+                                <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['category']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div>
-                            <label for="stone" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stone (optional)</label>
-                            <input type="text" id="stone" name="stone" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
+                            <label for="tags" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Search Tags / Keywords <span class="text-gray-400 font-normal lowercase">(optional)</span></label>
+                            <input type="text" id="tags" name="tags" value="<?= htmlspecialchars($draftTags) ?>" placeholder="e.g. handmade, wedding gift, chandi" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none" oninput="autoSaveDraft()">
                         </div>
                         <div>
-                            <label for="dimensions" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Size (optional)</label>
-                            <input type="text" id="dimensions" name="dimensions" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
+                            <label for="purity" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Purity <span class="text-gray-400 font-normal lowercase">(optional)</span></label>
+                            <input type="text" id="purity" name="purity" value="<?= htmlspecialchars($draftPurity) ?>" placeholder="e.g. 22K / 916 / 925" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm" oninput="autoSaveDraft()">
                         </div>
                         <div>
-                            <label for="sku" class="block text-xs font-semibold text-gray-500 uppercase mb-1">SKU (optional)</label>
-                            <input type="text" id="sku" name="sku" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm">
+                            <label for="stone" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stone <span class="text-gray-400 font-normal lowercase">(optional)</span></label>
+                            <input type="text" id="stone" name="stone" value="<?= htmlspecialchars($draftStone) ?>" placeholder="e.g. Ruby, CZ" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm" oninput="autoSaveDraft()">
+                        </div>
+                        <div>
+                            <label for="dimensions" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Size / Dimensions <span class="text-gray-400 font-normal lowercase">(optional)</span></label>
+                            <input type="text" id="dimensions" name="dimensions" value="<?= htmlspecialchars($draftDims) ?>" placeholder="e.g. Size 12 / 2.4 Bangle" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm" oninput="autoSaveDraft()">
+                        </div>
+                        <div>
+                            <label for="sku" class="block text-xs font-semibold text-gray-500 uppercase mb-1">SKU <span class="text-gray-400 font-normal lowercase">(optional)</span></label>
+                            <input type="text" id="sku" name="sku" value="<?= htmlspecialchars($draftSku) ?>" placeholder="e.g. CJ-SR-102" class="w-full p-2.5 border border-gray-200 rounded-lg text-sm" oninput="autoSaveDraft()">
                         </div>
                     </div>
 
                     <div class="mt-4 admin-check-row grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                         <div class="flex items-center">
-                            <input type="checkbox" id="use_manual_rates" name="use_manual_rates" class="h-4 w-4 text-amber-500 border-gray-200 rounded focus:ring-amber-500" onchange="calculatePrice('add')">
+                            <input type="checkbox" id="use_manual_rates" name="use_manual_rates" class="h-4 w-4 text-amber-500 border-gray-200 rounded focus:ring-amber-500" <?= $draftUseManual ? 'checked' : '' ?> onchange="calculatePrice('add'); autoSaveDraft();">
                             <label for="use_manual_rates" class="ml-2 text-xs font-semibold text-gray-600">Use Manual Override Rates</label>
                         </div>
                         <div class="flex items-center">
-                            <input type="checkbox" id="is_fav" name="is_fav" class="h-4 w-4 text-amber-500 border-gray-200 rounded focus:ring-amber-500">
+                            <input type="checkbox" id="is_fav" name="is_fav" class="h-4 w-4 text-amber-500 border-gray-200 rounded focus:ring-amber-500" <?= $draftFav ? 'checked' : '' ?> onchange="autoSaveDraft();">
                             <label for="is_fav" class="ml-2 text-xs font-semibold text-gray-600">Mark as Hot Favourite (Max 3)</label>
                         </div>
                         <div class="flex items-center">
-                            <input type="checkbox" id="is_sold_out" name="is_sold_out" class="h-4 w-4 text-rose-500 border-gray-200 rounded focus:ring-rose-500">
+                            <input type="checkbox" id="is_sold_out" name="is_sold_out" class="h-4 w-4 text-rose-500 border-gray-200 rounded focus:ring-rose-500" <?= $draftSoldOut ? 'checked' : '' ?> onchange="autoSaveDraft();">
                             <label for="is_sold_out" class="ml-2 text-xs font-semibold text-gray-600">Sold Out on website</label>
                         </div>
                     </div>
 
                     <!-- Image upload wrapper + Self-Built OCR Auto-Fill -->
-                    <div class="mt-5 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                    <div class="mt-5 border border-dashed <?= !empty($addItemFieldErrors['image']) ? 'border-rose-400 bg-rose-50/20' : 'border-gray-200 bg-gray-50/50' ?> rounded-xl p-4">
                         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase">Item Image + Auto OCR Scan</label>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase">
+                                Item Image + Auto OCR Scan <span class="text-rose-500 font-bold" title="Compulsory field">*</span>
+                            </label>
                             <button type="button" id="ocr_scan_add_btn" onclick="runImageOcrScan(false)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer">
                                 <i class="fas fa-wand-magic-sparkles"></i> Scan Image (OCR + SEO Name)
                             </button>
                         </div>
-                        <input type="file" id="image_upload" name="image" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" required>
-                        <input type="hidden" name="image_filename" id="image_filename">
+                        <input type="file" id="image_upload" name="image" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" <?= empty($draftImage) ? 'required' : '' ?>>
+                        <input type="hidden" name="image_filename" id="image_filename" value="<?= htmlspecialchars($draftImage) ?>">
                         
+                        <?php if (!empty($addItemFieldErrors['image'])): ?>
+                            <p class="text-[11px] text-rose-600 mt-1 font-medium"><i class="fas fa-exclamation-circle mr-1"></i><?= htmlspecialchars($addItemFieldErrors['image']) ?></p>
+                        <?php endif; ?>
+
                         <div class="flex gap-4 items-center mt-4">
-                            <img id="image_preview" src="#" alt="Preview" class="w-20 h-20 object-cover rounded-xl border border-gray-200 hidden">
+                            <img id="image_preview" src="<?= !empty($draftImage) ? 'https://res.cloudinary.com/hihrgcxm/image/upload/f_auto,q_auto,w_400,c_limit/chandrakala/uploads/' . htmlspecialchars($draftImage) : '#' ?>" alt="Preview" class="w-20 h-20 object-cover rounded-xl border border-gray-200 <?= empty($draftImage) ? 'hidden' : '' ?>">
                             <div class="flex-grow">
                                 <div class="progress-bar-container hidden" id="progress_wrapper">
                                     <div class="progress-bar" id="progress_bar">0%</div>
                                 </div>
-                                <div id="progress_message" class="text-xs text-gray-500 mt-1"></div>
+                                <div id="progress_message" class="text-xs text-gray-500 mt-1"><?= !empty($draftImage) ? 'Preserved image from draft: ' . htmlspecialchars($draftImage) : '' ?></div>
                                 <div id="ocr_status_add" class="text-[11px] text-amber-700 font-medium mt-1"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-4 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Extra photos (optional, up to 6)</label>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Extra photos <span class="text-gray-400 font-normal lowercase">(optional, up to 6)</span></label>
                         <input type="file" name="extra_images[]" accept="image/*" multiple class="text-sm text-gray-500">
                     </div>
+
                     <div class="mt-6 flex justify-between items-center p-4 bg-amber-50/50 border border-amber-100 rounded-xl">
                         <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Calculated Value (Realtime)</span>
                         <span id="calculated_price" class="text-lg font-bold text-amber-700">₹ 0</span>
                     </div>
 
-                    <button type="submit" name="add_item" id="add_item_btn" class="mt-5 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors duration-150 shadow-sm">
-                        Add New Item to Stock
+                    <!-- Live Error Box Directly Above Submit Button -->
+                    <div id="add_item_error_box" class="<?= empty($addItemError) ? 'hidden ' : '' ?>mt-5 p-4 rounded-xl border border-rose-300 bg-rose-50 text-rose-800 text-sm font-semibold flex items-start gap-3 shadow-sm">
+                        <i class="fas fa-exclamation-circle text-rose-600 text-xl mt-0.5 shrink-0"></i>
+                        <div class="flex-1">
+                            <p class="font-bold text-rose-950 text-sm mb-1" id="add_item_error_title">Please fix the following before submitting:</p>
+                            <p id="add_item_error_message" class="text-xs text-rose-800 leading-relaxed font-normal"><?= htmlspecialchars($addItemError ?? '') ?></p>
+                        </div>
+                    </div>
+
+                    <button type="submit" name="add_item" id="add_item_btn" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all duration-150 shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fas fa-plus-circle text-base"></i> Add New Item to Stock
                     </button>
                 </form>
             </div>
@@ -2434,6 +2571,15 @@ if ($just_logged_in) {
                                 if (response.success && response.files && response.files.length > 0) {
                                     progressMessage.textContent = 'Image uploaded successfully!';
                                     hiddenInput.value = response.files[0].filename;
+                                    if (inputFile) {
+                                        inputFile.removeAttribute('required');
+                                        var parentBox = inputFile.closest('.border-dashed');
+                                        if (parentBox) {
+                                            parentBox.classList.remove('border-rose-400', 'bg-rose-50/20');
+                                            parentBox.classList.add('border-gray-200', 'bg-gray-50/50');
+                                        }
+                                    }
+                                    if (typeof autoSaveDraft === 'function') autoSaveDraft();
                                     if (submitBtn) {
                                         submitBtn.disabled = false;
                                         submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -2721,6 +2867,329 @@ if ($just_logged_in) {
         <?php if ($adminView === 'add-item' && $cat_ocr_pending > 0): ?>
         setTimeout(function () { startCatalogueOcrWorker(false); }, 1800);
         <?php endif; ?>
+
+        // =========================================================================
+        // ADD-ITEM FORM STATE MANAGEMENT & VALIDATION ENGINE
+        // =========================================================================
+        function cjEscapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        var _autoSaveDraftTimer = null;
+        function autoSaveDraft() {
+            clearTimeout(_autoSaveDraftTimer);
+            _autoSaveDraftTimer = setTimeout(function() {
+                var form = document.getElementById('add_item_form');
+                if (!form) return;
+                var draft = {
+                    name: (document.getElementById('name') || {}).value || '',
+                    metal_type: (document.getElementById('metal_type') || {}).value || 'gold',
+                    weight: (document.getElementById('weight') || {}).value || '',
+                    description: (document.getElementById('description') || {}).value || '',
+                    category: (document.getElementById('category') || {}).value || '',
+                    tags: (document.getElementById('tags') || {}).value || '',
+                    purity: (document.getElementById('purity') || {}).value || '',
+                    stone: (document.getElementById('stone') || {}).value || '',
+                    dimensions: (document.getElementById('dimensions') || {}).value || '',
+                    sku: (document.getElementById('sku') || {}).value || '',
+                    use_manual_rates: !!(document.getElementById('use_manual_rates') && document.getElementById('use_manual_rates').checked),
+                    is_fav: !!(document.getElementById('is_fav') && document.getElementById('is_fav').checked),
+                    is_sold_out: !!(document.getElementById('is_sold_out') && document.getElementById('is_sold_out').checked),
+                    image_filename: (document.getElementById('image_filename') || {}).value || '',
+                    saved_at: Date.now()
+                };
+                try {
+                    localStorage.setItem('cj_admin_add_item_draft', JSON.stringify(draft));
+                } catch(e) {}
+            }, 120);
+        }
+        window.autoSaveDraft = autoSaveDraft;
+
+        function clearAddItemDraft() {
+            try { localStorage.removeItem('cj_admin_add_item_draft'); } catch(e){}
+            fetch('index.php?action=clear_add_item_draft', { method: 'POST', credentials: 'same-origin' }).catch(function(){});
+
+            var form = document.getElementById('add_item_form');
+            if (form) {
+                form.reset();
+                var imgFn = document.getElementById('image_filename');
+                if (imgFn) imgFn.value = '';
+                var imgPreview = document.getElementById('image_preview');
+                if (imgPreview) {
+                    imgPreview.src = '#';
+                    imgPreview.classList.add('hidden');
+                }
+                var imgUpload = document.getElementById('image_upload');
+                if (imgUpload) {
+                    imgUpload.value = '';
+                    imgUpload.setAttribute('required', 'required');
+                }
+                var progMsg = document.getElementById('progress_message');
+                if (progMsg) progMsg.textContent = '';
+                var ocrStatus = document.getElementById('ocr_status_add');
+                if (ocrStatus) ocrStatus.textContent = '';
+                var calcPrice = document.getElementById('calculated_price');
+                if (calcPrice) calcPrice.textContent = '₹ 0';
+                var draftBanner = document.getElementById('draft_restore_banner');
+                if (draftBanner) draftBanner.remove();
+                var localBanner = document.getElementById('local_draft_banner');
+                if (localBanner) localBanner.classList.add('hidden');
+                var errBox = document.getElementById('add_item_error_box');
+                if (errBox) errBox.classList.add('hidden');
+
+                form.querySelectorAll('.ring-rose-400, .border-rose-400, .border-rose-500, .bg-rose-50\\/20').forEach(function(el) {
+                    el.classList.remove('ring-2', 'ring-1', 'ring-rose-400', 'ring-rose-300', 'border-rose-400', 'border-rose-500', 'bg-rose-50/20');
+                    el.classList.add('border-gray-200');
+                });
+            }
+        }
+        window.clearAddItemDraft = clearAddItemDraft;
+
+        function restoreDraftFromStorage() {
+            var form = document.getElementById('add_item_form');
+            if (!form) return;
+
+            var nameEl = document.getElementById('name');
+            var metalEl = document.getElementById('metal_type');
+            var weightEl = document.getElementById('weight');
+            var descEl = document.getElementById('description');
+            var catEl = document.getElementById('category');
+            var imgFnEl = document.getElementById('image_filename');
+
+            // If PHP already populated values from a server draft, sync to storage and trigger price calc
+            var hasSessionDraft = <?= !empty($addItemDraft) ? 'true' : 'false' ?>;
+            if (hasSessionDraft) {
+                autoSaveDraft();
+                if (typeof calculatePrice === 'function') calculatePrice('add');
+                return;
+            }
+
+            var raw = null;
+            try { raw = localStorage.getItem('cj_admin_add_item_draft'); } catch(e){}
+            if (!raw) return;
+
+            var draft = null;
+            try { draft = JSON.parse(raw); } catch(e){ return; }
+            if (!draft || typeof draft !== 'object') return;
+
+            var hasContent = (draft.name || draft.weight || draft.description || draft.category || draft.image_filename);
+            if (!hasContent) return;
+
+            if (nameEl && !nameEl.value && draft.name) nameEl.value = draft.name;
+            if (metalEl && draft.metal_type) metalEl.value = draft.metal_type;
+            if (weightEl && !weightEl.value && draft.weight) weightEl.value = draft.weight;
+            if (descEl && !descEl.value && draft.description) descEl.value = draft.description;
+            if (catEl && !catEl.value && draft.category && typeof setProductTypeSelectValue === 'function') {
+                setProductTypeSelectValue(catEl, draft.category);
+            }
+
+            var tagsEl = document.getElementById('tags');
+            if (tagsEl && !tagsEl.value && draft.tags) tagsEl.value = draft.tags;
+
+            var purityEl = document.getElementById('purity');
+            if (purityEl && !purityEl.value && draft.purity) purityEl.value = draft.purity;
+
+            var stoneEl = document.getElementById('stone');
+            if (stoneEl && !stoneEl.value && draft.stone) stoneEl.value = draft.stone;
+
+            var dimsEl = document.getElementById('dimensions');
+            if (dimsEl && !dimsEl.value && draft.dimensions) dimsEl.value = draft.dimensions;
+
+            var skuEl = document.getElementById('sku');
+            if (skuEl && !skuEl.value && draft.sku) skuEl.value = draft.sku;
+
+            var manualEl = document.getElementById('use_manual_rates');
+            if (manualEl && draft.use_manual_rates !== undefined) manualEl.checked = !!draft.use_manual_rates;
+
+            var favEl = document.getElementById('is_fav');
+            if (favEl && draft.is_fav !== undefined) favEl.checked = !!draft.is_fav;
+
+            var soldEl = document.getElementById('is_sold_out');
+            if (soldEl && draft.is_sold_out !== undefined) soldEl.checked = !!draft.is_sold_out;
+
+            if (imgFnEl && !imgFnEl.value && draft.image_filename) {
+                imgFnEl.value = draft.image_filename;
+                var prev = document.getElementById('image_preview');
+                if (prev) {
+                    prev.src = 'https://res.cloudinary.com/hihrgcxm/image/upload/f_auto,q_auto,w_400,c_limit/chandrakala/uploads/' + encodeURIComponent(draft.image_filename);
+                    prev.classList.remove('hidden');
+                }
+                var msg = document.getElementById('progress_message');
+                if (msg) msg.textContent = 'Preserved image from draft: ' + draft.image_filename;
+                var fileIn = document.getElementById('image_upload');
+                if (fileIn) fileIn.removeAttribute('required');
+            }
+
+            var localBanner = document.getElementById('local_draft_banner');
+            if (localBanner) {
+                localBanner.classList.remove('hidden');
+                var bannerText = document.getElementById('local_draft_text');
+                if (bannerText) {
+                    var metalName = (draft.metal_type || 'gold').charAt(0).toUpperCase() + (draft.metal_type || 'gold').slice(1);
+                    bannerText.innerHTML = '<i class="fas fa-save text-amber-600 mr-1.5"></i> Restored unsubmitted draft. Selected metal: <strong>' + cjEscapeHtml(metalName) + '</strong>.';
+                }
+            }
+
+            if (typeof calculatePrice === 'function') calculatePrice('add');
+        }
+
+        // Live error clearing as user interacts
+        function initAddItemErrorClearing() {
+            var fields = ['name', 'weight', 'description', 'category', 'metal_type'];
+            fields.forEach(function(fid) {
+                var el = document.getElementById(fid);
+                if (!el) return;
+                var evName = (el.tagName === 'SELECT') ? 'change' : 'input';
+                el.addEventListener(evName, function() {
+                    var val = (el.value || '').trim();
+                    if (val !== '' && (fid !== 'weight' || parseFloat(val) > 0)) {
+                        el.classList.remove('border-rose-500', 'border-rose-400', 'ring-2', 'ring-1', 'ring-rose-400', 'ring-rose-300', 'bg-rose-50/20');
+                        el.classList.add('border-gray-200');
+                    }
+                    autoSaveDraft();
+                });
+            });
+
+            var imgInput = document.getElementById('image_upload');
+            if (imgInput) {
+                imgInput.addEventListener('change', function() {
+                    if (imgInput.files && imgInput.files.length > 0) {
+                        var imgBox = imgInput.closest('.border-dashed');
+                        if (imgBox) {
+                            imgBox.classList.remove('border-rose-400', 'bg-rose-50/20');
+                            imgBox.classList.add('border-gray-200', 'bg-gray-50/50');
+                        }
+                    }
+                });
+            }
+        }
+
+        // Pre-submit validation attached in capture phase
+        function initAddItemSubmitValidation() {
+            var form = document.getElementById('add_item_form');
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                var nameEl = document.getElementById('name');
+                var metalEl = document.getElementById('metal_type');
+                var weightEl = document.getElementById('weight');
+                var descEl = document.getElementById('description');
+                var catEl = document.getElementById('category');
+                var imgFnEl = document.getElementById('image_filename');
+                var imgUploadEl = document.getElementById('image_upload');
+                var errBox = document.getElementById('add_item_error_box');
+                var errMsg = document.getElementById('add_item_error_message');
+                var errTitle = document.getElementById('add_item_error_title');
+                var submitBtn = document.getElementById('add_item_btn');
+
+                var errors = [];
+                var firstInvalidEl = null;
+
+                function markErr(el, msg) {
+                    errors.push(msg);
+                    if (el) {
+                        el.classList.add('border-rose-500', 'ring-2', 'ring-rose-400', 'bg-rose-50/20');
+                        el.classList.remove('border-gray-200');
+                        if (!firstInvalidEl) firstInvalidEl = el;
+                    }
+                }
+
+                // 1. Name
+                if (!nameEl || !nameEl.value.trim()) {
+                    markErr(nameEl, 'Item Name is required. Please provide a title for the piece.');
+                }
+
+                // 2. Metal Type
+                var metalVal = metalEl ? metalEl.value : '';
+                if (!metalVal || ['gold', 'silver', 'silver_925'].indexOf(metalVal) === -1) {
+                    markErr(metalEl, 'Please select a valid Metal Type (Gold, Silver, or Silver 92.5).');
+                }
+
+                // 3. Weight
+                var weightVal = weightEl ? parseFloat(weightEl.value) : 0;
+                if (isNaN(weightVal) || weightVal <= 0) {
+                    markErr(weightEl, 'Weight must be greater than 0 grams.');
+                }
+
+                // 4. Description
+                if (!descEl || !descEl.value.trim()) {
+                    markErr(descEl, 'Product Description is compulsory. Please describe the piece.');
+                }
+
+                // 5. Category
+                if (!catEl || !catEl.value.trim()) {
+                    markErr(catEl, 'Jewellery Type / Category is compulsory. Select one from dropdown.');
+                }
+
+                // 6. Image
+                var hasImg = (imgFnEl && imgFnEl.value.trim() !== '') || (imgUploadEl && imgUploadEl.files && imgUploadEl.files.length > 0);
+                if (!hasImg) {
+                    errors.push('Item Image is required. Please select or capture a photo.');
+                    if (!firstInvalidEl && imgUploadEl) firstInvalidEl = imgUploadEl;
+                    var imgBox = imgUploadEl ? imgUploadEl.closest('.border-dashed') : null;
+                    if (imgBox) {
+                        imgBox.classList.add('border-rose-400', 'bg-rose-50/20');
+                        imgBox.classList.remove('border-gray-200', 'bg-gray-50/50');
+                    }
+                }
+
+                if (errors.length > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+                    if (errBox && errMsg) {
+                        errBox.classList.remove('hidden');
+                        if (errTitle) errTitle.textContent = 'Please fill all compulsory fields marked with * before submitting:';
+                        errMsg.innerHTML = '<ul class="list-disc list-inside space-y-1 font-medium mt-1">' +
+                            errors.map(function(m) { return '<li>' + cjEscapeHtml(m) + '</li>'; }).join('') +
+                            '</ul>';
+                    }
+
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('opacity-80', 'opacity-50', 'cursor-not-allowed');
+                        submitBtn.innerHTML = '<i class="fas fa-plus-circle text-base"></i> Add New Item to Stock';
+                    }
+
+                    if (errBox) {
+                        errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (firstInvalidEl) {
+                        firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    if (firstInvalidEl && typeof firstInvalidEl.focus === 'function') {
+                        setTimeout(function() { firstInvalidEl.focus(); }, 250);
+                    }
+
+                    autoSaveDraft();
+                    return false;
+                }
+
+                // Valid submission: clear storage draft
+                try { localStorage.removeItem('cj_admin_add_item_draft'); } catch(e){}
+                if (errBox) errBox.classList.add('hidden');
+                return true;
+            }, true); // Capture phase ensures this runs BEFORE any bubble listeners
+        }
+
+        // Initialize Add-Item handlers on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                restoreDraftFromStorage();
+                initAddItemErrorClearing();
+                initAddItemSubmitValidation();
+            });
+        } else {
+            restoreDraftFromStorage();
+            initAddItemErrorClearing();
+            initAddItemSubmitValidation();
+        }
 
         // Client-side instant search & filter on Stock Inventory page
         (function initStockFilter() {
