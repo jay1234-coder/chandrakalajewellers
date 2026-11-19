@@ -204,7 +204,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 <head>
 <?php include 'includes/seo-head.php'; ?>
     <link rel="stylesheet" href="css/tailwind.min.css?v=9">
-    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/style.css?v=10">
     <link rel="stylesheet" href="css/admin-theme.css?v=9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -444,7 +444,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
     <script>
     (function () {
         var waNumber = <?= json_encode($waNumber) ?>;
-        var catalogueUrl = <?= json_encode($cataloguePageUrl) ?>;
+        var catalogueUrl = window.location.origin + window.location.pathname;
         window.CJ_CUSTOMER_LOGGED_IN = <?= json_encode(!empty($currentCustomer)) ?>;
         window.CJ_LIKED_CATALOGUE_IDS = <?= json_encode(array_values(array_map('intval', $customerLikedIds))) ?>;
         var likedSet = new Set(window.CJ_LIKED_CATALOGUE_IDS);
@@ -625,21 +625,33 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 waShareBtn.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(shareMsg);
             }
 
-            if (window.history && window.history.replaceState && id) {
-                window.history.replaceState(null, '', 'Catalogue?id=' + encodeURIComponent(id));
-            }
+            try {
+                if (window.history && window.history.replaceState && id) {
+                    window.history.replaceState(null, '', 'Catalogue?id=' + encodeURIComponent(id));
+                }
+            } catch (histErr) {}
+
             lb.hidden = false;
             lb.setAttribute('aria-hidden', 'false');
             document.body.classList.add('catalogue-lightbox-open');
             requestAnimationFrame(function () { lb.classList.add('is-open'); });
             var closeBtn = lb.querySelector('.catalogue-lightbox-close');
-            if (closeBtn) closeBtn.focus({ preventScroll: true });
+            if (closeBtn && typeof closeBtn.focus === 'function') {
+                try { closeBtn.focus({ preventScroll: true }); } catch (fErr) {}
+            }
         }
 
-        function closeViewer() {
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', catalogueUrl);
+        function closeViewer(e) {
+            if (e) {
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
             }
+            try {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+            } catch (histErr) {}
+
             lb.classList.remove('is-open');
             document.body.classList.remove('catalogue-lightbox-open');
             clearTimeout(closeTimer);
@@ -647,8 +659,10 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 lb.hidden = true;
                 lb.setAttribute('aria-hidden', 'true');
                 img.removeAttribute('src');
-                if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
-            }, 320);
+                if (lastFocus && typeof lastFocus.focus === 'function') {
+                    try { lastFocus.focus({ preventScroll: true }); } catch (fErr) {}
+                }
+            }, 250);
         }
 
         sc.bindItemClicks(function (el) {
@@ -710,6 +724,16 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 
         lb.querySelectorAll('[data-catalogue-close]').forEach(function (el) {
             el.addEventListener('click', closeViewer);
+            el.addEventListener('touchend', function (e) {
+                closeViewer(e);
+            }, { passive: false });
+        });
+
+        // Extra defensive delegation on lightbox container itself
+        lb.addEventListener('click', function (e) {
+            if (e.target && e.target.matches('[data-catalogue-close], .catalogue-lightbox-close, .catalogue-lightbox-backdrop')) {
+                closeViewer(e);
+            }
         });
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
