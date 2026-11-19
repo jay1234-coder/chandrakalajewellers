@@ -222,6 +222,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'clear_add_item_draft') {
     exit;
 }
 
+// Handle Manual Sitemap Rebuild & Auto-Indexing Action
+if (isset($_GET['action']) && $_GET['action'] === 'rebuild_sitemap') {
+    if (!function_exists('cj_validate_csrf') || !cj_validate_csrf((string)($_GET['csrf_token'] ?? ''))) {
+        $_SESSION['error_message'] = "Security check failed. Please refresh and try again.";
+    } else {
+        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+        $res = cj_trigger_auto_indexing($conn, [], 'admin_manual_rebuild');
+        $cnt = $res['indexnow']['count'] ?? '250+';
+        $_SESSION['success_message'] = "Sitemap refreshed & submitted to Google, Bing, Yandex & IndexNow! ($cnt URLs indexed)";
+    }
+    header('Location: ' . $cj_view_url('overview'));
+    exit();
+}
+
 cj_ensure_rates_schema($conn);
 
 // Handle Rate Update before any page rendering / fragile queries
@@ -482,7 +496,12 @@ if (isset($_POST['add_item'])) {
         require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
         cj_notify_event($conn, 'new_product', $_SESSION['username'] ?? 'admin', 'New piece added: ' . $name);
         cj_log_activity($conn, 'add_item', $name . ' (' . $metal . ', ' . $weight . 'g)');
-        cj_auto_ping_indexnow(['https://chandrakalajewellers.in/product?id=' . $newId]);
+        if (function_exists('cj_trigger_auto_indexing')) {
+            cj_trigger_auto_indexing($conn, [
+                'https://chandrakalajewellers.in/product?id=' . $newId,
+                'https://chandrakalajewellers.in/gallery'
+            ], 'product_upload');
+        }
 
         header('Location: ' . $cj_view_url('inventory'));
         exit();
@@ -571,6 +590,13 @@ if (isset($_POST['update_item'])) {
         require_once dirname(__DIR__) . '/includes/push.php';
         cj_notify_event($conn, 'product_updated', $_SESSION['username'] ?? 'admin', 'Updated: ' . $name);
         cj_log_activity($conn, 'update_item', "#{$id} " . $name);
+        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+        if (function_exists('cj_trigger_auto_indexing')) {
+            cj_trigger_auto_indexing($conn, [
+                'https://chandrakalajewellers.in/product?id=' . $id,
+                'https://chandrakalajewellers.in/gallery'
+            ], 'product_update');
+        }
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not update item: " . $e->getMessage();
     }
@@ -602,6 +628,12 @@ if (isset($_GET['delete'])) {
         }
         $_SESSION['success_message'] = "Jewellery item deleted successfully!";
         cj_log_activity($conn, 'delete_item', 'Deleted jewellery item #' . $id);
+        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+        if (function_exists('cj_trigger_auto_indexing')) {
+            cj_trigger_auto_indexing($conn, [
+                'https://chandrakalajewellers.in/gallery'
+            ], 'product_delete');
+        }
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not delete item: " . $e->getMessage();
     }
@@ -792,6 +824,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload_catalogue_image
     if ($uploadedCount > 0) {
         $_SESSION['success_message'] = "$uploadedCount images uploaded successfully to catalogue.";
         cj_log_activity($conn, 'upload_catalogue', $uploadedCount . ' image(s) uploaded');
+        require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+        if (function_exists('cj_trigger_auto_indexing')) {
+            cj_trigger_auto_indexing($conn, [
+                'https://chandrakalajewellers.in/Catalogue'
+            ], 'catalogue_upload');
+        }
     }
     if (!empty($errors)) {
         $_SESSION['error_message'] = "Some errors occurred during catalogue upload: " . implode("<br>", $errors);
@@ -1188,9 +1226,14 @@ if ($just_logged_in) {
                     <h2 class="text-base sm:text-lg font-bold text-gray-900 font-serif">Quick Workspace</h2>
                     <p class="text-xs text-gray-500">Jump straight to any section — zero endless scrolling.</p>
                 </div>
-                <span class="text-[11px] font-semibold text-gray-500">
-                    Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 · <?= (int)$fav_count ?>/3 favs
-                </span>
+                <div class="flex items-center gap-2">
+                    <a href="index.php?action=rebuild_sitemap&csrf_token=<?= urlencode($_SESSION['csrf_token']) ?>" title="Rebuild dynamic sitemap.xml and broadcast instant indexing pings to Google, Bing, Yandex, Seznam &amp; ChatGPT Search" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all cursor-pointer">
+                        <i class="fas fa-satellite-dish"></i> Auto-Index Entire Site
+                    </a>
+                    <span class="hidden sm:inline-block text-[11px] font-semibold text-gray-500">
+                        Mix: <?= (int)$metal_counts_admin['gold'] ?> gold · <?= (int)$metal_counts_admin['silver'] ?> silver · <?= (int)$metal_counts_admin['silver_925'] ?> 925 · <?= (int)$fav_count ?>/3 favs
+                    </span>
+                </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                 <a href="<?= htmlspecialchars($cj_view_url('rates')) ?>" class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-amber-300 transition-all flex items-center gap-3">

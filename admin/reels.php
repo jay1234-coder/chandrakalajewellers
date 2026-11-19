@@ -36,6 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->query("UPDATE video_reels SET is_active = IF(is_active = 1, 0, 1) WHERE id = {$rid}");
                 $msg = "Reel #{$rid} visibility updated.";
                 $msgType = 'success';
+                require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+                if (function_exists('cj_trigger_auto_indexing')) {
+                    cj_trigger_auto_indexing($conn, [
+                        'https://chandrakalajewellers.in/reels',
+                        'https://chandrakalajewellers.in/showcase?v=' . $rid
+                    ], 'reel_toggle');
+                }
             }
         } elseif ($action === 'update_note') {
             $rid = (int)($_POST['reel_id'] ?? 0);
@@ -64,6 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->query("DELETE FROM video_reels WHERE id = {$rid}");
                 $msg = "Reel #{$rid} permanently deleted.";
                 $msgType = 'success';
+                require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+                if (function_exists('cj_trigger_auto_indexing')) {
+                    cj_trigger_auto_indexing($conn, [
+                        'https://chandrakalajewellers.in/reels'
+                    ], 'reel_delete');
+                }
             }
         } elseif ($action === 'delete_comment') {
             $cid = (int)($_POST['comment_id'] ?? 0);

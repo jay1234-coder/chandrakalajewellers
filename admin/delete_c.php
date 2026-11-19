@@ -49,6 +49,12 @@ if (isset($_GET['delete_id'])) {
             }
             $message = "Product deleted successfully!";
             $message_type = 'success';
+            require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
+            if (function_exists('cj_trigger_auto_indexing')) {
+                cj_trigger_auto_indexing($conn, [
+                    'https://chandrakalajewellers.in/Catalogue'
+                ], 'catalogue_delete');
+            }
         } else {
             $message = "Error deleting product from database: " . $stmt_delete->error;
             $message_type = 'error';

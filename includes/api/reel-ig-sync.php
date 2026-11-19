@@ -309,11 +309,14 @@ if ($action === 'import_one') {
     $newId = (int)$stmt->insert_id;
     $stmt->close();
 
-    // Auto-ping IndexNow for instant search indexing
+    // Auto-ping IndexNow & rebuild sitemap for instant search indexing
     if (file_exists(dirname(__DIR__, 2) . '/includes/indexnow-helper.php')) {
         require_once dirname(__DIR__, 2) . '/includes/indexnow-helper.php';
-        if (function_exists('cj_auto_ping_indexnow')) {
-            @cj_auto_ping_indexnow(['https://chandrakalajewellers.in/reels', 'https://chandrakalajewellers.in/showcase?v=' . $newId], true);
+        if (function_exists('cj_trigger_auto_indexing')) {
+            @cj_trigger_auto_indexing($conn, [
+                'https://chandrakalajewellers.in/reels',
+                'https://chandrakalajewellers.in/showcase?v=' . $newId
+            ], 'reel_ig_import');
         }
     }
 

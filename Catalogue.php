@@ -47,6 +47,22 @@ if ($search_q !== '' || ($filter_cat !== '' && strtolower($filter_cat) !== 'all'
     $filtered = $all_products;
 }
 
+// Deep-link support for individual catalogue designs (?id=45 or ?item=45)
+$targetItemId = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_GET['item']) ? (int)$_GET['item'] : 0);
+$targetProduct = null;
+if ($targetItemId > 0) {
+    foreach ($all_products as $p) {
+        if ((int)$p['id'] === $targetItemId) {
+            $targetProduct = $p;
+            $filtered = array_values(array_filter($filtered, function($item) use ($targetItemId) {
+                return (int)$item['id'] !== $targetItemId;
+            }));
+            array_unshift($filtered, $targetProduct);
+            break;
+        }
+    }
+}
+
 $total_items = count($filtered);
 $total_pages = max(1, (int) ceil($total_items / $per_page));
 if ($page > $total_pages) {
@@ -116,11 +132,23 @@ if ($is_ajax) {
     exit;
 }
 
+$catalogueCanonical = $targetItemId > 0 ? cj_abs_url('Catalogue?id=' . $targetItemId) : cj_abs_url('Catalogue');
+$catalogueTitle = $targetProduct 
+    ? (htmlspecialchars($targetProduct['name']) . ' | Custom Design Catalogue | ChandraKala Jewellers') 
+    : 'Custom Design Catalogue | ChandraKala Jewellers';
+$catalogueDesc = $targetProduct && !empty($targetProduct['description']) 
+    ? htmlspecialchars($targetProduct['description']) 
+    : 'Explore 138+ custom 916 gold & silver jewellery design photos at ChandraKala Jewellers, Khedbrahma. Compare pieces side-by-side & order directly on WhatsApp.';
+$catalogueOgImage = $targetProduct && !empty($targetProduct['image_filename']) 
+    ? cj_img_url($targetProduct['image_filename'], 1200, 'catalogue') 
+    : null;
+
 $seo = cj_merge_seo([
-    'title' => 'Custom Design Catalogue | ChandraKala Jewellers',
-    'description' => 'Explore 138+ custom 916 gold & silver jewellery design photos at ChandraKala Jewellers, Khedbrahma. Compare pieces side-by-side & order directly on WhatsApp.',
+    'title' => $catalogueTitle,
+    'description' => $catalogueDesc,
     'keywords' => 'custom gold jewellery designs Khedbrahma, silver design catalogue Gujarat, jewellery photo catalogue Sabarkantha',
-    'canonical' => cj_abs_url('Catalogue'),
+    'canonical' => $catalogueCanonical,
+    'image' => $catalogueOgImage,
     'schema' => [
         cj_local_business_schema(),
         cj_breadcrumb_schema([
@@ -468,6 +496,9 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             desc.textContent = currentItem.desc;
             desc.hidden = !currentItem.desc;
             if (orderBtn) orderBtn.href = sc.buildSingleWhatsApp(currentItem, 'order');
+            if (window.history && window.history.replaceState && currentItem.id) {
+                window.history.replaceState(null, '', 'Catalogue?id=' + encodeURIComponent(currentItem.id));
+            }
             lb.hidden = false;
             lb.setAttribute('aria-hidden', 'false');
             document.body.classList.add('catalogue-lightbox-open');
@@ -477,6 +508,9 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         }
 
         function closeViewer() {
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', catalogueUrl);
+            }
             lb.classList.remove('is-open');
             document.body.classList.remove('catalogue-lightbox-open');
             clearTimeout(closeTimer);
@@ -527,6 +561,15 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 sc.ensureSelected(lastFocus);
                 closeViewer();
             });
+        }
+
+        // Auto-open design from deep-link (?id=... or ?item=...)
+        var targetId = <?= json_encode($targetItemId > 0 ? (string)$targetItemId : '') ?>;
+        if (targetId) {
+            var targetEl = document.querySelector('[data-sc-item][data-id="' + targetId + '"]');
+            if (targetEl) {
+                setTimeout(function () { openViewer(targetEl); }, 280);
+            }
         }
     })();
     </script>
