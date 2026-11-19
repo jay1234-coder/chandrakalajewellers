@@ -1,17 +1,22 @@
 <?php
 /**
  * Store admin — reserved / confirmed orders.
+ * Hardened with authenticated AES-256-GCM query sealing and PII masking.
  */
 require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/orders.php';
 require_once dirname(__DIR__) . '/includes/activity-log.php';
+require_once dirname(__DIR__) . '/includes/crypto.php';
 
 cj_auth_bootstrap($conn);
 cj_ensure_orders_schema($conn);
 cj_expire_reservations($conn);
 cj_admin_noindex_headers();
 cj_require_role(['admin', 'superadmin'], 'admin');
+
+// 1. Bootstrap encrypted query filter (?f=...) and mask sensitive plain text
+$maskedQuery = cj_bootstrap_encrypted_query('admin_orders', ['search', 'phone', 'customer_id']);
 
 $embed = !empty($_GET['embed']) || !empty($_POST['embed']);
 
@@ -68,28 +73,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$filter = (string) ($_GET['status'] ?? 'reserved');
+$search = trim((string) ($_GET['search'] ?? ($_GET['phone'] ?? '')));
+$filter = (string) ($_GET['status'] ?? ($search !== '' ? 'all' : 'reserved'));
 $allowed = ['reserved', 'confirmed', 'cancelled', 'expired', 'refunded', 'all'];
 if (!in_array($filter, $allowed, true)) {
     $filter = 'reserved';
 }
 
-$sql = 'SELECT * FROM orders';
+$whereClauses = ['1=1'];
+$bindTypes = '';
+$bindParams = [];
+
 if ($filter !== 'all') {
-    $sql .= ' WHERE status = ?';
+    $whereClauses[] = 'status = ?';
+    $bindTypes .= 's';
+    $bindParams[] = $filter;
 }
-$sql .= ' ORDER BY id DESC LIMIT 80';
+
+if ($search !== '') {
+    $cleanPhone = preg_replace('/\D+/', '', $search);
+    $searchTerm = '%' . $search . '%';
+    if (strlen($cleanPhone) >= 6) {
+        $whereClauses[] = '(order_no LIKE ? OR customer_name LIKE ? OR customer_phone LIKE ? OR customer_phone LIKE ?)';
+        $bindTypes .= 'ssss';
+        $bindParams[] = $searchTerm;
+        $bindParams[] = $searchTerm;
+        $bindParams[] = '%' . $cleanPhone . '%';
+        $bindParams[] = '%91' . $cleanPhone . '%';
+    } else {
+        $whereClauses[] = '(order_no LIKE ? OR customer_name LIKE ? OR customer_phone LIKE ?)';
+        $bindTypes .= 'sss';
+        $bindParams[] = $searchTerm;
+        $bindParams[] = $searchTerm;
+        $bindParams[] = $searchTerm;
+    }
+}
+
+$whereSql = implode(' AND ', $whereClauses);
+$sql = "SELECT * FROM orders WHERE {$whereSql} ORDER BY id DESC LIMIT 80";
 $stmt = $conn->prepare($sql);
-if ($filter !== 'all') {
-    $stmt->bind_param('s', $filter);
-}
-$stmt->execute();
 $orders = [];
-$res = $stmt->get_result();
-while ($row = $res->fetch_assoc()) {
-    $orders[] = $row;
+if ($stmt) {
+    if ($bindTypes !== '') {
+        $stmt->bind_param($bindTypes, ...$bindParams);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $orders[] = $row;
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 $itemsByOrder = [];
 $itemStockMap = [];
@@ -108,11 +142,15 @@ if ($orders) {
     }
 }
 
-$counts = ['reserved' => 0, 'confirmed' => 0, 'cancelled' => 0, 'expired' => 0, 'refunded' => 0];
+$counts = ['reserved' => 0, 'confirmed' => 0, 'cancelled' => 0, 'expired' => 0, 'refunded' => 0, 'all' => 0];
 $cq = $conn->query("SELECT status, COUNT(*) c FROM orders GROUP BY status");
 if ($cq) {
     while ($c = $cq->fetch_assoc()) {
-        $counts[$c['status']] = (int) $c['c'];
+        $stKey = (string) $c['status'];
+        if (isset($counts[$stKey])) {
+            $counts[$stKey] = (int) $c['c'];
+        }
+        $counts['all'] += (int) $c['c'];
     }
 }
 ?>
@@ -125,6 +163,7 @@ if ($cq) {
     <title>Orders — ChandraKala Jewellers</title>
     <link rel="stylesheet" href="/css/tailwind.min.css?v=9">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/admin.css">
     <?php include dirname(__DIR__) . '/includes/admin-head-theme.php'; ?>
 </head>
@@ -132,7 +171,7 @@ if ($cq) {
 <?php
 $cjShellPage     = 'orders';
 $cjShellTitle    = 'Orders & Reservations';
-$cjShellSubtitle = 'Confirm sales, manage sold-out website status & refunds';
+$cjShellSubtitle = 'Confirm sales, manage sold-out website status & refunds (Encrypted URL Protection)';
 $cjShellEmbed    = !empty($embed);
 $cjShellMaxWidth = '1120px';
 include dirname(__DIR__) . '/includes/admin-shell-start.php';
@@ -146,35 +185,91 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
         <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
 
-    <nav class="flex flex-wrap gap-2 mb-5 text-xs font-semibold">
-        <?php foreach (['reserved' => 'Reserved (' . $counts['reserved'] . ')', 'confirmed' => 'Confirmed', 'refunded' => 'Refunded', 'cancelled' => 'Cancelled', 'expired' => 'Expired', 'all' => 'All'] as $key => $label): ?>
-            <a href="orders.php?status=<?= $key ?><?= $embed ? '&embed=1' : '' ?>"
-               class="px-3 py-1.5 rounded-lg border <?= $filter === $key ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-200' ?>"><?= htmlspecialchars($label) ?></a>
-        <?php endforeach; ?>
-    </nav>
+    <!-- Opaque Encrypted Filter Navigation & Search Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5">
+        <nav class="flex flex-wrap gap-2 text-xs font-semibold">
+            <?php foreach (['reserved' => 'Reserved (' . $counts['reserved'] . ')', 'confirmed' => 'Confirmed', 'refunded' => 'Refunded', 'cancelled' => 'Cancelled', 'expired' => 'Expired', 'all' => 'All (' . $counts['all'] . ')'] as $key => $label): 
+                $tabParams = ['status' => $key];
+                if ($search !== '') $tabParams['search'] = $search;
+                $tabToken = cj_seal($tabParams, 'admin_orders');
+            ?>
+                <a href="orders.php?f=<?= htmlspecialchars($tabToken) ?><?= $embed ? '&embed=1' : '' ?>"
+                   class="px-3 py-1.5 rounded-lg border transition-all duration-150 <?= $filter === $key ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300' ?>">
+                    <?= htmlspecialchars($label) ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
+
+        <form method="get" action="orders.php" class="flex items-center gap-2 max-w-sm w-full" id="orderSearchForm">
+            <div class="relative flex-1">
+                <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search phone, order #, name…" class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 bg-white" autocomplete="off">
+                <i class="fas fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+            </div>
+            <input type="hidden" name="status" value="<?= htmlspecialchars($filter) ?>">
+            <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
+            <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">Filter</button>
+            <?php if ($search !== ''): 
+                $clearToken = cj_seal(['status' => $filter], 'admin_orders');
+            ?>
+                <a href="orders.php?f=<?= htmlspecialchars($clearToken) ?><?= $embed ? '&embed=1' : '' ?>" class="bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 text-xs px-2.5 py-1.5 rounded-lg" title="Clear search">✕</a>
+            <?php endif; ?>
+        </form>
+    </div>
+
+    <?php if ($search !== ''): ?>
+        <div class="bg-amber-50/70 border border-amber-200/80 rounded-xl px-3 py-2 mb-4 text-xs text-amber-900 flex items-center justify-between">
+            <span>
+                <i class="fas fa-shield-alt text-amber-600 mr-1.5"></i>
+                Encrypted filter applied for: <strong><?= htmlspecialchars(cj_mask_phone($search)) ?></strong> (found <?= count($orders) ?> order<?= count($orders) === 1 ? '' : 's' ?>)
+            </span>
+            <span class="text-[10px] text-amber-700 uppercase tracking-wide font-mono bg-white px-2 py-0.5 rounded border border-amber-200">
+                AES-256-GCM Opaque URL
+            </span>
+        </div>
+    <?php endif; ?>
 
     <?php if (!$orders): ?>
-        <p class="text-sm text-gray-500 bg-white border border-gray-100 rounded-xl p-8 text-center">No orders in this list yet.</p>
+        <div class="text-sm text-gray-500 bg-white border border-gray-100 rounded-xl p-8 text-center">
+            <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
+            <p>No orders found matching the selected filter.</p>
+        </div>
     <?php else: ?>
         <div class="space-y-4">
             <?php foreach ($orders as $o):
                 $oid = (int) $o['id'];
                 $lines = $itemsByOrder[$oid] ?? [];
             ?>
-            <article class="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-sm">
+            <article class="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-sm hover:border-gray-200 transition-colors">
                 <div class="flex flex-wrap justify-between gap-2 mb-3">
                     <div>
-                        <p class="font-bold text-gray-900"><?= htmlspecialchars($o['order_no']) ?></p>
-                        <p class="text-xs text-gray-500"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '')) ?> · <?= htmlspecialchars($o['status']) ?>
+                        <p class="font-bold text-gray-900">Order #<?= htmlspecialchars((string)$o['order_no']) ?></p>
+                        <p class="text-xs text-gray-500"><?= htmlspecialchars(cj_format_ist($o['created_at'] ?? '')) ?> · 
+                            <span class="font-semibold text-gray-700"><?= htmlspecialchars((string)$o['status']) ?></span>
                             · <?= htmlspecialchars((string) ($o['payment_status'] ?? 'unpaid')) ?>
                             <?php if (!empty($o['payment_method'])): ?>
                                 (<?= htmlspecialchars((string) $o['payment_method']) ?>)
                             <?php endif; ?>
                         </p>
                     </div>
-                    <p class="font-extrabold text-amber-700">₹<?= number_format(function_exists('cj_order_payable_rupees') ? cj_order_payable_rupees($o) : (float) $o['subtotal'], 0) ?></p>
+                    <p class="font-extrabold text-amber-700 text-base">₹<?= number_format(function_exists('cj_order_payable_rupees') ? cj_order_payable_rupees($o) : (float) $o['subtotal'], 0) ?></p>
                 </div>
-                <p class="text-sm text-gray-800"><strong><?= htmlspecialchars($o['customer_name']) ?></strong> · <?= htmlspecialchars($o['customer_phone']) ?></p>
+
+                <!-- Customer Info with PII Phone Masking & Shoulder-Surfing Protection -->
+                <p class="text-sm text-gray-800">
+                    <strong><?= htmlspecialchars($o['customer_name']) ?></strong> · 
+                    <span class="font-mono text-xs bg-gray-50 px-2 py-0.5 rounded border border-gray-200 pii-phone" data-full="<?= htmlspecialchars((string)$o['customer_phone']) ?>">
+                        <?= htmlspecialchars(cj_mask_phone((string)$o['customer_phone'])) ?>
+                    </span>
+                    <button type="button" onclick="togglePhoneMask(this)" class="text-gray-400 hover:text-amber-600 ml-1 p-0.5 text-xs inline-flex items-center" title="Reveal / hide full phone number">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                    <?php if (!empty($o['customer_phone'])): 
+                        $orderCustToken = cj_seal(['status' => 'all', 'search' => $o['customer_phone']], 'admin_orders');
+                    ?>
+                        <a href="orders.php?f=<?= htmlspecialchars($orderCustToken) ?><?= $embed ? '&embed=1' : '' ?>" class="text-[11px] text-amber-600 hover:text-amber-700 underline ml-2" title="Filter orders for this phone securely">All customer orders</a>
+                    <?php endif; ?>
+                </p>
+
                 <?php if ($o['customer_address'] !== ''): ?>
                     <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($o['customer_address']) ?><?php if (!empty($o['customer_pincode'])): ?> · PIN <?= htmlspecialchars((string) $o['customer_pincode']) ?><?php endif; ?></p>
                 <?php endif; ?>
@@ -184,11 +279,13 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
                 <?php if (!empty($o['razorpay_payment_id'])): ?>
                     <p class="text-[11px] text-gray-400 mt-1">Razorpay: <?= htmlspecialchars((string) $o['razorpay_payment_id']) ?></p>
                 <?php endif; ?>
-                <ul class="mt-3 text-sm text-gray-700 space-y-1">
+
+                <ul class="mt-3 text-sm text-gray-700 space-y-1 bg-gray-50/60 p-3 rounded-xl border border-gray-100">
                     <?php foreach ($lines as $line): ?>
                         <li><?= htmlspecialchars($line['product_name']) ?> · <?= htmlspecialchars((string) $line['weight']) ?> g · ₹<?= number_format((float) $line['unit_price'], 0) ?></li>
                     <?php endforeach; ?>
                 </ul>
+
                 <?php if ($o['status'] === 'reserved'):
                     $itemTitles = array_map(static fn($l) => (string)$l['product_name'], $lines);
                     $itemsSummary = implode(', ', $itemTitles);
@@ -271,6 +368,9 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
         </form>
     </div>
 </div>
+
+<?php cj_render_url_mask_script($maskedQuery['clean_url']); ?>
+
 <script>
 function openConfirmSaleModal(orderId, orderNo, itemsText) {
     document.getElementById('cjCsOrderId').value = String(orderId);
@@ -288,6 +388,26 @@ function closeConfirmSaleModal() {
 function submitConfirmSale(markSoldOut) {
     document.getElementById('cjCsMarkSold').value = markSoldOut ? '1' : '0';
     document.getElementById('cjConfirmSaleForm').submit();
+}
+
+function togglePhoneMask(btn) {
+    var span = btn.previousElementSibling;
+    if (!span || !span.classList.contains('pii-phone')) return;
+    var full = span.getAttribute('data-full') || '';
+    var isMasked = span.textContent.trim().indexOf('*') !== -1;
+    if (isMasked) {
+        span.textContent = full;
+        btn.innerHTML = '<i class="fas fa-eye text-amber-600"></i>';
+        btn.title = 'Hide phone number';
+    } else {
+        var digits = full.replace(/\D/g, '');
+        var prefix = digits.substring(0, 2);
+        var suffix = digits.substring(digits.length - 4);
+        var stars = '****';
+        span.textContent = prefix + stars + suffix;
+        btn.innerHTML = '<i class="fas fa-eye-slash text-gray-400"></i>';
+        btn.title = 'Reveal full phone number';
+    }
 }
 </script>
 </body>

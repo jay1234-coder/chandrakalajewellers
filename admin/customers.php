@@ -11,11 +11,15 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/customers.php';
 require_once dirname(__DIR__) . '/includes/orders.php';
 require_once dirname(__DIR__) . '/includes/activity-log.php';
+require_once dirname(__DIR__) . '/includes/crypto.php';
 
 cj_auth_bootstrap($conn);
 cj_ensure_customers_schema($conn);
 cj_admin_noindex_headers();
 cj_require_role(['admin', 'superadmin'], 'admin');
+
+// Bootstrap encrypted query filter (?f=...) and mask plain text search from URL
+$maskedQuery = cj_bootstrap_encrypted_query('admin_customers', ['search', 'phone', 'q']);
 
 $currentRole = (string)($_SESSION['role'] ?? 'admin');
 $currentUserId = (int)($_SESSION['user_id'] ?? 0);
@@ -597,9 +601,12 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center gap-2">
-                                        <a href="tel:<?= htmlspecialchars($c['phone']) ?>" class="font-semibold text-gray-900 hover:text-amber-600">
-                                            <i class="fas fa-phone-alt text-[10px] text-gray-400 mr-1"></i><?= htmlspecialchars($c['phone']) ?>
+                                        <a href="tel:<?= htmlspecialchars($c['phone']) ?>" class="font-semibold text-gray-900 hover:text-amber-600 font-mono text-xs">
+                                            <i class="fas fa-phone-alt text-[10px] text-gray-400 mr-1"></i><span class="pii-phone" data-full="<?= htmlspecialchars($c['phone']) ?>"><?= htmlspecialchars(cj_mask_phone($c['phone'])) ?></span>
                                         </a>
+                                        <button type="button" onclick="togglePhoneMask(this)" class="text-gray-400 hover:text-amber-600 p-0.5 text-xs inline-flex items-center" title="Reveal / hide full phone number">
+                                            <i class="fas fa-eye-slash"></i>
+                                        </button>
                                         <a href="<?= htmlspecialchars($waUrl) ?>" target="_blank" rel="noopener" class="text-emerald-500 hover:text-emerald-600 text-sm" title="Chat on WhatsApp">
                                             <i class="fab fa-whatsapp"></i>
                                         </a>
@@ -611,8 +618,10 @@ include dirname(__DIR__) . '/includes/admin-shell-start.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <?php if ($ordersCount > 0): ?>
-                                        <a href="orders.php?status=all&search=<?= urlencode($c['phone']) ?>" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                                    <?php if ($ordersCount > 0): 
+                                        $custOrdersToken = cj_seal(['status' => 'all', 'search' => $c['phone']], 'admin_orders');
+                                    ?>
+                                        <a href="orders.php?f=<?= htmlspecialchars($custOrdersToken) ?><?= $embed ? '&embed=1' : '' ?>" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors" title="View all orders for this customer (Encrypted URL)">
                                             <i class="fas fa-receipt text-[10px]"></i> <?= $ordersCount ?> <?= $ordersCount === 1 ? 'order' : 'orders' ?>
                                         </a>
                                     <?php else: ?>
@@ -930,7 +939,29 @@ function closeEditAdminModal() {
     m.classList.add('hidden');
     m.classList.remove('flex');
 }
+
+function togglePhoneMask(btn) {
+    var span = btn.previousElementSibling ? btn.previousElementSibling.querySelector('.pii-phone') || btn.previousElementSibling : null;
+    if (!span || !span.classList.contains('pii-phone')) return;
+    var full = span.getAttribute('data-full') || '';
+    var isMasked = span.textContent.trim().indexOf('*') !== -1;
+    if (isMasked) {
+        span.textContent = full;
+        btn.innerHTML = '<i class="fas fa-eye text-amber-600"></i>';
+        btn.title = 'Hide phone number';
+    } else {
+        var digits = full.replace(/\D/g, '');
+        var prefix = digits.substring(0, 2);
+        var suffix = digits.substring(digits.length - 4);
+        var stars = '****';
+        span.textContent = prefix + stars + suffix;
+        btn.innerHTML = '<i class="fas fa-eye-slash text-gray-400"></i>';
+        btn.title = 'Reveal full phone number';
+    }
+}
 </script>
+
+<?php cj_render_url_mask_script($maskedQuery['clean_url']); ?>
 
 </body>
 </html>

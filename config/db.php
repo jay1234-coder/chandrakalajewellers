@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/env.php';
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/crypto.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
