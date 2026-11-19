@@ -1757,46 +1757,72 @@ if ($just_logged_in) {
                 </form>
             </div>
 
-            <!-- Bulk Catalogue Card -->
-            <div class="admin-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <!-- Bulk Catalogue Studio Card -->
+            <?php
+            $cat_types_list = function_exists('cj_default_product_types') ? cj_default_product_types() : ['Necklace Set', 'Bridal Set', 'Kundan Set', 'Mangalsutra', 'Tanmaniya', 'Pendant Butti Set', 'Earrings / Butti', 'Gold Chain', 'Dokiya', 'Bangles / Patala', 'Ring', 'Kada', 'Bracelet', 'Hathpan', 'Payal / Anklet', 'Kanchain', 'Nose Pin', 'Coin / Bar', 'Catalogue Design'];
+            ?>
+            <div class="admin-card bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 font-serif pb-2 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
-                        <span><i class="fas fa-images text-amber-500 mr-1"></i> Catalogue Bulk</span>
-                        <a href="/admin/delete_c.php" class="text-xs text-red-500 hover:underline">Manage Catalogue &rarr;</a>
+                    <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-3 font-serif pb-2 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                        <span><i class="fas fa-images text-amber-500 mr-1.5"></i> Catalogue Upload Studio</span>
+                        <a href="/admin/delete_c.php" class="text-xs text-amber-700 hover:text-amber-800 font-semibold bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">
+                            Manage Designs (<?= (int)$catalogue_count ?>) &rarr;
+                        </a>
                     </h2>
-                    
-                    <form method="POST" action="<?= htmlspecialchars($cj_admin_home) ?>" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                        <?php if (!empty($cj_admin_embed)): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
-                        <div class="border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50 text-center">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-300 mb-2"></i>
-                            <label for="catalogue_images" class="block text-xs font-semibold text-gray-500 uppercase mb-2">Upload Multiple Photos</label>
-                            <input type="file" id="catalogue_images" name="catalogue_images[]" multiple accept="image/png, image/jpeg, image/jpg" class="text-xs text-gray-500 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+
+                    <!-- Dropzone -->
+                    <div id="catDropzone" class="border-2 border-dashed border-gray-200 hover:border-amber-400 rounded-2xl p-6 bg-gray-50/50 hover:bg-amber-50/30 text-center transition-all cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-amber-400 mb-2"></i>
+                        <p class="text-xs sm:text-sm font-bold text-gray-800">Drag &amp; drop catalogue photos here</p>
+                        <p class="text-[11px] text-gray-400 mt-1">or click to browse multiple images (JPG, PNG, WEBP)</p>
+                        <input type="file" id="catFilesInput" multiple accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden">
+                    </div>
+
+                    <!-- Batch Controls Toolbar (Visible when queue has items) -->
+                    <div id="catQueueToolbar" class="hidden mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold text-amber-900 whitespace-nowrap"><i class="fas fa-layer-group text-amber-600 mr-1"></i> Batch Category:</span>
+                            <select id="catBatchCategorySelect" class="text-xs py-1.5 px-2.5 rounded-lg border border-amber-300 bg-white font-medium focus:outline-none focus:border-amber-600">
+                                <?php foreach ($cat_types_list as $ct): ?>
+                                    <option value="<?= htmlspecialchars($ct) ?>" <?= $ct === 'Necklace Set' ? 'selected' : '' ?>><?= htmlspecialchars($ct) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" id="catApplyBatchCatBtn" class="text-[11px] font-bold bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg transition-colors shadow-sm">
+                                Apply to All Queued
+                            </button>
                         </div>
-                        <button type="submit" name="upload_catalogue_images" class="mt-6 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors duration-150 shadow-sm">
-                            Upload Catalogue
-                        </button>
-                    </form>
+                        <div class="flex items-center gap-2 justify-end">
+                            <span id="catQueueCountBadge" class="text-xs font-bold text-amber-800 bg-white px-2.5 py-1 rounded-md border border-amber-200">0 queued</span>
+                            <button type="button" id="catClearQueueBtn" class="text-xs text-red-600 hover:text-red-700 font-semibold px-2 py-1 rounded hover:bg-red-50">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Overall Upload Progress Bar -->
+                    <div id="catOverallProgressWrap" class="hidden mt-3">
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <span id="catOverallStatusText" class="font-bold text-amber-900">Uploading photos...</span>
+                            <span id="catOverallPercentText" class="font-bold text-amber-900">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="catOverallProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Queued Items List -->
+                    <div id="catQueueList" class="mt-4 space-y-3 max-h-[380px] overflow-y-auto pr-1"></div>
+
+                    <!-- Start Upload Button -->
+                    <button type="button" id="catStartUploadBtn" class="hidden mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload All Queued Designs
+                    </button>
                 </div>
-                
-                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mt-6 text-xs text-amber-900 leading-relaxed space-y-2">
-                    <div class="flex items-center justify-between gap-2">
-                        <strong class="flex items-center gap-1.5"><i class="fas fa-robot text-amber-600"></i> Background Catalogue OCR Engine</strong>
-                        <span id="catOcrBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $cat_ocr_pending > 0 ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800' ?>">
-                            <?= $cat_ocr_pending > 0 ? ($cat_ocr_pending . ' pending') : 'All ' . (int)$catalogue_count . ' Named' ?>
-                        </span>
-                    </div>
-                    <p id="catOcrStatusText" class="text-[11px] text-amber-800">
-                        <?= $cat_ocr_pending > 0 ? 'Auto-scanning newly uploaded photos in background for fancy SEO names & tags...' : 'Every catalogue image has been enriched with fancy SEO names, categories & AI search tags.' ?>
-                    </p>
-                    <div class="w-full h-1.5 bg-amber-200/70 rounded-full overflow-hidden">
-                        <?php $ocrPct = $catalogue_count > 0 ? (int)round((($catalogue_count - $cat_ocr_pending) / $catalogue_count) * 100) : 100; ?>
-                        <div id="catOcrBar" class="h-full bg-amber-600 transition-all duration-300" style="width: <?= $ocrPct ?>%"></div>
-                    </div>
-                    <div class="flex gap-2 pt-1">
-                        <button type="button" id="catOcrRunBtn" onclick="startCatalogueOcrWorker(false)" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold cursor-pointer">Scan Pending</button>
-                        <button type="button" onclick="if(confirm('Re-scan and refresh SEO names for all catalogue photos?')) startCatalogueOcrWorker(true);" class="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold cursor-pointer">Re-Scan All</button>
-                    </div>
+
+                <!-- Info note -->
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 mt-5 text-[11px] text-gray-500 leading-relaxed flex items-start gap-2">
+                    <i class="fas fa-shield-alt text-amber-500 mt-0.5 shrink-0"></i>
+                    <span><strong>Permanent Custom Naming:</strong> Titles and categories you assign in this studio are saved directly to the database and sitemap. They will never be overwritten or changed automatically.</span>
                 </div>
             </div>
         </div>
@@ -2906,10 +2932,300 @@ if ($just_logged_in) {
             }
         }
 
-        // Auto-start background Catalogue OCR silently if any newly uploaded catalogue images are pending
-        <?php if ($adminView === 'add-item' && $cat_ocr_pending > 0): ?>
-        setTimeout(function () { startCatalogueOcrWorker(false); }, 1800);
-        <?php endif; ?>
+        // Background OCR worker is opt-in via manual click only
+
+        // =========================================================================
+        // CATALOGUE UPLOAD STUDIO — INTERACTIVE QUEUE & PER-IMAGE PROGRESS ENGINE
+        // =========================================================================
+        (function() {
+            var dropzone = document.getElementById('catDropzone');
+            var fileInput = document.getElementById('catFilesInput');
+            var queueToolbar = document.getElementById('catQueueToolbar');
+            var queueList = document.getElementById('catQueueList');
+            var startBtn = document.getElementById('catStartUploadBtn');
+            var batchCatSelect = document.getElementById('catBatchCategorySelect');
+            var applyBatchCatBtn = document.getElementById('catApplyBatchCatBtn');
+            var clearBtn = document.getElementById('catClearQueueBtn');
+            var countBadge = document.getElementById('catQueueCountBadge');
+            var overallWrap = document.getElementById('catOverallProgressWrap');
+            var overallBar = document.getElementById('catOverallProgressBar');
+            var overallStatus = document.getElementById('catOverallStatusText');
+            var overallPercent = document.getElementById('catOverallPercentText');
+
+            if (!dropzone || !fileInput) return;
+
+            var queue = [];
+            var isUploading = false;
+            var categories = <?php echo json_encode($cat_types_list ?? []); ?>;
+
+            dropzone.addEventListener('click', function(e) {
+                if (!isUploading) fileInput.click();
+            });
+
+            ['dragenter', 'dragover'].forEach(function(ev) {
+                dropzone.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('border-amber-500', 'bg-amber-50/50');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function(ev) {
+                dropzone.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('border-amber-500', 'bg-amber-50/50');
+                });
+            });
+
+            dropzone.addEventListener('drop', function(e) {
+                if (isUploading) return;
+                var files = e.dataTransfer.files;
+                if (files && files.length) addFilesToQueue(files);
+            });
+
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files && fileInput.files.length) {
+                    addFilesToQueue(fileInput.files);
+                    fileInput.value = '';
+                }
+            });
+
+            function cleanFilenameToTitle(name) {
+                var base = name.replace(/\.[^/.]+$/, "");
+                base = base.replace(/[_-]+/g, " ");
+                base = base.replace(/\b\w/g, function(l) { return l.toUpperCase(); }).trim();
+                return base || "Handcrafted Jewellery Design";
+            }
+
+            function addFilesToQueue(fileList) {
+                var defaultCat = (batchCatSelect ? batchCatSelect.value : 'Necklace Set');
+                for (var i = 0; i < fileList.length; i++) {
+                    var file = fileList[i];
+                    if (!file.type.match(/^image\//i)) continue;
+                    var id = 'cq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                    queue.push({
+                        id: id,
+                        file: file,
+                        name: cleanFilenameToTitle(file.name),
+                        category: defaultCat,
+                        status: 'pending',
+                        progress: 0,
+                        error: '',
+                        blobUrl: URL.createObjectURL(file)
+                    });
+                }
+                renderQueue();
+            }
+
+            function renderQueue() {
+                if (queue.length === 0) {
+                    if (queueToolbar) queueToolbar.classList.add('hidden');
+                    if (queueList) queueList.innerHTML = '';
+                    if (startBtn) startBtn.classList.add('hidden');
+                    if (overallWrap) overallWrap.classList.add('hidden');
+                    return;
+                }
+
+                if (queueToolbar) queueToolbar.classList.remove('hidden');
+                if (startBtn) startBtn.classList.remove('hidden');
+                if (countBadge) countBadge.textContent = queue.length + (queue.length === 1 ? ' design' : ' designs');
+
+                if (queueList) {
+                    queueList.innerHTML = queue.map(function(item) {
+                        var catOptions = categories.map(function(c) {
+                            var sel = (c === item.category ? ' selected' : '');
+                            return '<option value="' + c + '"' + sel + '>' + c + '</option>';
+                        }).join('');
+
+                        var statusBadge = '';
+                        if (item.status === 'pending') {
+                            statusBadge = '<span class="text-[10px] text-gray-500 font-medium"><i class="fas fa-clock mr-1 text-gray-400"></i>Queued</span>';
+                        } else if (item.status === 'uploading') {
+                            statusBadge = '<span class="text-[10px] text-amber-700 font-bold"><i class="fas fa-spinner fa-spin mr-1"></i>' + item.progress + '%</span>';
+                        } else if (item.status === 'success') {
+                            statusBadge = '<span class="text-[10px] text-emerald-700 font-bold"><i class="fas fa-check-circle mr-1"></i>Saved ✓</span>';
+                        } else if (item.status === 'error') {
+                            statusBadge = '<span class="text-[10px] text-rose-600 font-bold" title="' + (item.error || '') + '"><i class="fas fa-exclamation-triangle mr-1"></i>Failed</span>';
+                        }
+
+                        var sizeMb = (item.file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+                        return '<div id="' + item.id + '" class="p-3 bg-white rounded-xl border ' + (item.status === 'success' ? 'border-emerald-200 bg-emerald-50/20' : 'border-gray-200') + ' shadow-sm flex flex-col sm:flex-row gap-3 items-center">' +
+                            '<div class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50">' +
+                                '<img src="' + item.blobUrl + '" class="w-full h-full object-cover" alt="preview">' +
+                            '</div>' +
+                            '<div class="flex-1 min-w-0 w-full space-y-2">' +
+                                '<div class="flex items-center justify-between gap-2">' +
+                                    '<span class="text-[11px] font-semibold text-gray-400 truncate max-w-[150px] sm:max-w-xs">' + item.file.name + ' (' + sizeMb + ')</span>' +
+                                    statusBadge +
+                                '</div>' +
+                                '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
+                                    '<div>' +
+                                        '<label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Design Name (Editable)</label>' +
+                                        '<input type="text" data-field="name" data-id="' + item.id + '" value="' + item.name.replace(/"/g, '&quot;') + '" class="w-full py-1.5 px-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 focus:border-amber-500 focus:outline-none" ' + (isUploading ? 'disabled' : '') + '>' +
+                                    '</div>' +
+                                    '<div>' +
+                                        '<label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Category</label>' +
+                                        '<select data-field="category" data-id="' + item.id + '" class="w-full py-1.5 px-2 border border-gray-200 rounded-lg text-xs font-medium text-gray-800 focus:border-amber-500 focus:outline-none bg-white" ' + (isUploading ? 'disabled' : '') + '>' +
+                                            catOptions +
+                                        '</select>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">' +
+                                    '<div class="cat-item-bar h-full ' + (item.status === 'success' ? 'bg-emerald-500' : (item.status === 'error' ? 'bg-rose-500' : 'bg-amber-500')) + ' transition-all duration-150" style="width: ' + item.progress + '%"></div>' +
+                                '</div>' +
+                            '</div>' +
+                            (!isUploading && item.status !== 'success' ? '<button type="button" data-remove="' + item.id + '" class="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 text-xs shrink-0" title="Remove"><i class="fas fa-trash-alt"></i></button>' : '') +
+                        '</div>';
+                    }).join('');
+
+                    // Bind inputs
+                    queueList.querySelectorAll('input[data-field="name"]').forEach(function(inp) {
+                        inp.addEventListener('input', function() {
+                            var it = queue.find(function(q) { return q.id === inp.getAttribute('data-id'); });
+                            if (it) it.name = inp.value.trim();
+                        });
+                    });
+                    queueList.querySelectorAll('select[data-field="category"]').forEach(function(sel) {
+                        sel.addEventListener('change', function() {
+                            var it = queue.find(function(q) { return q.id === sel.getAttribute('data-id'); });
+                            if (it) it.category = sel.value;
+                        });
+                    });
+                    queueList.querySelectorAll('button[data-remove]').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var removeId = btn.getAttribute('data-remove');
+                            queue = queue.filter(function(q) { return q.id !== removeId; });
+                            renderQueue();
+                        });
+                    });
+                }
+            }
+
+            if (applyBatchCatBtn && batchCatSelect) {
+                applyBatchCatBtn.addEventListener('click', function() {
+                    var selectedCat = batchCatSelect.value;
+                    queue.forEach(function(item) {
+                        if (item.status === 'pending') item.category = selectedCat;
+                    });
+                    renderQueue();
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (isUploading) return;
+                    queue = [];
+                    renderQueue();
+                });
+            }
+
+            if (startBtn) {
+                startBtn.addEventListener('click', async function() {
+                    if (isUploading || queue.length === 0) return;
+                    var pendingItems = queue.filter(function(it) { return it.status !== 'success'; });
+                    if (pendingItems.length === 0) {
+                        alert('All items in the queue have already been uploaded.');
+                        return;
+                    }
+
+                    isUploading = true;
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Uploading Designs...';
+                    if (clearBtn) clearBtn.disabled = true;
+                    if (overallWrap) overallWrap.classList.remove('hidden');
+
+                    var totalCount = pendingItems.length;
+                    var completedCount = 0;
+
+                    for (var i = 0; i < pendingItems.length; i++) {
+                        var item = pendingItems[i];
+                        item.status = 'uploading';
+                        item.progress = 5;
+                        renderQueue();
+
+                        try {
+                            await uploadSingleFile(item, function(pct) {
+                                item.progress = pct;
+                                var bar = document.querySelector('#' + item.id + ' .cat-item-bar');
+                                if (bar) bar.style.width = pct + '%';
+                            });
+                            item.status = 'success';
+                            item.progress = 100;
+                            completedCount++;
+                        } catch (err) {
+                            item.status = 'error';
+                            item.error = err.message || 'Upload failed';
+                        }
+
+                        var overallPct = Math.round((completedCount / totalCount) * 100);
+                        if (overallBar) overallBar.style.width = overallPct + '%';
+                        if (overallPercent) overallPercent.textContent = overallPct + '%';
+                        if (overallStatus) overallStatus.textContent = 'Uploaded ' + completedCount + ' of ' + totalCount + ' designs...';
+
+                        renderQueue();
+                    }
+
+                    isUploading = false;
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '<i class="fas fa-check-circle mr-1.5"></i> Upload Finished';
+                    if (clearBtn) clearBtn.disabled = false;
+
+                    if (completedCount === totalCount) {
+                        if (overallStatus) overallStatus.textContent = '✓ All ' + completedCount + ' designs uploaded & auto-indexed successfully!';
+                        alert('✓ Success: All ' + completedCount + ' catalogue designs have been uploaded and auto-indexed!');
+                    } else {
+                        if (overallStatus) overallStatus.textContent = 'Uploaded ' + completedCount + ' of ' + totalCount + ' designs (' + (totalCount - completedCount) + ' errors).';
+                    }
+                });
+            }
+
+            function uploadSingleFile(item, onProgress) {
+                return new Promise(function(resolve, reject) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/catalogue-upload-single.php', true);
+                    xhr.withCredentials = true;
+
+                    xhr.upload.onprogress = function(e) {
+                        if (e.lengthComputable) {
+                            var percent = Math.round((e.loaded / e.total) * 95);
+                            onProgress(percent);
+                        }
+                    };
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data && data.ok) {
+                                    onProgress(100);
+                                    resolve(data);
+                                } else {
+                                    reject(new Error((data && data.error) || 'Upload failed.'));
+                                }
+                            } catch (e) {
+                                reject(new Error('Invalid server response.'));
+                            }
+                        } else {
+                            reject(new Error('HTTP Error: ' + xhr.status));
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        reject(new Error('Network error during upload.'));
+                    };
+
+                    var fd = new FormData();
+                    fd.append('image', item.file);
+                    fd.append('name', item.name);
+                    fd.append('category', item.category);
+                    fd.append('csrf_token', CJ_ADMIN_CSRF);
+
+                    xhr.send(fd);
+                });
+            }
+        })();
 
         // =========================================================================
         // ADD-ITEM FORM STATE MANAGEMENT & VALIDATION ENGINE

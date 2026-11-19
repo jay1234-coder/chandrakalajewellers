@@ -93,7 +93,6 @@ if (!function_exists('cj_build_sitemap_xml')) {
                         'title' => cj_reel_seo_title($r),
                         'description' => cj_reel_seo_description($r),
                         'content_loc' => $contentUrl,
-                        'player_loc' => $pageUrl,
                         'duration' => $dur,
                         'view_count' => $views,
                         'publication_date' => $pubIso,
@@ -197,8 +196,12 @@ if (!function_exists('cj_build_sitemap_xml')) {
                 $xml .= '      <video:thumbnail_loc>' . htmlspecialchars($v['thumbnail_loc'], ENT_XML1) . '</video:thumbnail_loc>' . "\n";
                 $xml .= '      <video:title>' . htmlspecialchars($v['title'], ENT_XML1) . '</video:title>' . "\n";
                 $xml .= '      <video:description>' . htmlspecialchars($v['description'], ENT_XML1) . '</video:description>' . "\n";
-                $xml .= '      <video:content_loc>' . htmlspecialchars($v['content_loc'], ENT_XML1) . '</video:content_loc>' . "\n";
-                $xml .= '      <video:player_loc>' . htmlspecialchars($v['player_loc'], ENT_XML1) . '</video:player_loc>' . "\n";
+                if (!empty($v['content_loc'])) {
+                    $xml .= '      <video:content_loc>' . htmlspecialchars($v['content_loc'], ENT_XML1) . '</video:content_loc>' . "\n";
+                }
+                if (!empty($v['player_loc']) && $v['player_loc'] !== $u['loc']) {
+                    $xml .= '      <video:player_loc>' . htmlspecialchars($v['player_loc'], ENT_XML1) . '</video:player_loc>' . "\n";
+                }
                 $xml .= '      <video:duration>' . (int)$v['duration'] . '</video:duration>' . "\n";
                 $xml .= '      <video:view_count>' . (int)$v['view_count'] . '</video:view_count>' . "\n";
                 $xml .= '      <video:publication_date>' . htmlspecialchars($v['publication_date'], ENT_XML1) . '</video:publication_date>' . "\n";

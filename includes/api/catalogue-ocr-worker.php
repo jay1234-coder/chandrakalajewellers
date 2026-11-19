@@ -89,23 +89,18 @@ foreach ($rows as $row) {
     // Prefer local file if available (super fast), else fast 320px Cloudinary thumbnail
     $imgSrc = is_file($local) ? $local : cj_img_url($fn, 320, 'catalogue');
 
-    // Keep meaningful human names if not numeric/generic
+    // Preserve human name if present
     $origName = trim((string)$row['name']);
-    $isGenericName = (
-        $origName === ''
-        || (bool)preg_match('/^(?:\d{5,}|img[_\-\s]*\d+|photo[_\-\s]*\d+|jewellery[_\-\s]*[a-f0-9.]+|whatsapp.*|untitled.*|[0-9a-f]{8}[\s\-_][0-9a-f]{4}[\s\-_][0-9a-f]{4}.*|[0-9a-f\s\-_]{14,})$/i', $origName)
-    );
-    $hint = $isGenericName ? '' : $origName;
+    $existingCategory = trim((string)($row['category'] ?? ''));
+    $hint = $origName;
 
     $analysis = cj_analyze_jewellery_image($conn, $imgSrc, (string)($row['ocr_text'] ?? ''), $hint, $id);
 
-    $newName = $isGenericName ? ($analysis['name'] ?? $origName) : $origName;
-    // Append subtle design code for easy WhatsApp reference (e.g. "Royal 916 Gold Bridal Set · #298")
-    if ($isGenericName && stripos($newName, '#') === false) {
-        $newName = $newName . ' #' . $id;
-    }
-    $newDesc = (string)($analysis['description'] ?? $row['description'] ?? 'Exquisite handcrafted jewellery design from ChandraKala Jewellers, Khedbrahma.');
-    $newCat = (string)($analysis['category'] ?? 'Necklace Set');
+    // Only update name if original name was totally empty
+    $newName = ($origName !== '') ? $origName : ($analysis['name'] ?? ('Custom Jewellery Design #' . $id));
+    $newDesc = (string)($row['description'] ?? $analysis['description'] ?? 'Exquisite handcrafted jewellery design from ChandraKala Jewellers, Khedbrahma.');
+    // Only update category if not already set by admin
+    $newCat = ($existingCategory !== '' && strtolower($existingCategory) !== 'all') ? $existingCategory : (string)($analysis['category'] ?? 'Catalogue Design');
     $newTags = (string)($analysis['tags'] ?? '');
     $newOcr = (string)($analysis['ocr_text'] ?? '');
 

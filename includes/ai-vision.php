@@ -552,30 +552,19 @@ if (!function_exists('cj_analyze_jewellery_image')) {
             : ($metal === 'gold' ? '22K 916 Gold' : ($metal === 'silver_925' ? '925 Sterling Silver' : '999 Pure Silver'));
         $stone = $ocr['stone'] !== '' ? $ocr['stone'] : ($visual['stone'] ?? '');
 
-        // Infer category from OCR first, else visual silhouette + metal + intricacy
+        // Infer category from OCR first, else user hint; NEVER randomly guess
         $category = $ocr['category'];
         if ($category === '') {
-            $sil = $visual['silhouette'] ?? 'square';
-            $intr = $visual['intricacy'] ?? 'medium';
-            if ($metal === 'silver_925' || $metal === 'silver') {
-                $silverPool = [
-                    'ring' => ['Ring', 'Kada', 'Bracelet'],
-                    'tall' => ['Pendant Butti Set', 'Earrings / Butti', 'Payal / Anklet'],
-                    'wide' => ['Bracelet', 'Payal / Anklet', 'Necklace Set'],
-                    'square' => ['Ring', 'Bracelet', 'Kada', 'Earrings / Butti'],
-                ];
-                $pool = $silverPool[$sil] ?? $silverPool['square'];
-                $category = $pool[$seed % count($pool)];
-            } else {
-                $goldPool = [
-                    'wide' => $intr === 'high' ? ['Bridal Set', 'Necklace Set', 'Kundan Set'] : ['Necklace Set', 'Bangles / Patala', 'Gold Chain'],
-                    'tall' => $intr === 'high' ? ['Mangalsutra', 'Pendant Butti Set', 'Tanmaniya'] : ['Pendant Butti Set', 'Earrings / Butti', 'Gold Chain', 'Dokiya'],
-                    'ring' => ['Ring', 'Bangles / Patala', 'Kada'],
-                    'square' => $intr === 'high' ? ['Bridal Set', 'Kundan Set', 'Hathpan', 'Earrings / Butti'] : ['Pendant Butti Set', 'Earrings / Butti', 'Ring', 'Mangalsutra', 'Tanmaniya'],
-                ];
-                $pool = $goldPool[$sil] ?? $goldPool['square'];
-                $category = $pool[$seed % count($pool)];
+            // Check if filename hint has category keyword
+            if ($filenameHint !== '') {
+                $hintOcr = cj_parse_ocr_text($filenameHint);
+                if (!empty($hintOcr['category'])) {
+                    $category = $hintOcr['category'];
+                }
             }
+        }
+        if ($category === '') {
+            $category = 'Catalogue Design';
         }
 
         // Fancy luxury adjective pool matched to style & intricacy
