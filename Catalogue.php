@@ -75,38 +75,37 @@ $elapsedMs = max(1, (int)round((microtime(true) - $tStart) * 1000));
 function cj_catalogue_card(array $product, int $pi, bool $lazyForce = false): string
 {
     $full = htmlspecialchars(cj_img_url($product['image_filename'], 1400, 'catalogue'));
-    $thumb = htmlspecialchars(cj_img_url($product['image_filename'], 480, 'catalogue'));
+    $thumb = htmlspecialchars(cj_img_url($product['image_filename'], 600, 'catalogue'));
     $absImg = $full;
-    $name = htmlspecialchars($product['name']);
-    $desc = htmlspecialchars($product['description'] ?? '');
+    $id = (int)$product['id'];
     $cat = trim((string)($product['category'] ?? ''));
-    $eager = !$lazyForce && $pi < 2;
+    $eager = !$lazyForce && $pi < 4;
     $img = $eager
-        ? '<img src="' . $thumb . '" alt="' . $name . '" class="max-h-full max-w-full object-contain group-hover:scale-[1.03] transition-transform duration-300 pointer-events-none" decoding="async" width="400" height="400" fetchpriority="' . ($pi === 0 ? 'high' : 'auto') . '">'
-        : '<img class="cj-lazy-img max-h-full max-w-full object-contain group-hover:scale-[1.03] transition-transform duration-300 pointer-events-none" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="' . $thumb . '" alt="' . $name . '" decoding="async" loading="lazy" width="400" height="400">';
+        ? '<img src="' . $thumb . '" alt="Custom Jewellery Design #' . $id . '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out pointer-events-none" decoding="async" width="500" height="500" fetchpriority="' . ($pi === 0 ? 'high' : 'auto') . '">'
+        : '<img class="cj-lazy-img w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out pointer-events-none" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="' . $thumb . '" alt="Custom Jewellery Design #' . $id . '" decoding="async" loading="lazy" width="500" height="500">';
 
     $catPill = $cat !== ''
-        ? '<span class="catalogue-cat-pill">' . htmlspecialchars($cat) . '</span>'
+        ? '<span class="absolute top-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/60 text-amber-200 backdrop-blur-md shadow-sm">' . htmlspecialchars($cat) . '</span>'
         : '';
 
-    return '<div class="group catalogue-item bg-white overflow-hidden text-left w-full"
+    return '<div class="group catalogue-item relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl border border-gray-100 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col aspect-square"
         data-sc-item data-catalogue-open
-        data-id="' . (int) $product['id'] . '"
+        data-id="' . $id . '"
+        data-name="Design #' . $id . ($cat !== '' ? ' (' . htmlspecialchars($cat) . ')' : '') . '"
         data-src="' . $full . '"
         data-image="' . htmlspecialchars($absImg) . '"
-        data-name="' . $name . '"
-        data-desc="' . $desc . '"
-        role="button" tabindex="0" aria-label="View ' . $name . '">
-        <div class="relative aspect-square overflow-hidden bg-gray-50/50 flex items-center justify-center p-2 sm:p-4">'
-        . $catPill . $img .
-        '<span class="catalogue-zoom-hint" aria-hidden="true">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zM11 8v6M8 11h6"/></svg>
-        </span>
+        data-category="' . htmlspecialchars($cat) . '"
+        role="button" tabindex="0" aria-label="View Custom Design #' . $id . '">
+        ' . $catPill . '
+        <div class="relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-50/60">
+            ' . $img . '
+            <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-3.5 pointer-events-none">
+                <span class="text-white text-xs font-semibold flex items-center gap-1.5 drop-shadow">
+                    <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg> Tap to View &amp; Share
+                </span>
+                <span class="text-[11px] font-mono font-bold text-amber-200 drop-shadow">#' . $id . '</span>
+            </div>
         </div>
-        <div class="p-2.5 sm:p-5 border-t border-gray-50">
-            <h3 class="font-bold text-gray-900 font-serif text-xs sm:text-base text-center line-clamp-2 sm:line-clamp-1 mb-0.5 sm:mb-1 leading-snug">' . $name . '</h3>'
-        . ($desc !== '' ? '<p class="text-[10px] sm:text-xs text-gray-400 text-center line-clamp-2 hidden sm:block">' . $desc . '</p>' : '') .
-        '</div>
     </div>';
 }
 
@@ -134,14 +133,41 @@ if ($is_ajax) {
 
 $catalogueCanonical = $targetItemId > 0 ? cj_abs_url('Catalogue?id=' . $targetItemId) : cj_abs_url('Catalogue');
 $catalogueTitle = $targetProduct 
-    ? (htmlspecialchars($targetProduct['name']) . ' | Custom Design Catalogue | ChandraKala Jewellers') 
-    : 'Custom Design Catalogue | ChandraKala Jewellers';
-$catalogueDesc = $targetProduct && !empty($targetProduct['description']) 
-    ? htmlspecialchars($targetProduct['description']) 
-    : 'Explore 138+ custom 916 gold & silver jewellery design photos at ChandraKala Jewellers, Khedbrahma. Compare pieces side-by-side & order directly on WhatsApp.';
+    ? ('Custom Jewellery Design #' . (int)$targetProduct['id'] . ' | ChandraKala Jewellers Khedbrahma') 
+    : 'Custom Gold & Silver Jewellery Design Catalogue | ChandraKala Jewellers';
+$catalogueDesc = 'Explore handcrafted 916 gold and 925 silver custom jewellery designs from ChandraKala Jewellers, Khedbrahma, Gujarat. Compare pieces and order directly on WhatsApp.';
 $catalogueOgImage = $targetProduct && !empty($targetProduct['image_filename']) 
     ? cj_img_url($targetProduct['image_filename'], 1200, 'catalogue') 
-    : null;
+    : cj_abs_url('images/logo.png');
+
+$schemas = [
+    cj_local_business_schema(),
+    cj_breadcrumb_schema([
+        ['name' => 'Home', 'url' => cj_abs_url('index1')],
+        ['name' => 'Catalogue', 'url' => cj_abs_url('Catalogue')],
+    ]),
+];
+
+if ($targetProduct) {
+    $designId = (int)$targetProduct['id'];
+    $designCat = trim((string)($targetProduct['category'] ?? 'Jewellery'));
+    $designImg = cj_img_url($targetProduct['image_filename'], 1200, 'catalogue');
+    $schemas[] = [
+        '@context' => 'https://schema.org',
+        '@type' => 'ImageObject',
+        'name' => 'Custom ' . ($designCat ?: 'Jewellery') . ' Design #' . $designId,
+        'contentUrl' => $designImg,
+        'thumbnailUrl' => cj_img_url($targetProduct['image_filename'], 500, 'catalogue'),
+        'caption' => 'Handcrafted 916 gold & silver custom jewellery design #' . $designId . ' from ChandraKala Jewellers Khedbrahma',
+        'representativeOfPage' => true,
+        'creator' => [
+            '@type' => 'JewelryStore',
+            'name' => 'ChandraKala Jewellers',
+            'url' => cj_abs_url(''),
+            'telephone' => '+91-9427080359'
+        ]
+    ];
+}
 
 $seo = cj_merge_seo([
     'title' => $catalogueTitle,
@@ -150,13 +176,7 @@ $seo = cj_merge_seo([
     'canonical' => $catalogueCanonical,
     'image' => $catalogueOgImage,
     'og_image' => $catalogueOgImage,
-    'schema' => [
-        cj_local_business_schema(),
-        cj_breadcrumb_schema([
-            ['name' => 'Home', 'url' => cj_abs_url('index1')],
-            ['name' => 'Catalogue', 'url' => cj_abs_url('Catalogue')],
-        ]),
-    ],
+    'schema' => $schemas,
 ]);
 $waNumber = function_exists('cj_shop_whatsapp_digits') ? cj_shop_whatsapp_digits() : '919427080359';
 $cataloguePageUrl = cj_abs_url('Catalogue');
@@ -337,59 +357,35 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
     <?php $activePage = 'catalogue'; include 'includes/header.php'; ?>
 
     <main class="flex-grow container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-7xl catalogue-page">
-        <div class="page-hero text-center max-w-2xl mx-auto mb-5 sm:mb-7 reveal">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-serif mb-2 sm:mb-3">Custom Gold &amp; Silver Design Catalogue</h2>
-            <p class="text-sm text-gray-500 leading-relaxed px-1">Tap a design to view it. Use <strong>AI Search</strong> to find designs by style, metal, or local name — or <strong>Compare</strong> side-by-side and order directly on WhatsApp.</p>
+        <div class="page-hero text-center max-w-2xl mx-auto mb-6 sm:mb-8 reveal">
+            <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-200/80 mb-3">Exclusive Bespoke Jewellery</span>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-serif mb-2 sm:mb-3">Custom Jewellery Design Catalogue</h1>
+            <p class="text-sm sm:text-base text-gray-500 max-w-xl mx-auto leading-relaxed">Handcrafted 916 gold &amp; 925 silver designs. Tap any piece to view, zoom, share direct link, or inquire on WhatsApp.</p>
         </div>
 
-        <!-- Powerful AI Search Bar (Regex + Synonyms + Fuzzy Live AJAX) -->
-        <section class="ai-search-shell reveal" aria-label="AI Jewellery Search">
-            <form id="catalogueAiSearchForm" action="Catalogue" method="get" role="search" class="ai-search-box">
-                <span class="ai-search-badge" aria-hidden="true">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/></svg>
-                    <span>AI Search</span>
-                </span>
-                <input
-                    type="search"
-                    id="catalogueAiInput"
-                    name="q"
-                    value="<?= htmlspecialchars($search_q) ?>"
-                    class="ai-search-input"
-                    placeholder='Try "gold bridal necklace", "kundan", "mangalsutra", "925 silver ring"...'
-                    autocomplete="off"
-                    enterkeyhint="search"
-                    aria-label="AI search custom jewellery catalogue"
-                >
-                <button type="button" id="catalogueAiClear" class="ai-search-icon-btn" title="Clear search" aria-label="Clear search" <?= $search_q === '' ? 'hidden' : '' ?>>
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-                <button type="button" id="catalogueAiVoice" class="ai-search-icon-btn" title="Voice search (English / Hindi / Gujarati)" aria-label="Voice search">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
-                </button>
-                <button type="submit" class="ai-search-submit">Search</button>
-            </form>
-
+        <!-- Category Filter Pills (1-tap filtering without search bar) -->
+        <section class="mb-6 reveal" aria-label="Filter designs by category">
             <?php
             $chipList = ['all' => 'All (' . (int)$cat_counts['all'] . ')'];
             $sortedCats = $cat_counts;
             unset($sortedCats['all']);
             arsort($sortedCats);
-            foreach (array_slice($sortedCats, 0, 10, true) as $cName => $cQty) {
+            foreach (array_slice($sortedCats, 0, 12, true) as $cName => $cQty) {
                 $chipList[$cName] = $cName . ' (' . (int)$cQty . ')';
             }
             ?>
-            <div class="ai-chips-row" id="catalogueAiChips" role="group" aria-label="Filter designs by category">
+            <div class="ai-chips-row flex flex-wrap justify-center gap-2 max-w-4xl mx-auto" id="catalogueAiChips" role="group" aria-label="Filter designs by category">
                 <?php foreach ($chipList as $cKey => $cLabel): ?>
                     <button type="button"
-                            class="ai-chip<?= strcasecmp($filter_cat, (string)$cKey) === 0 ? ' is-active' : '' ?>"
+                            class="ai-chip px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium border transition-all cursor-pointer<?= strcasecmp($filter_cat, (string)$cKey) === 0 ? ' is-active' : '' ?>"
                             data-ai-cat="<?= htmlspecialchars((string)$cKey) ?>">
                         <?= htmlspecialchars($cLabel) ?>
                     </button>
                 <?php endforeach; ?>
             </div>
 
-            <p class="ai-search-meta" id="catalogueAiMeta" aria-live="polite">
-                Showing <strong><?= (int)$total_items ?></strong> custom jewellery design<?= $total_items === 1 ? '' : 's' ?> · Understands typos, English, Gujarati &amp; Hindi jewellery terms.
+            <p class="ai-search-meta text-center text-xs text-gray-400 mt-2" id="catalogueAiMeta" aria-live="polite">
+                Showing <strong><?= (int)$total_items ?></strong> custom jewellery design<?= $total_items === 1 ? '' : 's' ?>
             </p>
         </section>
 
@@ -410,7 +406,6 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 
         <div id="catalogueEmptyState" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 sm:p-16 text-center text-gray-500 max-w-md mx-auto reveal" <?= empty($products) ? '' : 'hidden' ?>>
             <p class="font-semibold text-gray-800">No matching jewellery designs found.</p>
-            <p class="text-xs text-gray-400 mt-1">Try simpler words like <strong>gold</strong>, <strong>bridal</strong>, <strong>kundan</strong>, <strong>ring</strong>, or <strong>mangalsutra</strong>.</p>
             <button type="button" id="catalogueResetSearch" class="mt-4 px-5 py-2 rounded-full bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 cursor-pointer">Show All Designs</button>
         </div>
 
@@ -423,7 +418,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 echo cj_catalogue_card($product, $pi, false);
             } ?>
         </div>
-        <p id="catalogueLazyStatus" class="text-center text-xs text-gray-400 mt-4" hidden>AI searching designs…</p>
+        <p id="catalogueLazyStatus" class="text-center text-xs text-gray-400 mt-4" hidden>Loading designs…</p>
         <div id="catalogueLazySentinel" class="shop-lazy-sentinel" aria-hidden="true"></div>
         <div class="text-center mt-8 mb-4" id="catalogueLoadMoreWrap" <?= $total_pages > 1 ? '' : 'hidden' ?>>
             <button type="button" id="catalogueLoadMoreBtn" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-full shadow-sm transition-all hover:scale-105 cursor-pointer">
@@ -441,16 +436,38 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 <img id="catalogueLbImg" src="" alt="" decoding="async">
             </div>
             <div class="catalogue-lightbox-meta">
-                <h3 id="catalogueLbTitle"></h3>
-                <p id="catalogueLbDesc"></p>
-                <div class="catalogue-lb-actions">
-                    <a id="catalogueLbOrder" class="catalogue-order-btn btn btn-whatsapp" href="#" target="_blank" rel="noopener">Order on WhatsApp</a>
-                    <button type="button" class="btn btn-secondary" id="catalogueLbSharePhoto">Share photo</button>
-                    <button type="button" class="btn btn-secondary" id="catalogueLbAddSelect">Add to selection</button>
+                <div class="flex items-center justify-center gap-2 mb-1 flex-wrap">
+                    <span id="catalogueLbBadge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200" hidden></span>
+                    <h3 id="catalogueLbTitle" class="text-lg sm:text-xl font-bold font-serif text-gray-900 m-0">Design</h3>
                 </div>
-                <p class="catalogue-order-hint">WhatsApp message includes this design’s <strong>photo link</strong>. On supported phones, Share photo can send the actual image.</p>
+                <p id="catalogueLbDesc" class="text-xs text-gray-500 m-0 mb-3">Handcrafted 916 Gold &amp; 925 Silver Design · ChandraKala Jewellers</p>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 max-w-xl mx-auto mt-2">
+                    <button type="button" id="catalogueLbShareBtn" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        <span>Share Link</span>
+                    </button>
+                    <a id="catalogueLbWhatsAppShare" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] text-decoration-none" href="#" target="_blank" rel="noopener">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.044-1.076-.07-.249-.074-.572-.187-1.042-.39-1.996-.864-3.298-2.884-3.398-3.018-.099-.134-.813-1.082-.813-2.064 0-.982.515-1.464.7-1.663.185-.2.404-.25.539-.25.134 0 .269.002.387.008.125.006.291-.047.456.349.168.404.572 1.396.622 1.498.05.101.083.22.016.353-.067.133-.101.217-.201.334-.1.118-.21.263-.3.353-.1.1-.205.209-.089.408.117.199.519.855 1.113 1.385.767.683 1.413.896 1.614.996.2.1.317.084.434-.05.117-.134.502-.584.636-.784.134-.2.269-.167.453-.1.184.067 1.17.552 1.372.653.202.101.336.151.386.235.05.084.05.488-.094.893z"/></svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    <a id="catalogueLbOrder" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] text-decoration-none" href="#" target="_blank" rel="noopener">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span>Inquire</span>
+                    </a>
+                    <button type="button" id="catalogueLbAddSelect" class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs sm:text-sm transition-all hover:scale-[1.02] cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>Compare</span>
+                    </button>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-2.5 mb-0">Direct design link <code class="bg-gray-100 text-amber-800 px-1.5 py-0.5 rounded font-mono">Catalogue?id=...</code> allows easy sharing &amp; social previews.</p>
             </div>
         </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="catalogueToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] bg-gray-900/90 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-lg backdrop-blur pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
+        Link copied to clipboard!
     </div>
 
     <?php include 'includes/footer.php'; ?>
@@ -474,31 +491,67 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         var img = document.getElementById('catalogueLbImg');
         var title = document.getElementById('catalogueLbTitle');
         var desc = document.getElementById('catalogueLbDesc');
+        var badge = document.getElementById('catalogueLbBadge');
         var orderBtn = document.getElementById('catalogueLbOrder');
-        var shareBtn = document.getElementById('catalogueLbSharePhoto');
+        var shareBtn = document.getElementById('catalogueLbShareBtn');
+        var waShareBtn = document.getElementById('catalogueLbWhatsAppShare');
         var addBtn = document.getElementById('catalogueLbAddSelect');
         var lastFocus = null;
         var closeTimer = null;
         var currentItem = null;
 
+        function showToast(msg) {
+            var toast = document.getElementById('catalogueToast');
+            if (!toast) return;
+            toast.textContent = msg || 'Link copied to clipboard!';
+            toast.classList.remove('opacity-0', 'translate-y-3');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(function () {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-3');
+            }, 2400);
+        }
+
         function openViewer(el) {
             lastFocus = el;
+            var id = el.getAttribute('data-id') || '';
+            var cat = el.getAttribute('data-category') || '';
             currentItem = {
-                id: el.getAttribute('data-id') || '',
-                name: el.getAttribute('data-name') || '',
+                id: id,
+                name: 'Design #' + id + (cat ? ' (' + cat + ')' : ''),
+                category: cat,
                 desc: el.getAttribute('data-desc') || '',
                 image: el.getAttribute('data-image') || el.getAttribute('data-src') || '',
-                url: catalogueUrl
+                url: catalogueUrl + '?id=' + encodeURIComponent(id)
             };
             var src = el.getAttribute('data-src') || '';
             img.src = src;
-            img.alt = currentItem.name;
-            title.textContent = currentItem.name;
-            desc.textContent = currentItem.desc;
-            desc.hidden = !currentItem.desc;
-            if (orderBtn) orderBtn.href = sc.buildSingleWhatsApp(currentItem, 'order');
-            if (window.history && window.history.replaceState && currentItem.id) {
-                window.history.replaceState(null, '', 'Catalogue?id=' + encodeURIComponent(currentItem.id));
+            img.alt = 'Custom Jewellery Design #' + id;
+
+            if (title) title.textContent = 'Design #' + id;
+            if (badge) {
+                if (cat) {
+                    badge.textContent = cat;
+                    badge.hidden = false;
+                } else {
+                    badge.hidden = true;
+                }
+            }
+
+            var directUrl = window.location.origin + '/Catalogue?id=' + encodeURIComponent(id);
+
+            if (orderBtn) {
+                var orderMsg = 'Hello ChandraKala Jewellers, I would like to inquire about Custom Design #' + id + ':\n' + directUrl;
+                orderBtn.href = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(orderMsg);
+            }
+            if (waShareBtn) {
+                var shareMsg = 'Check out this handcrafted jewellery design #' + id + ' at ChandraKala Jewellers:\n' + directUrl;
+                waShareBtn.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(shareMsg);
+            }
+
+            if (window.history && window.history.replaceState && id) {
+                window.history.replaceState(null, '', 'Catalogue?id=' + encodeURIComponent(id));
             }
             lb.hidden = false;
             lb.setAttribute('aria-hidden', 'false');
@@ -552,14 +605,31 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 
         if (shareBtn) {
             shareBtn.addEventListener('click', function () {
-                if (!currentItem) return;
-                sc.shareSinglePhoto(currentItem);
+                if (!currentItem || !currentItem.id) return;
+                var directUrl = window.location.origin + '/Catalogue?id=' + encodeURIComponent(currentItem.id);
+                var shareData = {
+                    title: 'Design #' + currentItem.id + ' | ChandraKala Jewellers',
+                    text: 'Check out this handcrafted jewellery design from ChandraKala Jewellers:',
+                    url: directUrl
+                };
+                if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                    navigator.share(shareData).catch(function () {});
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(directUrl).then(function () {
+                        showToast('Design link copied to clipboard!');
+                    }).catch(function () {
+                        prompt('Copy design link:', directUrl);
+                    });
+                } else {
+                    prompt('Copy design link:', directUrl);
+                }
             });
         }
         if (addBtn) {
             addBtn.addEventListener('click', function () {
                 if (!lastFocus) return;
                 sc.ensureSelected(lastFocus);
+                showToast('Added Design #' + (currentItem ? currentItem.id : '') + ' to compare');
                 closeViewer();
             });
         }

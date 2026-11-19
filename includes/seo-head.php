@@ -11,21 +11,25 @@ if (!isset($seo) || !is_array($seo)) {
     $seo = array_merge(cj_default_seo(), $seo);
 }
 
-$title = htmlspecialchars($seo['title'], ENT_QUOTES, 'UTF-8');
+$title = htmlspecialchars((string)($seo['title'] ?? ''), ENT_QUOTES, 'UTF-8');
 $rawDescription = function_exists('cj_normalize_meta_description')
     ? cj_normalize_meta_description((string)($seo['description'] ?? ''))
     : (string)($seo['description'] ?? '');
 $description = htmlspecialchars($rawDescription, ENT_QUOTES, 'UTF-8');
-$keywords = htmlspecialchars($seo['keywords'], ENT_QUOTES, 'UTF-8');
-$canonical = htmlspecialchars($seo['canonical'], ENT_QUOTES, 'UTF-8');
-$robots = htmlspecialchars($seo['robots'], ENT_QUOTES, 'UTF-8');
-$ogType = htmlspecialchars($seo['og_type'], ENT_QUOTES, 'UTF-8');
-$ogImage = htmlspecialchars($seo['og_image'], ENT_QUOTES, 'UTF-8');
-$twitterCard = htmlspecialchars($seo['twitter_card'], ENT_QUOTES, 'UTF-8');
-$locale = htmlspecialchars($seo['locale'], ENT_QUOTES, 'UTF-8');
-$geoRegion = htmlspecialchars($seo['geo_region'], ENT_QUOTES, 'UTF-8');
-$geoPlace = htmlspecialchars($seo['geo_placename'], ENT_QUOTES, 'UTF-8');
-$geoPos = htmlspecialchars($seo['geo_position'], ENT_QUOTES, 'UTF-8');
+$keywords = htmlspecialchars((string)($seo['keywords'] ?? ''), ENT_QUOTES, 'UTF-8');
+$canonical = htmlspecialchars((string)($seo['canonical'] ?? ''), ENT_QUOTES, 'UTF-8');
+$robots = htmlspecialchars((string)($seo['robots'] ?? ''), ENT_QUOTES, 'UTF-8');
+$ogType = htmlspecialchars((string)($seo['og_type'] ?? 'website'), ENT_QUOTES, 'UTF-8');
+$rawOgImage = (string)($seo['og_image'] ?? ($seo['image'] ?? ''));
+if ($rawOgImage === '') {
+    $rawOgImage = function_exists('cj_abs_url') ? cj_abs_url('images/logo.png') : 'https://chandrakalajewellers.in/images/logo.png';
+}
+$ogImage = htmlspecialchars($rawOgImage, ENT_QUOTES, 'UTF-8');
+$twitterCard = htmlspecialchars((string)($seo['twitter_card'] ?? 'summary_large_image'), ENT_QUOTES, 'UTF-8');
+$locale = htmlspecialchars((string)($seo['locale'] ?? 'en_IN'), ENT_QUOTES, 'UTF-8');
+$geoRegion = htmlspecialchars((string)($seo['geo_region'] ?? 'IN-GJ'), ENT_QUOTES, 'UTF-8');
+$geoPlace = htmlspecialchars((string)($seo['geo_placename'] ?? 'Khedbrahma'), ENT_QUOTES, 'UTF-8');
+$geoPos = htmlspecialchars((string)($seo['geo_position'] ?? '24.0321;73.0456'), ENT_QUOTES, 'UTF-8');
 $siteName = 'ChandraKala Jewellers';
 
 $seoConfig = @include __DIR__ . '/../config/seo-config.php';
