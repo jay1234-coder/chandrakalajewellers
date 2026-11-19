@@ -3,6 +3,8 @@ require_once 'config/db.php';
 require_once 'includes/seo.php';
 require_once 'includes/img-helper.php';
 require_once 'includes/gallery-search.php';
+require_once 'includes/customers.php';
+require_once 'includes/catalogue-wishlist.php';
 
 $tStart = microtime(true);
 $per_page = 24;
@@ -72,38 +74,53 @@ $offset = ($page - 1) * $per_page;
 $products = array_slice($filtered, $offset, $per_page);
 $elapsedMs = max(1, (int)round((microtime(true) - $tStart) * 1000));
 
-function cj_catalogue_card(array $product, int $pi, bool $lazyForce = false): string
+$currentCustomer = cj_customer_session();
+$customerLikedIds = $currentCustomer ? cj_get_customer_catalogue_wishlist_ids($conn, (int)$currentCustomer['id']) : [];
+
+function cj_catalogue_card(array $product, int $pi, bool $lazyForce = false, array $likedIds = []): string
 {
     $full = htmlspecialchars(cj_img_url($product['image_filename'], 1400, 'catalogue'));
     $thumb = htmlspecialchars(cj_img_url($product['image_filename'], 600, 'catalogue'));
     $absImg = $full;
     $id = (int)$product['id'];
-    $cat = trim((string)($product['category'] ?? ''));
+    $isLiked = in_array($id, $likedIds, true);
     $eager = !$lazyForce && $pi < 4;
     $img = $eager
         ? '<img src="' . $thumb . '" alt="Custom Jewellery Design #' . $id . '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out pointer-events-none" decoding="async" width="500" height="500" fetchpriority="' . ($pi === 0 ? 'high' : 'auto') . '">'
         : '<img class="cj-lazy-img w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out pointer-events-none" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="' . $thumb . '" alt="Custom Jewellery Design #' . $id . '" decoding="async" loading="lazy" width="500" height="500">';
 
-    $catPill = $cat !== ''
-        ? '<span class="absolute top-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/60 text-amber-200 backdrop-blur-md shadow-sm">' . htmlspecialchars($cat) . '</span>'
-        : '';
-
     return '<div class="group catalogue-item relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl border border-gray-100 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col aspect-square"
         data-sc-item data-catalogue-open
         data-id="' . $id . '"
-        data-name="Design #' . $id . ($cat !== '' ? ' (' . htmlspecialchars($cat) . ')' : '') . '"
+        data-name="Design #' . $id . '"
         data-src="' . $full . '"
         data-image="' . htmlspecialchars($absImg) . '"
-        data-category="' . htmlspecialchars($cat) . '"
         role="button" tabindex="0" aria-label="View Custom Design #' . $id . '">
-        ' . $catPill . '
+        
+        <button type="button" class="catalogue-heart-btn ' . ($isLiked ? 'is-liked' : '') . '"
+                data-catalogue-like
+                data-id="' . $id . '"
+                title="' . ($isLiked ? 'Saved in Wishlist' : 'Save to Wishlist') . '"
+                aria-label="Save design to wishlist">
+            <svg class="w-5 h-5 heart-svg ' . ($isLiked ? 'fill-current text-rose-500' : 'fill-none text-white') . '" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+        </button>
+
         <div class="relative w-full h-full overflow-hidden flex items-center justify-center bg-gray-50/60">
             ' . $img . '
-            <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-3.5 pointer-events-none">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-3 pointer-events-none">
                 <span class="text-white text-xs font-semibold flex items-center gap-1.5 drop-shadow">
-                    <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg> Tap to View &amp; Share
+                    <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg> View
                 </span>
-                <span class="text-[11px] font-mono font-bold text-amber-200 drop-shadow">#' . $id . '</span>
+                <div class="flex items-center gap-1.5 pointer-events-auto">
+                    <button type="button" class="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white hover:text-amber-300 transition-all cursor-pointer shadow-sm" data-quick-share data-id="' . $id . '" title="Share design">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    </button>
+                    <button type="button" class="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white hover:text-amber-300 transition-all cursor-pointer shadow-sm" data-quick-compare data-id="' . $id . '" title="Compare design">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>';
@@ -112,7 +129,7 @@ function cj_catalogue_card(array $product, int $pi, bool $lazyForce = false): st
 if ($is_ajax) {
     $html = '';
     foreach ($products as $i => $product) {
-        $html .= cj_catalogue_card($product, $i, true);
+        $html .= cj_catalogue_card($product, $i, true, $customerLikedIds);
     }
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
@@ -195,160 +212,106 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
     <?php include 'includes/theme-boot.php'; ?>
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); }
-        .ai-search-shell {
-            max-width: 760px;
-            margin: 0 auto 1.5rem;
-        }
-        .ai-search-box {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 8px 6px 14px;
-            border-radius: 999px;
-            background: var(--surface, #ffffff);
-            border: 1.5px solid rgba(212, 175, 55, 0.45);
-            box-shadow: 0 10px 30px rgba(184, 151, 44, 0.12), 0 0 0 4px rgba(212, 175, 55, 0.06);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .ai-search-box:focus-within {
-            border-color: #d4af37;
-            box-shadow: 0 12px 34px rgba(184, 151, 44, 0.2), 0 0 0 4px rgba(212, 175, 55, 0.16);
-        }
-        .ai-search-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 11px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #f59e0b, #b45309);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            white-space: nowrap;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(180, 83, 9, 0.28);
-        }
-        .ai-search-input {
-            flex: 1;
-            min-width: 0;
-            border: 0;
-            outline: 0;
-            background: transparent;
-            color: var(--text-primary, #111827);
-            font-size: 14px;
-            padding: 9px 4px;
-        }
-        .ai-search-input::placeholder {
-            color: var(--text-light, #9ca3af);
-        }
-        .ai-search-icon-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        .catalogue-heart-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 20;
             width: 36px;
             height: 36px;
             border-radius: 999px;
-            border: 0;
-            background: transparent;
-            color: var(--text-secondary, #6b7280);
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: background 0.15s ease, color 0.15s ease;
-        }
-        .ai-search-icon-btn:hover {
-            background: rgba(212, 175, 55, 0.12);
-            color: #b45309;
-        }
-        .ai-search-icon-btn.is-listening {
-            background: #fee2e2;
-            color: #dc2626;
-            animation: aiPulse 1.1s infinite;
-        }
-        @keyframes aiPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); }
-            50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
-        }
-        .ai-search-submit {
-            padding: 9px 18px;
-            border-radius: 999px;
-            border: 0;
-            background: linear-gradient(135deg, #d4af37, #b8972c);
-            color: #111827;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: transform 0.15s ease, filter 0.15s ease;
-        }
-        .ai-search-submit:hover { filter: brightness(1.06); transform: translateY(-1px); }
-        .ai-chips-row {
+            background: rgba(17, 24, 39, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
-            gap: 7px;
-            margin-top: 12px;
-        }
-        .ai-chip {
-            padding: 6px 13px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid var(--border-color, #e5e7eb);
-            background: var(--surface, #ffffff);
-            color: var(--text-secondary, #4b5563);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .ai-chip:hover {
-            border-color: #d4af37;
-            color: #92400e;
+        .catalogue-heart-btn:hover {
+            background: rgba(17, 24, 39, 0.8);
+            transform: scale(1.12);
         }
-        .ai-chip.is-active {
-            background: linear-gradient(135deg, #d4af37, #b8972c);
-            border-color: #b8972c;
-            color: #111827;
-            font-weight: 700;
+        .catalogue-heart-btn.is-liked {
+            background: rgba(255, 255, 255, 0.95);
+            color: #e11d48;
+            border-color: rgba(225, 29, 72, 0.3);
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
         }
-        .ai-search-meta {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-secondary, #6b7280);
-            min-height: 18px;
+        .catalogue-heart-btn.is-liked .heart-svg {
+            fill: #e11d48;
+            stroke: #e11d48;
+            animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .catalogue-cat-pill {
+        @keyframes heartPop {
+            0% { transform: scale(0.7); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .catalogue-auth-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .catalogue-auth-modal.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .catalogue-auth-modal[hidden] {
+            display: none !important;
+        }
+        .catalogue-auth-backdrop {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            z-index: 2;
-            padding: 3px 9px;
+            inset: 0;
+            background: rgba(10, 12, 16, 0.65);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .catalogue-auth-card {
+            position: relative;
+            z-index: 1;
+            width: min(440px, 100%);
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px 24px 22px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px) scale(0.96);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .catalogue-auth-modal.is-open .catalogue-auth-card {
+            transform: translateY(0) scale(1);
+        }
+        .catalogue-auth-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .catalogue-auth-icon-wrap {
+            width: 56px;
+            height: 56px;
             border-radius: 999px;
-            font-size: 10px;
-            font-weight: 600;
-            background: rgba(17, 24, 39, 0.72);
-            color: #fde68a;
-            backdrop-filter: blur(4px);
-            pointer-events: none;
-        }
-        html[data-theme="dark"] .ai-search-box {
-            background: #161b26;
-            border-color: rgba(240, 215, 140, 0.35);
-        }
-        html[data-theme="dark"] .ai-search-input { color: #f8fafc; }
-        html[data-theme="dark"] .ai-chip {
-            background: #161b26;
-            border-color: #293244;
-            color: #cbd5e1;
-        }
-        html[data-theme="dark"] .ai-chip.is-active {
-            color: #111827;
-        }
-        @media (max-width: 640px) {
-            .ai-search-badge span { display: none; }
-            .ai-search-submit { padding: 8px 13px; font-size: 12px; }
+            background: #ffe4e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
         }
     </style>
 </head>
@@ -360,34 +323,14 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         <div class="page-hero text-center max-w-2xl mx-auto mb-6 sm:mb-8 reveal">
             <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-200/80 mb-3">Exclusive Bespoke Jewellery</span>
             <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-serif mb-2 sm:mb-3">Custom Jewellery Design Catalogue</h1>
-            <p class="text-sm sm:text-base text-gray-500 max-w-xl mx-auto leading-relaxed">Handcrafted 916 gold &amp; 925 silver designs. Tap any piece to view, zoom, share direct link, or inquire on WhatsApp.</p>
-        </div>
-
-        <!-- Category Filter Pills (1-tap filtering without search bar) -->
-        <section class="mb-6 reveal" aria-label="Filter designs by category">
-            <?php
-            $chipList = ['all' => 'All (' . (int)$cat_counts['all'] . ')'];
-            $sortedCats = $cat_counts;
-            unset($sortedCats['all']);
-            arsort($sortedCats);
-            foreach (array_slice($sortedCats, 0, 12, true) as $cName => $cQty) {
-                $chipList[$cName] = $cName . ' (' . (int)$cQty . ')';
-            }
-            ?>
-            <div class="ai-chips-row flex flex-wrap justify-center gap-2 max-w-4xl mx-auto" id="catalogueAiChips" role="group" aria-label="Filter designs by category">
-                <?php foreach ($chipList as $cKey => $cLabel): ?>
-                    <button type="button"
-                            class="ai-chip px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium border transition-all cursor-pointer<?= strcasecmp($filter_cat, (string)$cKey) === 0 ? ' is-active' : '' ?>"
-                            data-ai-cat="<?= htmlspecialchars((string)$cKey) ?>">
-                        <?= htmlspecialchars($cLabel) ?>
-                    </button>
-                <?php endforeach; ?>
+            <p class="text-sm sm:text-base text-gray-500 max-w-xl mx-auto leading-relaxed">Handcrafted 916 gold &amp; 925 silver designs. Tap any piece to view, zoom, share direct link, compare, or save to your wishlist.</p>
+            <div class="flex items-center justify-center gap-3 mt-4">
+                <a href="wishlist?tab=catalogue" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all shadow-sm">
+                    <svg class="w-3.5 h-3.5 fill-current text-rose-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    View Saved Catalogue Images
+                </a>
             </div>
-
-            <p class="ai-search-meta text-center text-xs text-gray-400 mt-2" id="catalogueAiMeta" aria-live="polite">
-                Showing <strong><?= (int)$total_items ?></strong> custom jewellery design<?= $total_items === 1 ? '' : 's' ?>
-            </p>
-        </section>
+        </div>
 
         <?php if (!empty($products) || $search_q !== '' || $filter_cat !== 'all'): ?>
         <div class="sc-toolbar reveal" role="toolbar" aria-label="Catalogue tools">
@@ -415,7 +358,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
              data-q="<?= htmlspecialchars($search_q) ?>"
              data-cat="<?= htmlspecialchars($filter_cat) ?>">
             <?php foreach ($products as $pi => $product) {
-                echo cj_catalogue_card($product, $pi, false);
+                echo cj_catalogue_card($product, $pi, false, $customerLikedIds);
             } ?>
         </div>
         <p id="catalogueLazyStatus" class="text-center text-xs text-gray-400 mt-4" hidden>Loading designs…</p>
@@ -436,13 +379,14 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 <img id="catalogueLbImg" src="" alt="" decoding="async">
             </div>
             <div class="catalogue-lightbox-meta">
-                <div class="flex items-center justify-center gap-2 mb-1 flex-wrap">
-                    <span id="catalogueLbBadge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200" hidden></span>
-                    <h3 id="catalogueLbTitle" class="text-lg sm:text-xl font-bold font-serif text-gray-900 m-0">Design</h3>
-                </div>
+                <h3 id="catalogueLbTitle" class="text-xl sm:text-2xl font-bold font-serif text-gray-900 m-0 mb-1">Design</h3>
                 <p id="catalogueLbDesc" class="text-xs text-gray-500 m-0 mb-3">Handcrafted 916 Gold &amp; 925 Silver Design · ChandraKala Jewellers</p>
                 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 max-w-xl mx-auto mt-2">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 max-w-2xl mx-auto mt-2">
+                    <button type="button" id="catalogueLbLikeBtn" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-600 font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer">
+                        <svg class="w-4 h-4 heart-svg fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        <span id="catalogueLbLikeLabel">Wishlist</span>
+                    </button>
                     <button type="button" id="catalogueLbShareBtn" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         <span>Share Link</span>
@@ -465,6 +409,30 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         </div>
     </div>
 
+    <!-- Auth Prompt Modal (Shown when guest clicks Like) -->
+    <div class="catalogue-auth-modal" id="catalogueAuthModal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catAuthTitle">
+        <div class="catalogue-auth-backdrop" data-auth-close></div>
+        <div class="catalogue-auth-card">
+            <button type="button" class="catalogue-auth-close" data-auth-close aria-label="Close modal">&times;</button>
+            <div class="catalogue-auth-icon-wrap">
+                <svg class="w-8 h-8 text-rose-500 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+            <h3 id="catAuthTitle" class="text-xl font-bold font-serif text-gray-900 mb-2">Save to Wishlist</h3>
+            <p class="text-xs sm:text-sm text-gray-500 mb-6 leading-relaxed">Create an account or sign in to save your favourite custom jewellery designs and view them anytime in your personal wishlist across all your devices.</p>
+            <div class="flex flex-col sm:flex-row gap-2.5 w-full mb-3">
+                <a href="account?tab=register&redirect=Catalogue" class="flex-1 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs sm:text-sm text-center shadow-sm transition-all hover:scale-[1.02]">
+                    Create Account
+                </a>
+                <a href="account?tab=login&redirect=Catalogue" class="flex-1 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-semibold text-xs sm:text-sm text-center transition-all hover:scale-[1.02]">
+                    Sign In
+                </a>
+            </div>
+            <button type="button" class="text-xs text-gray-400 hover:text-gray-600 py-1 transition-colors cursor-pointer" data-auth-close>
+                Continue browsing
+            </button>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="catalogueToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] bg-gray-900/90 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-lg backdrop-blur pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
         Link copied to clipboard!
@@ -477,6 +445,10 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
     (function () {
         var waNumber = <?= json_encode($waNumber) ?>;
         var catalogueUrl = <?= json_encode($cataloguePageUrl) ?>;
+        window.CJ_CUSTOMER_LOGGED_IN = <?= json_encode(!empty($currentCustomer)) ?>;
+        window.CJ_LIKED_CATALOGUE_IDS = <?= json_encode(array_values(array_map('intval', $customerLikedIds))) ?>;
+        var likedSet = new Set(window.CJ_LIKED_CATALOGUE_IDS);
+
         var sc = window.CJSelectCompare.create({
             phone: waNumber,
             pageUrl: catalogueUrl,
@@ -491,11 +463,13 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         var img = document.getElementById('catalogueLbImg');
         var title = document.getElementById('catalogueLbTitle');
         var desc = document.getElementById('catalogueLbDesc');
-        var badge = document.getElementById('catalogueLbBadge');
         var orderBtn = document.getElementById('catalogueLbOrder');
         var shareBtn = document.getElementById('catalogueLbShareBtn');
         var waShareBtn = document.getElementById('catalogueLbWhatsAppShare');
         var addBtn = document.getElementById('catalogueLbAddSelect');
+        var likeBtn = document.getElementById('catalogueLbLikeBtn');
+        var likeLabel = document.getElementById('catalogueLbLikeLabel');
+        var authModal = document.getElementById('catalogueAuthModal');
         var lastFocus = null;
         var closeTimer = null;
         var currentItem = null;
@@ -503,25 +477,121 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
         function showToast(msg) {
             var toast = document.getElementById('catalogueToast');
             if (!toast) return;
-            toast.textContent = msg || 'Link copied to clipboard!';
+            toast.innerHTML = msg || 'Link copied to clipboard!';
             toast.classList.remove('opacity-0', 'translate-y-3');
             toast.classList.add('opacity-100', 'translate-y-0');
             clearTimeout(toast._timer);
             toast._timer = setTimeout(function () {
                 toast.classList.remove('opacity-100', 'translate-y-0');
                 toast.classList.add('opacity-0', 'translate-y-3');
-            }, 2400);
+            }, 3000);
+        }
+
+        function openAuthModal() {
+            if (!authModal) return;
+            authModal.hidden = false;
+            authModal.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(function () { authModal.classList.add('is-open'); });
+        }
+
+        function closeAuthModal() {
+            if (!authModal) return;
+            authModal.classList.remove('is-open');
+            setTimeout(function () {
+                authModal.hidden = true;
+                authModal.setAttribute('aria-hidden', 'true');
+            }, 250);
+        }
+
+        document.querySelectorAll('[data-auth-close]').forEach(function (btn) {
+            btn.addEventListener('click', closeAuthModal);
+        });
+
+        function updateLikeUI(id, isLiked) {
+            var numericId = parseInt(id, 10);
+            if (isLiked) {
+                likedSet.add(numericId);
+            } else {
+                likedSet.delete(numericId);
+            }
+
+            // Update matching cards in grid
+            document.querySelectorAll('[data-catalogue-like][data-id="' + numericId + '"]').forEach(function (btn) {
+                var svg = btn.querySelector('.heart-svg');
+                if (isLiked) {
+                    btn.classList.add('is-liked');
+                    btn.title = 'Saved in Wishlist';
+                    if (svg) {
+                        svg.classList.remove('fill-none', 'text-white');
+                        svg.classList.add('fill-current', 'text-rose-500');
+                    }
+                } else {
+                    btn.classList.remove('is-liked');
+                    btn.title = 'Save to Wishlist';
+                    if (svg) {
+                        svg.classList.remove('fill-current', 'text-rose-500');
+                        svg.classList.add('fill-none', 'text-white');
+                    }
+                }
+            });
+
+            // Update Lightbox like button if currently viewing this item
+            if (currentItem && parseInt(currentItem.id, 10) === numericId && likeBtn) {
+                var lbSvg = likeBtn.querySelector('.heart-svg');
+                if (isLiked) {
+                    likeBtn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    if (likeLabel) likeLabel.textContent = 'Saved in Wishlist';
+                    if (lbSvg) {
+                        lbSvg.classList.remove('fill-none');
+                        lbSvg.classList.add('fill-current');
+                    }
+                } else {
+                    likeBtn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    if (likeLabel) likeLabel.textContent = 'Wishlist';
+                    if (lbSvg) {
+                        lbSvg.classList.remove('fill-current');
+                        lbSvg.classList.add('fill-none');
+                    }
+                }
+            }
+        }
+
+        function handleLikeClick(id) {
+            if (!id) return;
+            var numericId = parseInt(id, 10);
+            if (!window.CJ_CUSTOMER_LOGGED_IN) {
+                openAuthModal();
+                return;
+            }
+
+            fetch('api/catalogue-wishlist.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ action: 'toggle', catalogue_id: numericId })
+            }).then(function (res) {
+                if (res.status === 401) {
+                    window.CJ_CUSTOMER_LOGGED_IN = false;
+                    openAuthModal();
+                    throw new Error('Auth required');
+                }
+                return res.json();
+            }).then(function (data) {
+                if (!data || !data.ok) return;
+                updateLikeUI(numericId, !!data.liked);
+                if (data.liked) {
+                    showToast('Saved to your Wishlist! <a href="wishlist?tab=catalogue" class="underline font-bold text-amber-300 ml-1">View in Wishlist</a>');
+                } else {
+                    showToast('Design removed from your Wishlist.');
+                }
+            }).catch(function () {});
         }
 
         function openViewer(el) {
             lastFocus = el;
             var id = el.getAttribute('data-id') || '';
-            var cat = el.getAttribute('data-category') || '';
             currentItem = {
                 id: id,
-                name: 'Design #' + id + (cat ? ' (' + cat + ')' : ''),
-                category: cat,
-                desc: el.getAttribute('data-desc') || '',
+                name: 'Design #' + id,
                 image: el.getAttribute('data-image') || el.getAttribute('data-src') || '',
                 url: catalogueUrl + '?id=' + encodeURIComponent(id)
             };
@@ -530,12 +600,17 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             img.alt = 'Custom Jewellery Design #' + id;
 
             if (title) title.textContent = 'Design #' + id;
-            if (badge) {
-                if (cat) {
-                    badge.textContent = cat;
-                    badge.hidden = false;
+            var isLiked = likedSet.has(parseInt(id, 10));
+            if (likeBtn) {
+                var lbSvg = likeBtn.querySelector('.heart-svg');
+                if (isLiked) {
+                    likeBtn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    if (likeLabel) likeLabel.textContent = 'Saved in Wishlist';
+                    if (lbSvg) { lbSvg.classList.remove('fill-none'); lbSvg.classList.add('fill-current'); }
                 } else {
-                    badge.hidden = true;
+                    likeBtn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    if (likeLabel) likeLabel.textContent = 'Wishlist';
+                    if (lbSvg) { lbSvg.classList.remove('fill-current'); lbSvg.classList.add('fill-none'); }
                 }
             }
 
@@ -588,6 +663,43 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 
         var gridEl = document.getElementById('catalogueGrid');
         if (gridEl) {
+            gridEl.addEventListener('click', function (e) {
+                var likeTarget = e.target.closest('[data-catalogue-like]');
+                if (likeTarget) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var lId = likeTarget.getAttribute('data-id');
+                    handleLikeClick(lId);
+                    return;
+                }
+                var shareTarget = e.target.closest('[data-quick-share]');
+                if (shareTarget) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var sId = shareTarget.getAttribute('data-id');
+                    var shareUrl = window.location.origin + '/Catalogue?id=' + encodeURIComponent(sId);
+                    if (navigator.share) {
+                        navigator.share({ title: 'Design #' + sId, url: shareUrl }).catch(function () {});
+                    } else if (navigator.clipboard) {
+                        navigator.clipboard.writeText(shareUrl).then(function () {
+                            showToast('Design link copied to clipboard!');
+                        });
+                    }
+                    return;
+                }
+                var compTarget = e.target.closest('[data-quick-compare]');
+                if (compTarget) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var cardEl = compTarget.closest('[data-sc-item]');
+                    if (cardEl) {
+                        sc.ensureSelected(cardEl);
+                        showToast('Added Design #' + compTarget.getAttribute('data-id') + ' to compare');
+                    }
+                    return;
+                }
+            });
+
             gridEl.addEventListener('keydown', function (e) {
                 var el = e.target.closest('[data-catalogue-open]');
                 if (!el || (e.key !== 'Enter' && e.key !== ' ')) return;
@@ -600,8 +712,21 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             el.addEventListener('click', closeViewer);
         });
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && lb.classList.contains('is-open')) closeViewer();
+            if (e.key === 'Escape') {
+                if (authModal && authModal.classList.contains('is-open')) {
+                    closeAuthModal();
+                    return;
+                }
+                if (lb.classList.contains('is-open')) closeViewer();
+            }
         });
+
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function () {
+                if (!currentItem || !currentItem.id) return;
+                handleLikeClick(currentItem.id);
+            });
+        }
 
         if (shareBtn) {
             shareBtn.addEventListener('click', function () {
