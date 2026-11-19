@@ -204,7 +204,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 <head>
 <?php include 'includes/seo-head.php'; ?>
     <link rel="stylesheet" href="css/tailwind.min.css?v=9">
-    <link rel="stylesheet" href="css/style.css?v=11">
+    <link rel="stylesheet" href="css/style.css?v=12">
     <link rel="stylesheet" href="css/admin-theme.css?v=9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -324,12 +324,6 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-200/80 mb-3">Exclusive Bespoke Jewellery</span>
             <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-serif mb-2 sm:mb-3">Custom Jewellery Design Catalogue</h1>
             <p class="text-sm sm:text-base text-gray-500 max-w-xl mx-auto leading-relaxed">Handcrafted 916 gold &amp; 925 silver designs. Tap any piece to view, zoom, share direct link, compare, or save to your wishlist.</p>
-            <div class="flex items-center justify-center gap-3 mt-4">
-                <a href="wishlist?tab=catalogue" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all shadow-sm">
-                    <svg class="w-3.5 h-3.5 fill-current text-rose-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    View Saved Catalogue Images
-                </a>
-            </div>
         </div>
 
         <?php if (!empty($products) || $search_q !== '' || $filter_cat !== 'all'): ?>
@@ -342,6 +336,11 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                 Compare
             </button>
+            <a href="wishlist?tab=catalogue" class="sc-tool-btn" id="scSavedDesignsBtn" title="View your saved catalogue wishlist">
+                <svg width="15" height="15" class="heart-svg <?= empty($customerLikedIds) ? 'fill-none stroke-current' : 'fill-current text-rose-500' ?>" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span>Saved Designs</span>
+                <span id="scSavedCountBadge" class="sc-tool-badge" <?= empty($customerLikedIds) ? 'style="display:none;"' : '' ?>><?= count($customerLikedIds) ?></span>
+            </a>
             <button type="button" class="sc-tool-btn sc-tool-muted" id="scClearAll">Clear</button>
             <p class="sc-toolbar-hint">Compare starts at 2 designs — keep adding as many as you like.</p>
         </div>
@@ -531,18 +530,38 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 }
             });
 
+            // Update Toolbar Saved Designs count badge
+            var scBadge = document.getElementById('scSavedCountBadge');
+            var scBtn = document.getElementById('scSavedDesignsBtn');
+            if (scBadge) {
+                scBadge.textContent = String(likedSet.size);
+                scBadge.style.display = likedSet.size > 0 ? 'inline-flex' : 'none';
+            }
+            if (scBtn) {
+                var sSvg = scBtn.querySelector('.heart-svg');
+                if (sSvg) {
+                    if (likedSet.size > 0) {
+                        sSvg.classList.remove('fill-none');
+                        sSvg.classList.add('fill-current', 'text-rose-500');
+                    } else {
+                        sSvg.classList.remove('fill-current', 'text-rose-500');
+                        sSvg.classList.add('fill-none');
+                    }
+                }
+            }
+
             // Update Lightbox like button if currently viewing this item
             if (currentItem && parseInt(currentItem.id, 10) === numericId && likeBtn) {
                 var lbSvg = likeBtn.querySelector('.heart-svg');
                 if (isLiked) {
-                    likeBtn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-300');
-                    if (likeLabel) likeLabel.textContent = 'Saved in Wishlist';
+                    likeBtn.classList.add('is-liked');
+                    if (likeLabel) likeLabel.textContent = 'Saved';
                     if (lbSvg) {
                         lbSvg.classList.remove('fill-none');
                         lbSvg.classList.add('fill-current');
                     }
                 } else {
-                    likeBtn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    likeBtn.classList.remove('is-liked');
                     if (likeLabel) likeLabel.textContent = 'Wishlist';
                     if (lbSvg) {
                         lbSvg.classList.remove('fill-current');
@@ -600,11 +619,11 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
             if (likeBtn) {
                 var lbSvg = likeBtn.querySelector('.heart-svg');
                 if (isLiked) {
-                    likeBtn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-300');
-                    if (likeLabel) likeLabel.textContent = 'Saved in Wishlist';
+                    likeBtn.classList.add('is-liked');
+                    if (likeLabel) likeLabel.textContent = 'Saved';
                     if (lbSvg) { lbSvg.classList.remove('fill-none'); lbSvg.classList.add('fill-current'); }
                 } else {
-                    likeBtn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-300');
+                    likeBtn.classList.remove('is-liked');
                     if (likeLabel) likeLabel.textContent = 'Wishlist';
                     if (lbSvg) { lbSvg.classList.remove('fill-current'); lbSvg.classList.add('fill-none'); }
                 }
