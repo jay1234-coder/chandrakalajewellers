@@ -11,8 +11,18 @@ require_once dirname(__DIR__) . '/catalogue-wishlist.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
+// Transparently decode JSON payload if submitted via fetch()
+$rawInput = @file_get_contents('php://input');
+if (!empty($rawInput)) {
+    $jsonData = @json_decode($rawInput, true);
+    if (is_array($jsonData)) {
+        $_POST = array_merge($jsonData, $_POST);
+        $_REQUEST = array_merge($jsonData, $_REQUEST);
+    }
+}
+
 $customer = cj_customer_session();
-$action = (string)($_REQUEST['action'] ?? 'list');
+$action = (string)($_REQUEST['action'] ?? ($_POST['action'] ?? 'list'));
 
 if ($action === 'list') {
     if (!$customer) {
@@ -28,16 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['ok' => false, 'message' => 'POST required.']);
     exit;
-}
-
-// Transparently decode JSON payload if submitted via fetch()
-$rawInput = @file_get_contents('php://input');
-if (!empty($rawInput)) {
-    $jsonData = @json_decode($rawInput, true);
-    if (is_array($jsonData)) {
-        $_POST = array_merge($jsonData, $_POST);
-        $action = (string)($_POST['action'] ?? $action);
-    }
 }
 
 if (!$customer) {
