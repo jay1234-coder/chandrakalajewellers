@@ -45,6 +45,12 @@ html[data-theme="dark"] {
 
 html {
     scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
 }
 
 .skip-link {
@@ -66,6 +72,8 @@ html {
 body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
     font-family: 'Poppins', sans-serif;
     background-color: var(--bg-light);
     color: var(--text-primary);
@@ -73,6 +81,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+    position: relative;
 }
 
 img {
@@ -4793,14 +4802,96 @@ html[data-theme="dark"] .follow-qr-badge {
     padding: 10px 12px;
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 10px;
-    font: inherit;
+    font-family: inherit;
+    font-size: 15px;
     background: var(--bg-light, #fff);
     color: var(--text-primary, #111827);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cj-account-form input:focus,
+.cj-account-page-form input:focus {
+    outline: none;
+    border-color: var(--primary-gold, #d4af37);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
 
 .cj-account-form input::placeholder,
 .cj-account-page-form input::placeholder {
     color: var(--text-light, #9ca3af);
+    font-size: 14px;
+}
+
+.cj-auth-tabs {
+    display: flex;
+    background: var(--bg-light, #f3f4f6);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    gap: 4px;
+}
+
+.cj-auth-tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.cj-auth-tab.active {
+    background: var(--bg-card, #ffffff);
+    color: var(--primary-gold-dark, #b8972c);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.cj-password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.cj-password-wrap input {
+    width: 100% !important;
+    padding-right: 44px !important;
+}
+
+.cj-pwd-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    z-index: 2;
+}
+
+.cj-pwd-toggle:hover {
+    color: var(--text-primary, #111827);
+}
+
+/* Universal mobile zoom prevention for iOS Safari */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
 }
 
 .cj-account-error {

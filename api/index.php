@@ -45,7 +45,17 @@ while (strpos($path, 'admin/admin/') === 0) {
 
 $rootDir = dirname(__DIR__);
 
-// Dynamic SEO & AI Discovery endpoints (always live, never stale static copies)
+if ($path === 'manifest.webmanifest' || $path === 'admin/manifest.webmanifest' || $path === 'site.webmanifest') {
+    header('Content-Type: application/manifest+json; charset=UTF-8');
+    header('Cache-Control: public, max-age=86400');
+    if (is_file($rootDir . '/manifest.webmanifest')) {
+        readfile($rootDir . '/manifest.webmanifest');
+    } else {
+        echo '{}';
+    }
+    exit;
+}
+
 if ($path === 'robots.txt') {
     chdir($rootDir);
     require $rootDir . '/robots.php';

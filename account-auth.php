@@ -20,6 +20,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     exit;
 }
 
+// Transparently decode JSON payload if submitted via fetch()
+$rawInput = @file_get_contents('php://input');
+if (!empty($rawInput)) {
+    $jsonData = @json_decode($rawInput, true);
+    if (is_array($jsonData)) {
+        $_POST = array_merge($jsonData, $_POST);
+    }
+}
+
 if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
     http_response_code(403);
     echo json_encode(['ok' => false, 'message' => 'Session expired. Please refresh and try again.']);

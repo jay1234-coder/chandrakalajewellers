@@ -47,14 +47,25 @@ if (!function_exists('cj_customer_issue_cookie')) {
         $val = $b64 . '.' . $sig;
 
         $params = cj_session_cookie_params();
+        // Host-only cookie ensures iOS Safari ITP never blocks or partitions the auth token
         setcookie('cj_cust_jwt', $val, [
             'expires' => time() + $lifetime,
             'path' => '/',
-            'domain' => $params['domain'],
+            'domain' => '',
             'secure' => $params['secure'],
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
+        if (!empty($params['domain'])) {
+            setcookie('cj_cust_jwt', $val, [
+                'expires' => time() + $lifetime,
+                'path' => '/',
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
         $_COOKIE['cj_cust_jwt'] = $val;
     }
 }
@@ -69,11 +80,21 @@ if (!function_exists('cj_customer_clear_cookie')) {
         setcookie('cj_cust_jwt', '', [
             'expires' => time() - 3600,
             'path' => '/',
-            'domain' => $params['domain'],
+            'domain' => '',
             'secure' => $params['secure'],
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
+        if (!empty($params['domain'])) {
+            setcookie('cj_cust_jwt', '', [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
         unset($_COOKIE['cj_cust_jwt']);
     }
 }

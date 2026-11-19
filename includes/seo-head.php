@@ -41,7 +41,7 @@ $seoConfig['ga4_id'] = cj_setting('ga4_id', (string) ($seoConfig['ga4_id'] ?? ''
 if (!defined('CJ_CHARSET_SET')) {
     define('CJ_CHARSET_SET', true);
     echo '<meta charset="UTF-8">' . "\n";
-    echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">' . "\n";
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, shrink-to-fit=no">' . "\n";
 }
 
 if (!empty($seoConfig['google_site_verification'])) {

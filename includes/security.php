@@ -297,7 +297,16 @@ if (!function_exists('cj_validate_csrf')) {
      */
     function cj_validate_csrf(?string $token = null): bool
     {
-        $token = $token ?? (string) ($_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '');
+        if ($token === null || $token === '') {
+            $token = (string) ($_POST['csrf_token'] ?? $_GET['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+            if ($token === '') {
+                $raw = @file_get_contents('php://input');
+                if ($raw && ($json = @json_decode($raw, true)) && is_array($json)) {
+                    $token = (string) ($json['csrf_token'] ?? '');
+                }
+            }
+        }
+        $token = trim((string) $token);
         if ($token === '') {
             return false;
         }

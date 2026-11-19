@@ -11,7 +11,7 @@ $cjAssetVer = '10';
 if (!defined('CJ_CHARSET_SET')) {
     define('CJ_CHARSET_SET', true);
     echo '<meta charset="UTF-8">' . "\n";
-    echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">' . "\n";
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, shrink-to-fit=no">' . "\n";
     $cjBaseHref = '/';
     if (function_exists('cj_is_local_host') && cj_is_local_host() && function_exists('cj_base_url')) {
         $parsedPath = (string)parse_url(cj_base_url(), PHP_URL_PATH);
@@ -55,16 +55,32 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--bg-light);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  position: relative;
+}
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 .header {
   background-color: var(--header-bg);
