@@ -79,7 +79,10 @@ function get_metal_name($metal) {
 }
 
 function gallery_url($metal, $pageNum, $sort = 'newest', $min = null, $max = null, $q = '') {
-    $params = ['metal_type' => $metal];
+    $params = [];
+    if ($metal !== 'all' && $metal !== '') {
+        $params['metal_type'] = $metal;
+    }
     if ($sort !== 'newest') {
         $params['sort'] = $sort;
     }
@@ -95,7 +98,7 @@ function gallery_url($metal, $pageNum, $sort = 'newest', $min = null, $max = nul
     if ($pageNum > 1) {
         $params['page'] = $pageNum;
     }
-    return 'gallery?' . http_build_query($params);
+    return empty($params) ? 'gallery' : ('gallery?' . http_build_query($params));
 }
 
 function cj_gallery_render_card(array $row, int $i = 0, bool $lazyForce = false): string {
