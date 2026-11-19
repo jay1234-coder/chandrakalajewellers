@@ -149,6 +149,7 @@ $seo = cj_merge_seo([
     'keywords' => 'custom gold jewellery designs Khedbrahma, silver design catalogue Gujarat, jewellery photo catalogue Sabarkantha',
     'canonical' => $catalogueCanonical,
     'image' => $catalogueOgImage,
+    'og_image' => $catalogueOgImage,
     'schema' => [
         cj_local_business_schema(),
         cj_breadcrumb_schema([
