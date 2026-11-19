@@ -3129,6 +3129,148 @@ body.catalogue-lightbox-open {
     overflow: hidden;
 }
 
+/* Catalogue Lightbox Action Buttons */
+.catalogue-actions-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 620px !important;
+    margin: 12px auto 0 !important;
+    box-sizing: border-box !important;
+}
+
+@media (min-width: 640px) {
+    .catalogue-actions-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+}
+
+.btn-cat-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.btn-cat-action:hover {
+    transform: translateY(-1.5px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+.btn-cat-action:active {
+    transform: scale(0.97) !important;
+}
+
+.btn-cat-action svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
+}
+
+.btn-cat-wishlist {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.btn-cat-wishlist:hover {
+    background: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+    color: #e11d48 !important;
+}
+
+.btn-cat-wishlist.is-liked {
+    background: #fff1f2 !important;
+    border-color: #fda4af !important;
+    color: #e11d48 !important;
+}
+
+.btn-cat-share {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+}
+
+.btn-cat-share:hover {
+    background: #b45309 !important;
+    border-color: #b45309 !important;
+    color: #ffffff !important;
+}
+
+.btn-cat-whatsapp {
+    background: #25D366 !important;
+    border-color: #25D366 !important;
+    color: #ffffff !important;
+}
+
+.btn-cat-whatsapp:hover {
+    background: #1da851 !important;
+    border-color: #1da851 !important;
+    color: #ffffff !important;
+}
+
+.btn-cat-compare {
+    background: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+.btn-cat-compare:hover {
+    background: #e5e7eb !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+}
+
+/* Site-wide Universal Tailwind Utility Fallbacks */
+.bg-amber-500 { background-color: #f59e0b !important; }
+.bg-amber-600 { background-color: #d97706 !important; }
+.bg-amber-700 { background-color: #b45309 !important; }
+.hover\:bg-amber-600:hover { background-color: #d97706 !important; }
+.hover\:bg-amber-700:hover { background-color: #b45309 !important; }
+
+.bg-green-500 { background-color: #22c55e !important; }
+.bg-green-600 { background-color: #16a34a !important; }
+.bg-green-700 { background-color: #15803d !important; }
+.hover\:bg-green-700:hover { background-color: #15803d !important; }
+
+.bg-emerald-500 { background-color: #10b981 !important; }
+.bg-emerald-600 { background-color: #059669 !important; }
+.bg-emerald-700 { background-color: #047857 !important; }
+.hover\:bg-emerald-600:hover { background-color: #059669 !important; }
+.hover\:bg-emerald-700:hover { background-color: #047857 !important; }
+
+.bg-rose-500 { background-color: #f43f5e !important; }
+.bg-rose-600 { background-color: #e11d48 !important; }
+.hover\:bg-rose-600:hover { background-color: #e11d48 !important; }
+.hover\:bg-rose-50:hover { background-color: #fff1f2 !important; }
+
+.text-white { color: #ffffff !important; }
+.text-rose-600 { color: #e11d48 !important; }
+.text-gray-700 { color: #374151 !important; }
+.text-gray-900 { color: #111827 !important; }
+
+.rounded-lg { border-radius: 8px !important; }
+.rounded-xl { border-radius: 12px !important; }
+.rounded-2xl { border-radius: 16px !important; }
+.rounded-full { border-radius: 9999px !important; }
+
 @media (max-width: 640px) {
     .catalogue-zoom-hint {
         opacity: 0.85;

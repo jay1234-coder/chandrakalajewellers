@@ -204,7 +204,7 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
 <head>
 <?php include 'includes/seo-head.php'; ?>
     <link rel="stylesheet" href="css/tailwind.min.css?v=9">
-    <link rel="stylesheet" href="css/style.css?v=10">
+    <link rel="stylesheet" href="css/style.css?v=11">
     <link rel="stylesheet" href="css/admin-theme.css?v=9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -382,24 +382,20 @@ $cataloguePageUrl = cj_abs_url('Catalogue');
                 <h3 id="catalogueLbTitle" class="text-xl sm:text-2xl font-bold font-serif text-gray-900 m-0 mb-1">Design</h3>
                 <p id="catalogueLbDesc" class="text-xs text-gray-500 m-0 mb-3">Handcrafted 916 Gold &amp; 925 Silver Design · ChandraKala Jewellers</p>
                 
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 max-w-2xl mx-auto mt-2">
-                    <button type="button" id="catalogueLbLikeBtn" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-600 font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer">
+                <div class="catalogue-actions-grid">
+                    <button type="button" id="catalogueLbLikeBtn" class="btn-cat-action btn-cat-wishlist" title="Save to wishlist">
                         <svg class="w-4 h-4 heart-svg fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                         <span id="catalogueLbLikeLabel">Wishlist</span>
                     </button>
-                    <button type="button" id="catalogueLbShareBtn" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer">
+                    <button type="button" id="catalogueLbShareBtn" class="btn-cat-action btn-cat-share" title="Share direct design link">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         <span>Share Link</span>
                     </button>
-                    <a id="catalogueLbWhatsAppShare" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] text-decoration-none" href="#" target="_blank" rel="noopener">
+                    <a id="catalogueLbOrder" class="btn-cat-action btn-cat-whatsapp" href="#" target="_blank" rel="noopener" title="Inquire on WhatsApp">
                         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.044-1.076-.07-.249-.074-.572-.187-1.042-.39-1.996-.864-3.298-2.884-3.398-3.018-.099-.134-.813-1.082-.813-2.064 0-.982.515-1.464.7-1.663.185-.2.404-.25.539-.25.134 0 .269.002.387.008.125.006.291-.047.456.349.168.404.572 1.396.622 1.498.05.101.083.22.016.353-.067.133-.101.217-.201.334-.1.118-.21.263-.3.353-.1.1-.205.209-.089.408.117.199.519.855 1.113 1.385.767.683 1.413.896 1.614.996.2.1.317.084.434-.05.117-.134.502-.584.636-.784.134-.2.269-.167.453-.1.184.067 1.17.552 1.372.653.202.101.336.151.386.235.05.084.05.488-.094.893z"/></svg>
                         <span>WhatsApp</span>
                     </a>
-                    <a id="catalogueLbOrder" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] text-decoration-none" href="#" target="_blank" rel="noopener">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span>Inquire</span>
-                    </a>
-                    <button type="button" id="catalogueLbAddSelect" class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs sm:text-sm transition-all hover:scale-[1.02] cursor-pointer">
+                    <button type="button" id="catalogueLbAddSelect" class="btn-cat-action btn-cat-compare" title="Add design to comparison tray">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         <span>Compare</span>
                     </button>
