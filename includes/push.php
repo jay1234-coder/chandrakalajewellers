@@ -84,7 +84,8 @@ if (!function_exists('cj_send_web_push_empty')) {
                 CURLOPT_POST => true,
                 CURLOPT_HTTPHEADER => $headers,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 12,
+                CURLOPT_CONNECTTIMEOUT => 2,
+                CURLOPT_TIMEOUT => 3,
                 CURLOPT_POSTFIELDS => '',
             ]);
             curl_exec($ch);
@@ -98,7 +99,7 @@ if (!function_exists('cj_send_web_push_empty')) {
                 'method' => 'POST',
                 'header' => implode("\r\n", $headers),
                 'content' => '',
-                'timeout' => 12,
+                'timeout' => 3,
                 'ignore_errors' => true,
             ],
         ]);
@@ -182,7 +183,7 @@ if (!function_exists('cj_notify_event')) {
      * Use $dispatchImmediately=false on admin save paths so slow push delivery
      * cannot time out the request after the DB write.
      */
-    function cj_notify_event(mysqli $conn, string $slug, string $createdBy = 'system', ?string $bodyOverride = null, bool $dispatchImmediately = true): void
+    function cj_notify_event(mysqli $conn, string $slug, string $createdBy = 'system', ?string $bodyOverride = null, bool $dispatchImmediately = false): void
     {
         try {
             $id = cj_queue_template($conn, $slug, $createdBy, $bodyOverride);

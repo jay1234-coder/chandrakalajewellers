@@ -45,6 +45,9 @@ catalogue/*.webp
 # Node.js dependencies and build outputs
 node_modules/
 */node_modules/
+.next/
+*/.next/
+*.tsbuildinfo
 dist/
 */dist/
 .vercel/

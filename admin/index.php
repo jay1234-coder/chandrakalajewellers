@@ -494,13 +494,15 @@ if (isset($_POST['add_item'])) {
         $_SESSION['success_message'] = "Jewellery item added successfully!";
         require_once dirname(__DIR__) . '/includes/push.php';
         require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
-        cj_notify_event($conn, 'new_product', $_SESSION['username'] ?? 'admin', 'New piece added: ' . $name);
+        cj_notify_event($conn, 'new_product', $_SESSION['username'] ?? 'admin', 'New piece added: ' . $name, false);
         cj_log_activity($conn, 'add_item', $name . ' (' . $metal . ', ' . $weight . 'g)');
         if (function_exists('cj_trigger_auto_indexing')) {
-            cj_trigger_auto_indexing($conn, [
-                'https://chandrakalajewellers.in/product?id=' . $newId,
-                'https://chandrakalajewellers.in/gallery'
-            ], 'product_upload');
+            try {
+                cj_trigger_auto_indexing($conn, [
+                    'https://chandrakalajewellers.in/product?id=' . $newId,
+                    'https://chandrakalajewellers.in/gallery'
+                ], 'product_upload');
+            } catch (Throwable $ignore) {}
         }
 
         header('Location: ' . $cj_view_url('inventory'));
@@ -588,14 +590,16 @@ if (isset($_POST['update_item'])) {
         cj_refresh_item_cached_price($conn, $id);
         $_SESSION['success_message'] = "Jewellery item updated successfully!";
         require_once dirname(__DIR__) . '/includes/push.php';
-        cj_notify_event($conn, 'product_updated', $_SESSION['username'] ?? 'admin', 'Updated: ' . $name);
+        cj_notify_event($conn, 'product_updated', $_SESSION['username'] ?? 'admin', 'Updated: ' . $name, false);
         cj_log_activity($conn, 'update_item', "#{$id} " . $name);
         require_once dirname(__DIR__) . '/includes/indexnow-helper.php';
         if (function_exists('cj_trigger_auto_indexing')) {
-            cj_trigger_auto_indexing($conn, [
-                'https://chandrakalajewellers.in/product?id=' . $id,
-                'https://chandrakalajewellers.in/gallery'
-            ], 'product_update');
+            try {
+                cj_trigger_auto_indexing($conn, [
+                    'https://chandrakalajewellers.in/product?id=' . $id,
+                    'https://chandrakalajewellers.in/gallery'
+                ], 'product_update');
+            } catch (Throwable $ignore) {}
         }
     } catch (Throwable $e) {
         $_SESSION['error_message'] = "Could not update item: " . $e->getMessage();
@@ -2536,30 +2540,29 @@ if ($just_logged_in) {
         })();
         
         function compressAndUpload(file, callback) {
-            if (!file.type.startsWith('image/')) {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
                 callback(file);
                 return;
             }
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
+            try {
+                const objectUrl = URL.createObjectURL(file);
                 const img = new Image();
-                img.src = event.target.result;
                 img.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200;
-                    const MAX_HEIGHT = 1200;
-                    let width = img.width;
-                    let height = img.height;
+                    let width = img.naturalWidth || img.width;
+                    let height = img.naturalHeight || img.height;
+                    const MAX_WIDTH = 1600;
+                    const MAX_HEIGHT = 1600;
 
                     if (width > height) {
                         if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
+                            height = Math.round(height * (MAX_WIDTH / width));
                             width = MAX_WIDTH;
                         }
                     } else {
                         if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
+                            width = Math.round(width * (MAX_HEIGHT / height));
                             height = MAX_HEIGHT;
                         }
                     }
@@ -2567,36 +2570,59 @@ if ($just_logged_in) {
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        callback(file);
+                        return;
+                    }
                     ctx.drawImage(img, 0, 0, width, height);
 
+                    const createJpegFile = (blob, quality) => {
+                        const baseName = (file.name || 'jewellery_image').replace(/\.[^/.]+$/, '');
+                        return new File([blob], baseName + '_opt.jpg', {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                    };
+
                     canvas.toBlob((blob) => {
-                        if (blob) {
-                            const ext = file.name.split('.').pop();
-                            const compressedFile = new File([blob], file.name.substring(0, file.name.lastIndexOf('.')) + '_compressed.' + ext, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now()
-                            });
-                            callback(compressedFile);
-                        } else {
+                        if (!blob) {
                             callback(file);
+                            return;
                         }
-                    }, 'image/jpeg', 0.85);
+                        // If output is unexpectedly large (> 2.5MB), recompress at 0.70
+                        if (blob.size > 2.5 * 1024 * 1024) {
+                            canvas.toBlob((blob2) => {
+                                callback(blob2 ? createJpegFile(blob2, 0.70) : createJpegFile(blob, 0.82));
+                            }, 'image/jpeg', 0.70);
+                        } else {
+                            callback(createJpegFile(blob, 0.82));
+                        }
+                    }, 'image/jpeg', 0.82);
                 };
-                img.onerror = () => callback(file);
-            };
-            reader.onerror = () => callback(file);
+                img.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    callback(file);
+                };
+                img.src = objectUrl;
+            } catch (e) {
+                callback(file);
+            }
         }
 
         function handleImageUpload(inputFileId, previewId, progressBarId, messageId, hiddenInputId, submitBtnId, progressWrapperId) {
             const inputFile = document.getElementById(inputFileId);
             if (!inputFile) return;
             inputFile.addEventListener('change', (event) => {
-                const file = event.target.files[0];
+                const file = event.target.files && event.target.files[0];
                 if (!file) return;
 
                 const preview = document.getElementById(previewId);
-                preview.src = URL.createObjectURL(file);
-                preview.classList.remove('hidden');
+                if (preview) {
+                    try {
+                        preview.src = URL.createObjectURL(file);
+                        preview.classList.remove('hidden');
+                    } catch(e) {}
+                }
 
                 const progressBar = document.getElementById(progressBarId);
                 const progressMessage = document.getElementById(messageId);
@@ -2605,9 +2631,11 @@ if ($just_logged_in) {
                 const progressWrapper = document.getElementById(progressWrapperId);
                 
                 if (progressWrapper) progressWrapper.classList.remove('hidden');
-                progressBar.style.width = '0%';
-                progressBar.textContent = '0%';
-                progressMessage.textContent = 'Compressing image...';
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
+                }
+                if (progressMessage) progressMessage.textContent = 'Optimizing image for fast upload...';
                 
                 if (submitBtn) {
                    submitBtn.disabled = true;
@@ -2615,20 +2643,22 @@ if ($just_logged_in) {
                 }
 
                 compressAndUpload(file, (processedFile) => {
-                    progressMessage.textContent = 'Uploading...';
+                    if (progressMessage) progressMessage.textContent = 'Uploading securely to cloud...';
                     const formData = new FormData();
                     formData.append('images[]', processedFile);
 
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'index.php?action=upload_images', true);
+                    // Always use absolute path to admin endpoint
+                    xhr.open('POST', '/admin/index.php?action=upload_images', true);
+                    xhr.timeout = 35000;
 
                     xhr.upload.addEventListener('progress', (e) => {
-                        if (e.lengthComputable) {
+                        if (e.lengthComputable && progressBar) {
                             const percent = Math.round((e.loaded / e.total) * 100);
                             progressBar.style.width = percent + '%';
                             progressBar.textContent = percent + '%';
-                            if (percent === 100) {
-                                progressMessage.textContent = 'Processing file...';
+                            if (percent === 100 && progressMessage) {
+                                progressMessage.textContent = 'Storing image safely...';
                             }
                         }
                     });
@@ -2638,8 +2668,8 @@ if ($just_logged_in) {
                             try {
                                 const response = JSON.parse(xhr.responseText);
                                 if (response.success && response.files && response.files.length > 0) {
-                                    progressMessage.textContent = 'Image uploaded successfully!';
-                                    hiddenInput.value = response.files[0].filename;
+                                    if (progressMessage) progressMessage.textContent = 'Image uploaded successfully!';
+                                    if (hiddenInput) hiddenInput.value = response.files[0].filename;
                                     if (inputFile) {
                                         inputFile.removeAttribute('required');
                                         var parentBox = inputFile.closest('.border-dashed');
@@ -2662,22 +2692,22 @@ if ($just_logged_in) {
                                         }
                                     }
                                 } else {
-                                    const errorMsg = response.message || (response.errors ? response.errors.join(', ') : 'Unknown upload error');
-                                    progressMessage.textContent = 'Upload failed: ' + errorMsg;
+                                    const errorMsg = response.message || (response.errors ? response.errors.join(', ') : 'Upload could not complete.');
+                                    if (progressMessage) progressMessage.textContent = 'Upload failed: ' + errorMsg;
                                     if (submitBtn) {
                                         submitBtn.disabled = false;
                                         submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                                     }
                                 }
                             } catch(err) {
-                                progressMessage.textContent = 'Response error parsing server output.';
+                                if (progressMessage) progressMessage.textContent = 'Server response parse error.';
                                 if (submitBtn) {
                                     submitBtn.disabled = false;
                                     submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                                 }
                             }
                         } else {
-                            progressMessage.textContent = 'Connection error (HTTP ' + xhr.status + ').';
+                            if (progressMessage) progressMessage.textContent = 'Upload error (HTTP ' + xhr.status + '). Please retry.';
                             if (submitBtn) {
                                 submitBtn.disabled = false;
                                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -2685,8 +2715,16 @@ if ($just_logged_in) {
                         }
                     };
 
+                    xhr.ontimeout = () => {
+                        if (progressMessage) progressMessage.textContent = 'Upload timed out. Please check connection and try again.';
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    };
+
                     xhr.onerror = () => {
-                        progressMessage.textContent = 'Network connection failed.';
+                        if (progressMessage) progressMessage.textContent = 'Network connection dropped. Please retry.';
                         if (submitBtn) {
                             submitBtn.disabled = false;
                             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');

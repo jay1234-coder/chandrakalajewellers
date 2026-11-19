@@ -34,6 +34,14 @@ register_shutdown_function(function () {
     }
 });
 
+// 1-hop canonical redirect for apex domain to prevent carrier double-redirect drop
+$hostHeader = strtolower($_SERVER['HTTP_HOST'] ?? '');
+if ($hostHeader === 'chandrakalajewellers.in') {
+    $canonicalUrl = 'https://www.chandrakalajewellers.in' . ($_SERVER['REQUEST_URI'] ?? '/');
+    header('Location: ' . $canonicalUrl, true, 301);
+    exit;
+}
+
 $rawUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($rawUri, PHP_URL_PATH);
 $path = trim($path, '/');

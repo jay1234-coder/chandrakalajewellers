@@ -270,8 +270,8 @@ if (!function_exists('cj_ping_search_engines')) {
             if ($ch) {
                 @curl_setopt_array($ch, [
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CONNECTTIMEOUT => 2,
-                    CURLOPT_TIMEOUT => 3,
+                    CURLOPT_CONNECTTIMEOUT => 1,
+                    CURLOPT_TIMEOUT => 2,
                     CURLOPT_SSL_VERIFYPEER => false,
                     CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; ChandraKalaJewellersBot/2.0)',
                 ]);
@@ -343,8 +343,8 @@ if (!function_exists('cj_auto_ping_indexnow')) {
             CURLOPT_HTTPHEADER => ['Content-Type: application/json; charset=utf-8'],
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 2,
-            CURLOPT_TIMEOUT => 4,
+            CURLOPT_CONNECTTIMEOUT => 1,
+            CURLOPT_TIMEOUT => 2,
             CURLOPT_SSL_VERIFYPEER => false,
         ]);
         $resp = @curl_exec($ch);
@@ -372,30 +372,39 @@ if (!function_exists('cj_trigger_auto_indexing')) {
      */
     function cj_trigger_auto_indexing(?mysqli $conn = null, array $extraUrls = [], string $source = 'upload', bool $force = true): array
     {
-        if (!$conn) {
-            global $conn;
+        try {
+            if (!$conn) {
+                global $conn;
+            }
+            $db = $conn;
+
+            $sitemapUpdated = false;
+            if ($db instanceof mysqli && !$db->connect_error) {
+                $sitemapUpdated = cj_rebuild_sitemap_file($db);
+            }
+
+            $indexNowRes = cj_auto_ping_indexnow($extraUrls, $force);
+            $pingRes = cj_ping_search_engines('https://chandrakalajewellers.in/sitemap.xml');
+
+            if ($db instanceof mysqli && !$db->connect_error && function_exists('cj_log_activity')) {
+                $details = $source . ' (' . count($extraUrls) . ' specific url(s), sitemap rebuilt)';
+                cj_log_activity($db, 'auto_indexing', $details);
+            }
+
+            return [
+                'ok' => true,
+                'sitemap_updated' => $sitemapUpdated,
+                'indexnow' => $indexNowRes,
+                'search_engines' => $pingRes,
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+        } catch (Throwable $e) {
+            // Guard: never disrupt or crash calling web request
+            return [
+                'ok' => false,
+                'error' => $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
         }
-        $db = $conn;
-
-        $sitemapUpdated = false;
-        if ($db instanceof mysqli && !$db->connect_error) {
-            $sitemapUpdated = cj_rebuild_sitemap_file($db);
-        }
-
-        $indexNowRes = cj_auto_ping_indexnow($extraUrls, $force);
-        $pingRes = cj_ping_search_engines('https://chandrakalajewellers.in/sitemap.xml');
-
-        if ($db instanceof mysqli && !$db->connect_error && function_exists('cj_log_activity')) {
-            $details = $source . ' (' . count($extraUrls) . ' specific url(s), sitemap rebuilt)';
-            cj_log_activity($db, 'auto_indexing', $details);
-        }
-
-        return [
-            'ok' => true,
-            'sitemap_updated' => $sitemapUpdated,
-            'indexnow' => $indexNowRes,
-            'search_engines' => $pingRes,
-            'timestamp' => date('Y-m-d H:i:s'),
-        ];
     }
 }
