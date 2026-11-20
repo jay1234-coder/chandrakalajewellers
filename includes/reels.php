@@ -809,19 +809,29 @@ if (!function_exists('cj_reel_video_object_schema')) {
         $likes = (int)($reel['likes_count'] ?? 0);
         $comments = (int)($reel['comments_count'] ?? 0);
 
+        $embedUrl = $pageUrl . '&embed=1';
+
+        $thumbnails = [$thumb];
+        $thumbWide = (string)($reel['poster_url'] ?? '');
+        if ($thumbWide !== '' && !in_array($thumbWide, $thumbnails, true)) {
+            $thumbnails[] = $thumbWide;
+        }
+
         return [
             '@type' => 'VideoObject',
             '@id' => $pageUrl . '#video',
             'name' => cj_reel_seo_title($reel),
             'description' => cj_reel_seo_description($reel),
-            'thumbnailUrl' => [$thumb],
+            'thumbnailUrl' => $thumbnails,
             'contentUrl' => $contentUrl,
-            'embedUrl' => $pageUrl,
+            'embedUrl' => $embedUrl,
             'url' => $pageUrl,
             'uploadDate' => $uploadDate,
             'duration' => cj_reel_iso_duration($reel),
+            'encodingFormat' => 'video/mp4',
             'inLanguage' => 'en-IN',
             'isFamilyFriendly' => true,
+            'regionsAllowed' => ['IN'],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => 'ChandraKala Jewellers',

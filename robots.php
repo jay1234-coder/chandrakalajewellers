@@ -6,6 +6,7 @@
 require_once __DIR__ . '/includes/seo.php';
 header('Content-Type: text/plain; charset=UTF-8');
 $sitemap = cj_abs_url('sitemap.xml');
+$videoSitemap = cj_abs_url('sitemap-videos.xml');
 $host = 'https://' . cj_site_host();
 
 $aiBots = [
@@ -14,6 +15,7 @@ $aiBots = [
     'OAI-SearchBot',
     'Google-Extended',
     'Googlebot',
+    'Googlebot-Video',
     'Googlebot-Image',
     'Googlebot-News',
     'Bingbot',
@@ -64,6 +66,8 @@ Allow: /blog
 Allow: /blog-post
 Allow: /jewellers-in-khedbrahma
 Allow: /gold-rate-khedbrahma
+Allow: /showcase
+Allow: /reels
 Allow: /follow-us
 Allow: /llms.txt
 Allow: /llms-full.txt
@@ -71,6 +75,7 @@ Allow: /ai.txt
 Allow: /agents.txt
 Allow: /humans.txt
 Allow: /img.php
+Allow: /sitemap-videos.xml
 Allow: /b7e4c91a2f8d4e6ab3c5d0e9f1a2b3c4.txt
 Disallow: /admin/
 Disallow: /secret
@@ -97,13 +102,14 @@ Disallow: /cron/
 TXT;
 
 foreach ($aiBots as $bot) {
-    $out .= "\nUser-agent: {$bot}\nAllow: /\nAllow: /llms.txt\nAllow: /llms-full.txt\nAllow: /ai.txt\nAllow: /agents.txt\nAllow: /sitemap.xml\n";
+    $out .= "\nUser-agent: {$bot}\nAllow: /\nAllow: /llms.txt\nAllow: /llms-full.txt\nAllow: /ai.txt\nAllow: /agents.txt\nAllow: /sitemap.xml\nAllow: /sitemap-videos.xml\n";
 }
 
 $out .= <<<TXT
 
 Host: {$host}
 Sitemap: {$sitemap}
+Sitemap: {$videoSitemap}
 
 TXT;
 

@@ -34,6 +34,7 @@ RewriteRule ^\.well-known/agents\.txt$ /agents.txt [L]
 
 # Dynamic SEO & AI files — always prefer PHP generators
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteRule ^sitemap-videos\.xml$ sitemap-videos.php [L]
 RewriteRule ^robots\.txt$ robots.php [L]
 RewriteRule ^llms\.txt$ llms.php [L]
 RewriteRule ^llms-full\.txt$ llms.php?full=1 [L]
@@ -49,6 +50,7 @@ RewriteCond %{REQUEST_METHOD} GET
 RewriteCond %{THE_REQUEST} !/admin [NC]
 RewriteCond %{THE_REQUEST} !admin\.php [NC]
 RewriteCond %{THE_REQUEST} !sitemap\.php [NC]
+RewriteCond %{THE_REQUEST} !sitemap-videos\.php [NC]
 RewriteCond %{THE_REQUEST} !robots\.php [NC]
 RewriteCond %{THE_REQUEST} !img\.php [NC]
 RewriteCond %{THE_REQUEST} !index\.php [NC]

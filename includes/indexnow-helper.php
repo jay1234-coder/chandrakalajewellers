@@ -93,6 +93,7 @@ if (!function_exists('cj_build_sitemap_xml')) {
                         'title' => cj_reel_seo_title($r),
                         'description' => cj_reel_seo_description($r),
                         'content_loc' => $contentUrl,
+                        'player_loc' => $pageUrl . '&embed=1',
                         'duration' => $dur,
                         'view_count' => $views,
                         'publication_date' => $pubIso,
@@ -200,7 +201,7 @@ if (!function_exists('cj_build_sitemap_xml')) {
                     $xml .= '      <video:content_loc>' . htmlspecialchars($v['content_loc'], ENT_XML1) . '</video:content_loc>' . "\n";
                 }
                 if (!empty($v['player_loc']) && $v['player_loc'] !== $u['loc']) {
-                    $xml .= '      <video:player_loc>' . htmlspecialchars($v['player_loc'], ENT_XML1) . '</video:player_loc>' . "\n";
+                    $xml .= '      <video:player_loc allow_embed="yes">' . htmlspecialchars($v['player_loc'], ENT_XML1) . '</video:player_loc>' . "\n";
                 }
                 $xml .= '      <video:duration>' . (int)$v['duration'] . '</video:duration>' . "\n";
                 $xml .= '      <video:view_count>' . (int)$v['view_count'] . '</video:view_count>' . "\n";
@@ -216,6 +217,74 @@ if (!function_exists('cj_build_sitemap_xml')) {
         }
 
         $xml .= '</urlset>' . "\n";
+        return $xml;
+    }
+}
+
+if (!function_exists('cj_build_video_sitemap_xml')) {
+    /**
+     * Build dedicated Google Video XML Sitemap containing only canonical video watch pages.
+     */
+    function cj_build_video_sitemap_xml(mysqli $conn): string
+    {
+        require_once __DIR__ . '/seo.php';
+        require_once __DIR__ . '/reels.php';
+
+        $nowIso = function_exists('cj_format_ist_iso') ? cj_format_ist_iso() : date('c');
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n";
+        $xml .= '        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">' . "\n";
+
+        // Video Feed/Index page
+        $xml .= "  <url>\n";
+        $xml .= '    <loc>' . htmlspecialchars(cj_abs_url('reels'), ENT_XML1) . "</loc>\n";
+        $xml .= "    <lastmod>{$nowIso}</lastmod>\n";
+        $xml .= "    <changefreq>daily</changefreq>\n";
+        $xml .= "    <priority>0.95</priority>\n";
+        $xml .= "  </url>\n";
+
+        if ($conn instanceof mysqli && !$conn->connect_error) {
+            $activeReels = cj_get_ranked_reels($conn, 250, true, 'top');
+            foreach ($activeReels as $r) {
+                $rid = (int)$r['id'];
+                $pubIso = !empty($r['created_at']) ? cj_format_ist_iso($r['created_at']) : $nowIso;
+                $thumb = (string)($r['poster_thumb'] ?: cj_abs_url('images/logo.png'));
+                $contentUrl = (string)$r['hd_url'];
+                $pageUrl = cj_abs_url('showcase?v=' . $rid);
+                $playerUrl = $pageUrl . '&embed=1';
+                $dur = max(1, (int)round((float)($r['duration'] ?? 15)));
+                $views = max(1, (int)$r['display_views']);
+                $tags = ['916 Gold Jewellery', 'ChandraKala Jewellers', 'Khedbrahma Jewellers', 'Jewellery Reels'];
+                foreach (cj_reel_extract_style_tokens((string)($r['admin_note'] ?? '')) as $tok) {
+                    $tags[] = ucfirst($tok);
+                }
+                $tags = array_slice(array_values(array_unique($tags)), 0, 10);
+
+                $xml .= "  <url>\n";
+                $xml .= '    <loc>' . htmlspecialchars($pageUrl, ENT_XML1) . "</loc>\n";
+                $xml .= "    <lastmod>{$pubIso}</lastmod>\n";
+                $xml .= "    <changefreq>weekly</changefreq>\n";
+                $xml .= '    <priority>' . (!empty($r['is_top_viewed']) ? '0.95' : '0.90') . "</priority>\n";
+                $xml .= "    <video:video>\n";
+                $xml .= '      <video:thumbnail_loc>' . htmlspecialchars($thumb, ENT_XML1) . "</video:thumbnail_loc>\n";
+                $xml .= '      <video:title>' . htmlspecialchars(cj_reel_seo_title($r), ENT_XML1) . "</video:title>\n";
+                $xml .= '      <video:description>' . htmlspecialchars(cj_reel_seo_description($r), ENT_XML1) . "</video:description>\n";
+                $xml .= '      <video:content_loc>' . htmlspecialchars($contentUrl, ENT_XML1) . "</video:content_loc>\n";
+                $xml .= '      <video:player_loc allow_embed="yes">' . htmlspecialchars($playerUrl, ENT_XML1) . "</video:player_loc>\n";
+                $xml .= "      <video:duration>{$dur}</video:duration>\n";
+                $xml .= "      <video:view_count>{$views}</video:view_count>\n";
+                $xml .= "      <video:publication_date>{$pubIso}</video:publication_date>\n";
+                $xml .= "      <video:family_friendly>yes</video:family_friendly>\n";
+                foreach ($tags as $tg) {
+                    $xml .= '      <video:tag>' . htmlspecialchars($tg, ENT_XML1) . "</video:tag>\n";
+                }
+                $xml .= "    </video:video>\n";
+                $xml .= "  </url>\n";
+            }
+        }
+
+        $xml .= "</urlset>\n";
         return $xml;
     }
 }

@@ -16,6 +16,36 @@ if (!$reel && !empty($allReels)) {
     $reel = $allReels[0];
 }
 
+// Minimal Embed Player for Twitter / Social Media Player Card
+if ($reel && isset($_GET['embed']) && $_GET['embed'] === '1') {
+    $embedVideoUrl = htmlspecialchars((string)($reel['hd_url'] ?? $reel['preview_url'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $embedPosterUrl = htmlspecialchars((string)($reel['poster_thumb'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $embedSiteUrl = htmlspecialchars(cj_abs_url('showcase?v=' . (int)$reel['id']), ENT_QUOTES, 'UTF-8');
+    ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><?= htmlspecialchars(cj_reel_seo_title($reel), ENT_QUOTES, 'UTF-8') ?></title>
+<style>
+  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#07080c; display:flex; align-items:center; justify-content:center; }
+  video { width:100%; height:100%; object-fit:contain; background:#07080c; }
+  .cj-embed-badge { position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.72); color:#fde68a; font-family:system-ui,-apple-system,sans-serif; font-size:11px; font-weight:700; padding:6px 12px; border-radius:999px; text-decoration:none; border:1px solid rgba(212,175,55,0.4); display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px); }
+  .cj-embed-badge:hover { background:rgba(212,175,55,0.25); color:#fff; }
+</style>
+</head>
+<body>
+<a href="<?= $embedSiteUrl ?>" target="_blank" rel="noopener" class="cj-embed-badge" title="Open in ChandraKala Jewellers">
+  <span>✨ ChandraKala Jewellers</span>
+</a>
+<video src="<?= $embedVideoUrl ?>" poster="<?= $embedPosterUrl ?>" autoplay muted loop playsinline controls></video>
+</body>
+</html>
+    <?php
+    exit;
+}
+
 // Determine Prev / Next reel in ranked order
 $prevId = 0;
 $nextId = 0;
@@ -85,17 +115,18 @@ $scSchemas = [
         ['name' => $rid > 0 ? "Showcase Reel #{$rid}" : 'Showroom Showcase', 'url' => $reelShareUrl],
     ]),
 ];
-$scExtraHead = '';
 $scOgImage = cj_abs_url('images/logo.png');
+$videoUrl = '';
+$videoWidth = 720;
+$videoHeight = 1280;
 if ($reel) {
     $scSchemas[] = cj_reel_video_object_schema($reel);
     if (!empty($reel['poster_thumb'])) {
         $scOgImage = (string)$reel['poster_thumb'];
     }
-    $hdEsc = htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8');
-    $scExtraHead = '<meta property="og:video" content="' . $hdEsc . '">' . "\n"
-        . '<meta property="og:video:secure_url" content="' . $hdEsc . '">' . "\n"
-        . '<meta property="og:video:type" content="video/mp4">' . "\n";
+    $videoUrl = (string)($reel['hd_url'] ?? $reel['preview_url'] ?? '');
+    if (!empty($reel['width'])) $videoWidth = (int)$reel['width'];
+    if (!empty($reel['height'])) $videoHeight = (int)$reel['height'];
 }
 
 $seo = cj_merge_seo([
@@ -105,7 +136,15 @@ $seo = cj_merge_seo([
     'canonical' => $reelShareUrl,
     'og_type' => $reel ? 'video.other' : 'website',
     'og_image' => $scOgImage,
-    'extra_head' => $scExtraHead,
+    'og_image_width' => $videoWidth,
+    'og_image_height' => $videoHeight,
+    'og_image_type' => 'image/jpeg',
+    'og_video' => $videoUrl,
+    'og_video_width' => $videoWidth,
+    'og_video_height' => $videoHeight,
+    'og_video_type' => 'video/mp4',
+    'twitter_card' => $videoUrl !== '' ? 'player' : 'summary_large_image',
+    'twitter_player' => $reelShareUrl . '&embed=1',
     'schema' => $scSchemas,
 ]);
 ?>
@@ -477,15 +516,32 @@ $seo = cj_merge_seo([
     <div class="cj-sc-grid">
         <!-- LEFT: HD Cinema Reel Player + Like / Comment / Order / Share Bar -->
         <div>
-            <div class="cj-sc-player-card">
+            <div class="cj-sc-player-card" itemscope itemtype="https://schema.org/VideoObject">
+                <meta itemprop="name" content="<?= htmlspecialchars(cj_reel_seo_title($reel), ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="description" content="<?= htmlspecialchars(cj_reel_seo_description($reel), ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="thumbnailUrl" content="<?= htmlspecialchars((string)($reel['poster_thumb'] ?: $scOgImage), ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="contentUrl" content="<?= htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="embedUrl" content="<?= htmlspecialchars($reelShareUrl . '&embed=1', ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="uploadDate" content="<?= htmlspecialchars(cj_format_ist_iso($reel['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="duration" content="<?= htmlspecialchars(cj_reel_iso_duration($reel), ENT_QUOTES, 'UTF-8') ?>">
+                <meta itemprop="inLanguage" content="en-IN">
+
                 <video id="cjShowcaseVideo"
                        src="<?= htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8') ?>"
                        <?php if (!empty($reel['poster_thumb'])): ?>poster="<?= htmlspecialchars((string)$reel['poster_thumb'], ENT_QUOTES, 'UTF-8') ?>"<?php endif; ?>
+                       title="<?= htmlspecialchars(cj_reel_seo_title($reel), ENT_QUOTES, 'UTF-8') ?>"
+                       preload="metadata"
                        autoplay
                        muted
                        loop
                        playsinline
-                       webkit-playsinline></video>
+                       webkit-playsinline>
+                    <source src="<?= htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8') ?>" type="video/mp4">
+                    <?php if (!empty($reel['preview_url']) && $reel['preview_url'] !== $reel['hd_url']): ?>
+                    <source src="<?= htmlspecialchars((string)$reel['preview_url'], ENT_QUOTES, 'UTF-8') ?>" type="video/mp4">
+                    <?php endif; ?>
+                    <p>Watch handcrafted 916 gold jewellery reel #<?= (int)$reel['id'] ?> at ChandraKala Jewellers, Khedbrahma.</p>
+                </video>
 
                 <div class="cj-sc-top-bar">
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">

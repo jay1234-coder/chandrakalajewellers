@@ -40,12 +40,44 @@ foreach (array_slice($cjVideoReels, 0, 12) as $vIdx => $rr) {
 }
 $leadPoster = !empty($cjVideoReels[0]['poster_thumb']) ? (string)$cjVideoReels[0]['poster_thumb'] : cj_abs_url('images/logo.png');
 
+$selectedReel = null;
+if ($startId > 0) {
+    foreach ($cjVideoReels as $rr) {
+        if ((int)$rr['id'] === $startId) {
+            $selectedReel = $rr;
+            break;
+        }
+    }
+    if (!$selectedReel) {
+        $selectedReel = cj_get_reel_by_id($conn, $startId);
+    }
+}
+
+$pageTitle = $selectedReel ? cj_reel_seo_title($selectedReel) : 'Jewellery Reels — 916 Gold & Bridal Videos | ChandraKala Jewellers Khedbrahma';
+$pageDesc = $selectedReel ? cj_reel_seo_description($selectedReel) : 'Watch real handcrafted 22K 916 gold, bridal, mangalsutra & 925 silver jewellery video reels from ChandraKala Jewellers, Civil Road, Khedbrahma. Tap any reel to order.';
+$pageUrl = $selectedReel ? cj_abs_url('reels?v=' . $startId) : cj_abs_url('reels');
+$pagePoster = ($selectedReel && !empty($selectedReel['poster_thumb'])) ? (string)$selectedReel['poster_thumb'] : $leadPoster;
+$pageVideo = $selectedReel ? (string)($selectedReel['hd_url'] ?? $selectedReel['preview_url'] ?? '') : (!empty($cjVideoReels[0]['hd_url']) ? (string)$cjVideoReels[0]['hd_url'] : '');
+$pageVideoWidth = ($selectedReel && !empty($selectedReel['width'])) ? (int)$selectedReel['width'] : 720;
+$pageVideoHeight = ($selectedReel && !empty($selectedReel['height'])) ? (int)$selectedReel['height'] : 1280;
+$twitterPlayer = cj_abs_url('showcase?v=' . ($selectedReel ? (int)$selectedReel['id'] : (int)($cjVideoReels[0]['id'] ?? 1)) . '&embed=1');
+
 $seo = cj_merge_seo([
-    'title' => 'Jewellery Reels — 916 Gold & Bridal Videos | ChandraKala Jewellers Khedbrahma',
-    'description' => 'Watch real handcrafted 22K 916 gold, bridal, mangalsutra & 925 silver jewellery video reels from ChandraKala Jewellers, Civil Road, Khedbrahma. Tap any reel to order.',
+    'title' => $pageTitle,
+    'description' => $pageDesc,
     'keywords' => 'ChandraKala Jewellers reels, gold jewellery videos Khedbrahma, 916 hallmark gold reels, bridal jewellery videos Gujarat, mangalsutra design video, Sabarkantha jewellers',
-    'canonical' => cj_abs_url('reels'),
-    'og_image' => $leadPoster,
+    'canonical' => $pageUrl,
+    'og_type' => 'video.other',
+    'og_image' => $pagePoster,
+    'og_image_width' => $pageVideoWidth,
+    'og_image_height' => $pageVideoHeight,
+    'og_image_type' => 'image/jpeg',
+    'og_video' => $pageVideo,
+    'og_video_width' => $pageVideoWidth,
+    'og_video_height' => $pageVideoHeight,
+    'og_video_type' => 'video/mp4',
+    'twitter_card' => $pageVideo !== '' ? 'player' : 'summary_large_image',
+    'twitter_player' => $twitterPlayer,
     'schema' => array_merge(
         [
             cj_local_business_schema(),

@@ -25,7 +25,16 @@ if ($rawOgImage === '') {
     $rawOgImage = function_exists('cj_abs_url') ? cj_abs_url('images/logo.png') : 'https://chandrakalajewellers.in/images/logo.png';
 }
 $ogImage = htmlspecialchars($rawOgImage, ENT_QUOTES, 'UTF-8');
-$twitterCard = htmlspecialchars((string)($seo['twitter_card'] ?? 'summary_large_image'), ENT_QUOTES, 'UTF-8');
+$rawOgVideo = (string)($seo['og_video'] ?? ($seo['video'] ?? ''));
+$ogVideo = htmlspecialchars($rawOgVideo, ENT_QUOTES, 'UTF-8');
+$ogVideoType = htmlspecialchars((string)($seo['og_video_type'] ?? 'video/mp4'), ENT_QUOTES, 'UTF-8');
+$ogVideoWidth = (int)($seo['og_video_width'] ?? 720);
+$ogVideoHeight = (int)($seo['og_video_height'] ?? 1280);
+$ogImageWidth = (int)($seo['og_image_width'] ?? ($rawOgVideo !== '' ? 720 : 1200));
+$ogImageHeight = (int)($seo['og_image_height'] ?? ($rawOgVideo !== '' ? 1280 : 630));
+$ogImageType = htmlspecialchars((string)($seo['og_image_type'] ?? 'image/jpeg'), ENT_QUOTES, 'UTF-8');
+$twitterPlayer = htmlspecialchars((string)($seo['twitter_player'] ?? ($rawOgVideo !== '' ? $canonical : '')), ENT_QUOTES, 'UTF-8');
+$twitterCard = htmlspecialchars((string)($seo['twitter_card'] ?? ($rawOgVideo !== '' ? 'player' : 'summary_large_image')), ENT_QUOTES, 'UTF-8');
 $locale = htmlspecialchars((string)($seo['locale'] ?? 'en_IN'), ENT_QUOTES, 'UTF-8');
 $geoRegion = htmlspecialchars((string)($seo['geo_region'] ?? 'IN-GJ'), ENT_QUOTES, 'UTF-8');
 $geoPlace = htmlspecialchars((string)($seo['geo_placename'] ?? 'Khedbrahma'), ENT_QUOTES, 'UTF-8');
@@ -118,7 +127,7 @@ $cjModifiedIso = !empty($seo['modified_iso'])
 <meta name="HandheldFriendly" content="true">
 <meta name="format-detection" content="telephone=yes">
 
-<!-- Open Graph -->
+<!-- Open Graph (WhatsApp, Facebook, Instagram, Telegram, LinkedIn) -->
 <meta property="og:type" content="<?= $ogType ?>">
 <meta property="og:site_name" content="<?= $siteName ?>">
 <meta property="og:locale" content="<?= $locale ?>">
@@ -128,7 +137,18 @@ $cjModifiedIso = !empty($seo['modified_iso'])
 <meta property="og:description" content="<?= $description ?>">
 <meta property="og:url" content="<?= $canonical ?>">
 <meta property="og:image" content="<?= $ogImage ?>">
-<meta property="og:image:alt" content="ChandraKala Jewellers — Gold & Silver Jewellery in Khedbrahma">
+<meta property="og:image:secure_url" content="<?= $ogImage ?>">
+<meta property="og:image:type" content="<?= $ogImageType ?>">
+<meta property="og:image:width" content="<?= $ogImageWidth ?>">
+<meta property="og:image:height" content="<?= $ogImageHeight ?>">
+<meta property="og:image:alt" content="<?= $title ?>">
+<?php if ($rawOgVideo !== ''): ?>
+<meta property="og:video" content="<?= $ogVideo ?>">
+<meta property="og:video:secure_url" content="<?= $ogVideo ?>">
+<meta property="og:video:type" content="<?= $ogVideoType ?>">
+<meta property="og:video:width" content="<?= $ogVideoWidth ?>">
+<meta property="og:video:height" content="<?= $ogVideoHeight ?>">
+<?php endif; ?>
 <meta property="og:see_also" content="https://chandrakalajewellers.in/index1">
 <meta property="business:contact_data:street_address" content="Opp. Bhoomi Complex, Civil Road">
 <meta property="business:contact_data:locality" content="Khedbrahma">
@@ -136,11 +156,27 @@ $cjModifiedIso = !empty($seo['modified_iso'])
 <meta property="business:contact_data:postal_code" content="383255">
 <meta property="business:contact_data:country_name" content="India">
 
-<!-- Twitter / X -->
+<!-- Twitter / X Video Player Card -->
+<?php if ($rawOgVideo !== '' || $twitterCard === 'player'): ?>
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="<?= $title ?>">
+<meta name="twitter:description" content="<?= $description ?>">
+<meta name="twitter:image" content="<?= $ogImage ?>">
+<?php if ($twitterPlayer !== ''): ?>
+<meta name="twitter:player" content="<?= $twitterPlayer ?>">
+<meta name="twitter:player:width" content="<?= $ogVideoWidth ?>">
+<meta name="twitter:player:height" content="<?= $ogVideoHeight ?>">
+<?php endif; ?>
+<?php if ($rawOgVideo !== ''): ?>
+<meta name="twitter:player:stream" content="<?= $ogVideo ?>">
+<meta name="twitter:player:stream:content_type" content="<?= $ogVideoType ?>">
+<?php endif; ?>
+<?php else: ?>
 <meta name="twitter:card" content="<?= $twitterCard ?>">
 <meta name="twitter:title" content="<?= $title ?>">
 <meta name="twitter:description" content="<?= $description ?>">
 <meta name="twitter:image" content="<?= $ogImage ?>">
+<?php endif; ?>
 
 <!-- AI / Answer engines (ChatGPT, Gemini, Claude, Perplexity, Bing Copilot, Grok, DeepSeek) -->
 <meta name="ai-content-declaration" content="human-created">
