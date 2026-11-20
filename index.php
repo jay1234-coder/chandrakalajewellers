@@ -11,7 +11,7 @@ if (!empty($_SERVER['QUERY_STRING'])) {
 
 $ua = strtolower((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
 $isBot = $ua === '' || (bool) preg_match(
-    '/bot|crawl|spider|slurp|bing|chatgpt|openai|oai-search|perplexity|anthropic|claude|cohere|mistral|grok|xai|deepseek|applebot|meta-external|google-extended|googleother|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|discord|bytespider|semrush|ahrefs|yandex|duckduck|curl|wget|python|node|axios|go-http|headless/i',
+    '/bot|crawl|spider|slurp|bing|chatgpt|openai|oai-search|perplexity|anthropic|claude|cohere|mistral|grok|xai|deepseek|applebot|meta-external|google-extended|googleother|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|discord|bytespider|semrush|ahrefs|yandex|duckduck|curl|wget|python|node|axios|go-http|headless|lighthouse|chrome-lighthouse|ptst|pagespeed|google-inspectiontool/i',
     $ua
 );
 
@@ -28,6 +28,13 @@ $canonical = 'https://chandrakalajewellers.in/index1';
 <html lang="en-IN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ChandraKala Jewellers | 916 Gold, Silver &amp; Live Rates in Khedbrahma</title>
+    <meta name="description" content="ChandraKala Jewellers — Trusted family-owned 916 BIS gold, pure silver &amp; 925 sterling silver jewellery store at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Sabarkantha, Gujarat. Call +91 9427080359.">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#b8972c">
+    <link rel="canonical" href="<?= htmlspecialchars($canonical, ENT_QUOTES, 'UTF-8') ?>">
+    <meta http-equiv="refresh" content="3;url=<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>">
     <?php
     $seoConfig = require __DIR__ . '/config/seo-config.php';
     if (!empty($seoConfig['google_site_verification'])) {
@@ -40,20 +47,17 @@ $canonical = 'https://chandrakalajewellers.in/index1';
         echo '<meta name="yandex-verification" content="' . htmlspecialchars($seoConfig['yandex_verification'], ENT_QUOTES, 'UTF-8') . '">' . "\n";
     }
     ?>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta http-equiv="refresh" content="3;url=<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>">
-    <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#b8972c">
-    <link rel="canonical" href="<?= htmlspecialchars($canonical, ENT_QUOTES, 'UTF-8') ?>">
     <link rel="alternate" type="text/plain" href="https://chandrakalajewellers.in/llms.txt" title="LLM / AI Summary & Live Rates">
     <link rel="alternate" type="text/plain" href="https://chandrakalajewellers.in/llms-full.txt" title="Full LLM / AI Product Catalog">
     <link rel="manifest" href="manifest.webmanifest">
-    <title>ChandraKala Jewellers | 916 Gold, Silver &amp; Live Rates in Khedbrahma</title>
-    <meta name="description" content="ChandraKala Jewellers — Trusted family-owned 916 BIS gold, pure silver &amp; 925 sterling silver jewellery store at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Sabarkantha, Gujarat. Call +91 9427080359.">
     <?php include __DIR__ . '/includes/gtm-head.php'; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap">
+    </noscript>
     <style>
         :root {
             --gold: #d4af37;
@@ -158,16 +162,19 @@ $canonical = 'https://chandrakalajewellers.in/index1';
 </head>
 <body>
 <?php include __DIR__ . '/includes/gtm-body.php'; ?>
-<div class="splash">
+<main class="splash" id="main-content" role="main">
     <div class="logo-wrap">
-        <img src="images/logo.png" alt="ChandraKala Jewellers" width="72" height="72">
+        <picture>
+            <source srcset="images/logo.webp" type="image/webp">
+            <img src="images/logo.png" alt="ChandraKala Jewellers Logo" width="72" height="72" decoding="async">
+        </picture>
     </div>
     <span class="tag">Khedbrahma · Gujarat</span>
     <h1>ChandraKala Jewellers</h1>
     <p>Gold, silver &amp; 925 jewellery — entering the showroom</p>
     <a class="btn" href="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>">Enter Showroom</a>
     <div class="bar" aria-hidden="true"><span></span></div>
-</div>
+</main>
 <script>
 (function () {
   var t = <?= json_encode($target) ?>;

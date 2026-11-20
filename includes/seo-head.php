@@ -87,7 +87,7 @@ if (!empty($seoConfig['ga4_id'])) {
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/images/icons/icon-192.png">
-<title><?= $title ?></title>
+<?php if (!defined('CJ_TITLE_EMITTED')): ?><title><?= $title ?></title><?php endif; ?>
 <meta name="description" content="<?= $description ?>">
 <meta name="keywords" content="<?= $keywords ?>">
 <meta name="author" content="ChandraKala Jewellers">

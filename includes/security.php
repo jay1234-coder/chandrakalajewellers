@@ -143,6 +143,7 @@ if (!function_exists('cj_send_security_headers')) {
             return;
         }
 
+        header('Content-Type: text/html; charset=UTF-8');
         header('X-Frame-Options: SAMEORIGIN');
         header('Content-Security-Policy: ' . cj_security_csp());
 

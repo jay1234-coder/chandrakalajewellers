@@ -12,6 +12,10 @@ if (!defined('CJ_CHARSET_SET')) {
     define('CJ_CHARSET_SET', true);
     echo '<meta charset="UTF-8">' . "\n";
     echo '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, shrink-to-fit=no">' . "\n";
+    if (isset($seo['title']) && (string)$seo['title'] !== '') {
+        echo '<title>' . htmlspecialchars((string)$seo['title'], ENT_QUOTES, 'UTF-8') . '</title>' . "\n";
+        define('CJ_TITLE_EMITTED', true);
+    }
     $cjBaseHref = '/';
     if (function_exists('cj_is_local_host') && cj_is_local_host() && function_exists('cj_base_url')) {
         $parsedPath = (string)parse_url(cj_base_url(), PHP_URL_PATH);
@@ -116,9 +120,13 @@ body {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-<link rel="preload" href="css/style.css?v=<?= $cjAssetVer ?>" as="style">
-<link rel="stylesheet" href="css/style.css?v=<?= $cjAssetVer ?>">
+<link rel="preload" href="css/style.min.css?v=<?= $cjAssetVer ?>" as="style">
+<link rel="stylesheet" href="css/style.min.css?v=<?= $cjAssetVer ?>">
 <link rel="stylesheet" href="css/tailwind.min.css?v=<?= $cjAssetVer ?>">
 <link rel="stylesheet" href="css/admin-theme.css?v=<?= $cjAssetVer ?>">
+<link rel="preload" as="style" href="<?= htmlspecialchars($cjFontUrl, ENT_QUOTES, 'UTF-8') ?>">
+<link rel="stylesheet" href="<?= htmlspecialchars($cjFontUrl, ENT_QUOTES, 'UTF-8') ?>" media="print" onload="this.media='all'">
+<noscript>
 <link rel="stylesheet" href="<?= htmlspecialchars($cjFontUrl, ENT_QUOTES, 'UTF-8') ?>">
+</noscript>
 <?php include __DIR__ . '/theme-boot.php'; ?>
