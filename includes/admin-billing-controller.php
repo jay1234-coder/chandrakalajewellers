@@ -19,6 +19,9 @@ if (!$is_billing_req) {
 
 // Ensure database tables exist
 require_once dirname(__DIR__) . '/billing-software/includes/db.php';
+if (isset($conn) && $conn instanceof mysqli) {
+    @mysqli_query($conn, "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+}
 date_default_timezone_set('Asia/Kolkata');
 
 // Helper URL generator

@@ -32,6 +32,7 @@ if (!$conn || (is_object($conn) && !empty($conn->connect_error))) {
 
 // Ensure UTF-8mb4 character set for Gujarati/Hindi customer names and descriptions
 @mysqli_set_charset($conn, "utf8mb4");
+@mysqli_query($conn, "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
 // Auto-Sync / Auto-Migration: Ensure billing tables exist in database
 if (!function_exists('cj_ensure_billing_tables')) {

@@ -6,6 +6,11 @@
  * Customer Khata Ledger & Daily Audit Reports directly integrated into the Store Admin Shell.
  */
 
+// Ensure database session does not crash on restrictive ONLY_FULL_GROUP_BY
+if (isset($conn) && $conn instanceof mysqli) {
+    @mysqli_query($conn, "SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+}
+
 // ─── 1. Initialize State & Tab Routing ──────────────────────────────────────────
 $activeTab = strtolower(trim((string)($_GET['tab'] ?? 'sale')));
 $allowedTabs = ['sale', 'history', 'labour', 'customers', 'reports', 'qr'];
@@ -573,10 +578,9 @@ $autoPrintLabourId = $_GET['print_labour_id'] ?? ($toast['print_labour_id'] ?? n
     <?php if ($activeTab === 'history'): ?>
     <?php
     $billsRes = $conn->query("
-        SELECT b.*, COUNT(bi.id) as item_count 
+        SELECT b.*, 
+               (SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.id) AS item_count 
         FROM bills b 
-        LEFT JOIN bill_items bi ON bi.bill_id = b.id 
-        GROUP BY b.id 
         ORDER BY b.bill_date DESC, b.id DESC
     ");
     ?>
@@ -888,13 +892,11 @@ $autoPrintLabourId = $_GET['print_labour_id'] ?? ($toast['print_labour_id'] ?? n
     $dailyQ = $conn->query("
         SELECT 
             b.*, 
-            COUNT(bi.id) as item_cnt,
-            COALESCE(SUM(CASE WHEN bi.item_metal_type LIKE '%Gold%' THEN bi.quantity ELSE 0 END), 0) as gold_weight,
-            COALESCE(SUM(CASE WHEN bi.item_metal_type LIKE '%Silver%' THEN bi.quantity ELSE 0 END), 0) as silver_weight
+            (SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.id) AS item_cnt,
+            (SELECT COALESCE(SUM(bi.quantity), 0) FROM bill_items bi WHERE bi.bill_id = b.id AND bi.item_metal_type LIKE '%Gold%') AS gold_weight,
+            (SELECT COALESCE(SUM(bi.quantity), 0) FROM bill_items bi WHERE bi.bill_id = b.id AND bi.item_metal_type LIKE '%Silver%') AS silver_weight
         FROM bills b
-        LEFT JOIN bill_items bi ON bi.bill_id = b.id
         WHERE b.bill_date = '$filterDate' AND b.status != 'CANCELLED'
-        GROUP BY b.id
         ORDER BY b.id ASC
     ");
 
