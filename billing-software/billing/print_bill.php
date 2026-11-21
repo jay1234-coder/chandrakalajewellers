@@ -74,7 +74,7 @@ function getAmountInWords($number) {
             .meta-left-panel, .meta-right-panel { padding: 4px 6px; }
             .meta-label { width: 75px; }
             .payment-breakdown-pane, .bank-details-pane, .legal-declaration-pane { padding: 4px 6px; }
-            .qr-img { width: 48px; height: 48px; }
+            .qr-img { width: 48px; height: 48px; object-fit: contain; }
             .signature-row-container { padding: 10px 10px 4px 10px; }
         <?php else: ?>
             @page { size: A4 portrait; margin: 8mm; }
@@ -89,7 +89,7 @@ function getAmountInWords($number) {
             .meta-left-panel, .meta-right-panel { padding: 6px 8px; }
             .meta-label { width: 100px; }
             .payment-breakdown-pane, .bank-details-pane, .legal-declaration-pane { padding: 6px 8px; }
-            .qr-img { width: 65px; height: 65px; }
+            .qr-img { width: 65px; height: 65px; object-fit: contain; }
             .signature-row-container { padding: 15px 10px 4px 10px; }
         <?php endif; ?>
 
@@ -440,13 +440,42 @@ function getAmountInWords($number) {
                         <tr><td style="color:#555;">A/c no</td><td>: <strong>240420110000135</strong></td></tr>
                         <tr><td style="color:#555;">Ifsc</td><td>: <strong>BKID0002404</strong></td></tr>
                     </table>
+                    <?php
+                    // Resolve QR 1 code (prioritizes base64 data URI for instant, 100% reliable printing)
+                    $qr1_candidates = [
+                        __DIR__ . '/../uploads/qr/qr1.jpeg',
+                        dirname(__DIR__, 2) . '/billing-software/uploads/qr/qr1.jpeg',
+                        dirname(__DIR__, 2) . '/public/billing-software/uploads/qr/qr1.jpeg',
+                    ];
+                    $qr1_src = '/billing-software/uploads/qr/qr1.jpeg';
+                    foreach ($qr1_candidates as $cand) {
+                        if (file_exists($cand) && filesize($cand) > 0) {
+                            $qr1_src = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($cand));
+                            break;
+                        }
+                    }
+
+                    // Resolve QR 2 code
+                    $qr2_candidates = [
+                        __DIR__ . '/../uploads/qr/qr2.jpg',
+                        dirname(__DIR__, 2) . '/billing-software/uploads/qr/qr2.jpg',
+                        dirname(__DIR__, 2) . '/public/billing-software/uploads/qr/qr2.jpg',
+                    ];
+                    $qr2_src = '/billing-software/uploads/qr/qr2.jpg';
+                    foreach ($qr2_candidates as $cand) {
+                        if (file_exists($cand) && filesize($cand) > 0) {
+                            $qr2_src = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($cand));
+                            break;
+                        }
+                    }
+                    ?>
                     <div class="qr-codes-container">
                         <div class="qr-wrapper">
-                            <img src="../uploads/qr/qr1.jpeg" alt="QR 1" class="qr-img">
+                            <img src="<?= $qr1_src ?>" alt="QR 1" class="qr-img">
                             <div class="qr-label">QR 1</div>
                         </div>
                         <div class="qr-wrapper">
-                            <img src="../uploads/qr/qr2.jpg" alt="QR 2" class="qr-img">
+                            <img src="<?= $qr2_src ?>" alt="QR 2" class="qr-img">
                             <div class="qr-label">QR 2</div>
                         </div>
                     </div>
