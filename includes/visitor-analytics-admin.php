@@ -1453,15 +1453,17 @@ html[data-theme="dark"] .cj-leaflet-popup .leaflet-popup-tip {
             zoomControl: true
         }).setView([23.2, 72.8], 7);
 
-        // Cartography tile layer (clean CartoDB Voyager or Dark Matter in dark mode)
+        // Cartography tile layer powered by CARTO (Voyager for Light, Dark Matter for Dark)
+        var cartoApiKey = 'cb1_5db2_1_4eca1af4f5e839505bfc67e5';
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         var tileUrl = isDark 
-            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=' + cartoApiKey
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=' + cartoApiKey;
 
         L.tileLayer(tileUrl, {
-            maxZoom: 18,
-            attribution: '&copy; CARTO &copy; OpenStreetMap'
+            subdomains: 'abcd',
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://carto.com/" target="_blank" rel="noopener">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
         }).addTo(map);
 
         // Responsive resize invalidate
