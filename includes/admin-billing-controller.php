@@ -264,6 +264,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_sale_bill'])) {
             );
             $stmt->execute();
             $saved_bill_id = (int)$conn->insert_id;
+            if ($saved_bill_id <= 0) {
+                $qLast = $conn->query("SELECT id FROM bills WHERE bill_no = '" . $conn->real_escape_string($bill_no) . "' ORDER BY id DESC LIMIT 1");
+                if ($qLast && $qLast->num_rows > 0) {
+                    $saved_bill_id = (int)$qLast->fetch_assoc()['id'];
+                }
+            }
             $stmt->close();
         }
 
@@ -455,6 +461,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_labour_bill'])) 
             );
             $stmt->execute();
             $saved_id = (int)$conn->insert_id;
+            if ($saved_id <= 0) {
+                $qLast = $conn->query("SELECT id FROM bills WHERE bill_no = '" . $conn->real_escape_string($bill_no) . "' ORDER BY id DESC LIMIT 1");
+                if ($qLast && $qLast->num_rows > 0) {
+                    $saved_id = (int)$qLast->fetch_assoc()['id'];
+                }
+            }
             $stmt->close();
         }
 

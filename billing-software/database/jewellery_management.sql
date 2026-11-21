@@ -28,7 +28,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `bills` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `bill_no` varchar(50) DEFAULT NULL,
   `bill_date` date DEFAULT NULL,
   `customer_name` varchar(255) DEFAULT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE `bills` (
 --
 
 CREATE TABLE `bill_items` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `bill_id` int(11) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `hsn_code` varchar(50) DEFAULT NULL,

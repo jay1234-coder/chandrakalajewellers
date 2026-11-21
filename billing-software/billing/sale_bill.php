@@ -121,7 +121,11 @@ if (isset($_POST['save_bill'])) {
             )";
             
             if (mysqli_query($conn, $sql)) {
-                $saved_bill_id = mysqli_insert_id($conn);
+                $saved_bill_id = (int)mysqli_insert_id($conn);
+                if ($saved_bill_id <= 0) {
+                    $r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id FROM bills WHERE bill_no='$bill_no_post' ORDER BY id DESC LIMIT 1"));
+                    if ($r) $saved_bill_id = (int)$r['id'];
+                }
             } else {
                 throw new Exception("Could not save initial bill structure: " . mysqli_error($conn));
             }
