@@ -222,6 +222,25 @@ if (isset($adminRedirects[$path])) {
     exit;
 }
 
+// 4. Billing Software (POS) routes
+if ($path === 'billing' || $path === 'billing.php' || $path === 'billing-software' || $path === 'billing-software.php') {
+    header('Location: /billing-software/dashboard.php', true, 302);
+    exit;
+}
+if (strpos($path, 'billing-software/') === 0) {
+    $sub = substr($path, 17);
+    if ($sub === '' || $sub === 'index' || $sub === 'index.php') {
+        cj_dispatch_script($rootDir . '/billing-software/dashboard.php');
+    }
+    $target = $rootDir . '/billing-software/' . $sub;
+    if (is_file($target)) {
+        cj_dispatch_script($target);
+    }
+    if (is_file($target . '.php')) {
+        cj_dispatch_script($target . '.php');
+    }
+}
+
 // 4. API endpoints inside api/ or includes/api/ (keeps Vercel serverless function count under Hobby 12-function cap)
 if (strpos($path, 'api/') === 0) {
     $sub = substr($path, 4);

@@ -16,6 +16,7 @@ scratch/
 _recovered/
 backup_ui_pre_opt/
 *.sql
+!billing-software/database/*.sql
 *.sql.zip
 *.zip
 *.pdf

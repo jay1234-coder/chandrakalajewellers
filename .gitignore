@@ -28,6 +28,7 @@ uploads/cache/
 !database/*.sql
 !supabase/**/*.sql
 !supabase/*.sql
+!billing-software/database/*.sql
 
 # Backup and scratch folders
 scratch/

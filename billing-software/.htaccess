@@ -1,0 +1,7 @@
+# ChandraKala Jewellers — Billing Software (POS) Directory Configuration
+DirectoryIndex dashboard.php index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  Options -Indexes
+</IfModule>

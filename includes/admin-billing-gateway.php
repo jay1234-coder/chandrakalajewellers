@@ -6,9 +6,10 @@
  * while keeping databases, records, and codebases 100% separate and isolated.
  */
 
-$isLocal = function_exists('cj_is_local_host') && cj_is_local_host();
-$localBase = '/jewellery-management/';
-$defaultFrameUrl = $localBase . 'dashboard.php';
+$uri = $_SERVER['REQUEST_URI'] ?? '';
+$isCjSubpath = (strpos($uri, '/CJ/') === 0);
+$billingBase = $isCjSubpath ? '/CJ/billing-software/' : '/billing-software/';
+$defaultFrameUrl = $billingBase . 'dashboard.php';
 ?>
 
 <style>
@@ -181,12 +182,12 @@ html[data-theme="dark"] .cj-pos-alert {
         <!-- System Architecture Isolation Notice -->
         <div class="mt-4 pt-3.5 border-t border-gray-100 dark:border-gray-800/60 flex items-center justify-between text-[11px] text-gray-500 flex-wrap gap-2">
             <span class="flex items-center gap-1.5">
-                <i class="fas fa-shield-alt text-amber-600"></i>
-                <strong>Independent Database:</strong> Customer invoices &amp; GST records are stored locally in <code>jewellery_management</code>.
+                <i class="fas fa-database text-amber-600"></i>
+                <strong>Centralized Database:</strong> In-Store POS &amp; Billing tables synced directly with live Cloud Database.
             </span>
             <span class="flex items-center gap-1.5">
                 <i class="fas fa-cloud text-blue-500"></i>
-                <strong>Online Cloud Separation:</strong> Public website database &amp; online stock remain completely isolated and unaffected.
+                <strong>Cloudinary Asset Support:</strong> Business logos &amp; documents backed by Cloudinary CDN storage.
             </span>
         </div>
     </div>
@@ -199,14 +200,14 @@ html[data-theme="dark"] .cj-pos-alert {
                     <i class="fas fa-route text-amber-500"></i> Jump to Screen:
                 </label>
                 <select id="posRouteSelect" class="text-xs font-semibold py-1.5 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500">
-                    <option value="/jewellery-management/dashboard.php">POS Dashboard (Overview &amp; Metrics)</option>
-                    <option value="/jewellery-management/billing/sale_bill.php">Create New Sale Bill (GST)</option>
-                    <option value="/jewellery-management/billing/bill_history.php">Bill History &amp; Reprint Search</option>
-                    <option value="/jewellery-management/billing/labour_bill.php">Labour &amp; Repair Invoicing</option>
-                    <option value="/jewellery-management/customers/customers.php">Customer Ledger &amp; Khata</option>
-                    <option value="/jewellery-management/reports/daily_report.php">Daily Sales &amp; Metal Reports</option>
-                    <option value="/jewellery-management/print_qr.php">Dual Payment QR Stand Studio</option>
-                    <option value="/jewellery-management/settings.php">System &amp; Business Settings</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>dashboard.php">POS Dashboard (Overview &amp; Metrics)</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>billing/sale_bill.php">Create New Sale Bill (GST)</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>billing/bill_history.php">Bill History &amp; Reprint Search</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>billing/labour_bill.php">Labour &amp; Repair Invoicing</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>customers/customers.php">Customer Ledger &amp; Khata</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>reports/daily_report.php">Daily Sales &amp; Metal Reports</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>print_qr.php">Dual Payment QR Stand Studio</option>
+                    <option value="<?= htmlspecialchars($billingBase) ?>settings.php">System &amp; Business Settings</option>
                 </select>
             </div>
 
@@ -228,7 +229,7 @@ html[data-theme="dark"] .cj-pos-alert {
     <!-- 3. Launchpad Deck Cards View (Toggled or Fallback) -->
     <div id="posLaunchpadView" class="cj-pos-grid hidden">
         <!-- Tile 1: Create Sale Bill -->
-        <a href="/jewellery-management/billing/sale_bill.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>billing/sale_bill.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-file-invoice-dollar"></i>
@@ -247,7 +248,7 @@ html[data-theme="dark"] .cj-pos-alert {
         </a>
 
         <!-- Tile 2: Bill History -->
-        <a href="/jewellery-management/billing/bill_history.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>billing/bill_history.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-history"></i>
@@ -266,7 +267,7 @@ html[data-theme="dark"] .cj-pos-alert {
         </a>
 
         <!-- Tile 3: Labour & Repair Bill -->
-        <a href="/jewellery-management/billing/labour_bill.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>billing/labour_bill.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-tools"></i>
@@ -285,7 +286,7 @@ html[data-theme="dark"] .cj-pos-alert {
         </a>
 
         <!-- Tile 4: Customers & Khata -->
-        <a href="/jewellery-management/customers/customers.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>customers/customers.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-users-cog"></i>
@@ -304,7 +305,7 @@ html[data-theme="dark"] .cj-pos-alert {
         </a>
 
         <!-- Tile 5: Daily Reports & GST -->
-        <a href="/jewellery-management/reports/daily_report.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>reports/daily_report.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-chart-pie"></i>
@@ -323,7 +324,7 @@ html[data-theme="dark"] .cj-pos-alert {
         </a>
 
         <!-- Tile 6: QR Payment Stands -->
-        <a href="/jewellery-management/print_qr.php" target="_blank" rel="noopener" class="cj-pos-tile">
+        <a href="<?= htmlspecialchars($billingBase) ?>print_qr.php" target="_blank" rel="noopener" class="cj-pos-tile">
             <div>
                 <div class="cj-pos-icon-box">
                     <i class="fas fa-qrcode"></i>
@@ -403,14 +404,15 @@ html[data-theme="dark"] .cj-pos-alert {
         });
     }
 
-    // 5. Ping Local XAMPP Server to update status badge
+    // 5. Ping POS System to update status badge
     if (serverBadge) {
-        fetch('/jewellery-management/dashboard.php', { method: 'HEAD', mode: 'no-cors' })
+        var pingUrl = '<?= $billingBase ?>dashboard.php';
+        fetch(pingUrl, { method: 'HEAD', mode: 'no-cors' })
             .then(function () {
-                serverBadge.textContent = 'Local POS Active';
+                serverBadge.textContent = 'POS Studio Online';
             })
             .catch(function () {
-                serverBadge.textContent = 'XAMPP Offline (Start Apache & MySQL)';
+                serverBadge.textContent = 'Checking POS…';
             });
     }
 })();
