@@ -216,7 +216,7 @@ if ($hRes && ($row = $hRes->fetch_assoc())) {
 $peakHourFormatted = date('g:00 A', strtotime("2026-01-01 {$peakHour}:00:00"));
 
 // -----------------------------------------------------------------------------
-// 8. Map Pins Data
+// 8. Map Pins Data & City Flight Chips
 // -----------------------------------------------------------------------------
 $mapPoints = [];
 $mRes = $conn->query("SELECT session_key, lat, lng, geo_label, geo_city, geo_region, geo_country, duration_seconds, page_count, landing_page, last_seen_at
@@ -229,6 +229,25 @@ if ($mRes) {
         $mapPoints[] = $row;
     }
 }
+
+// Extract top geotagged cities for interactive quick-flight chips
+$mapCityChips = [];
+foreach ($mapPoints as $mp) {
+    $cn = trim((string)($mp['geo_city'] ?: ($mp['geo_region'] ?: '')));
+    if ($cn !== '' && !isset($mapCityChips[$cn])) {
+        $mapCityChips[$cn] = [
+            'name' => $cn,
+            'lat' => (float)$mp['lat'],
+            'lng' => (float)$mp['lng'],
+            'count' => 0
+        ];
+    }
+    if ($cn !== '') {
+        $mapCityChips[$cn]['count']++;
+    }
+}
+uasort($mapCityChips, static fn($a, $b) => $b['count'] <=> $a['count']);
+$mapCityChips = array_slice($mapCityChips, 0, 7, true);
 
 // -----------------------------------------------------------------------------
 // 9. Paginated Session Journey Logs
@@ -471,65 +490,276 @@ html[data-theme="dark"] {
     transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Interactive Map Container */
+/* -----------------------------------------------------------------------------
+   Interactive Live Visitor Map & Radar Styling
+----------------------------------------------------------------------------- */
+#adminVisitorMap {
+    height: 480px !important;
+    min-height: 400px !important;
+    width: 100% !important;
+    border-radius: 14px;
+    background: #eef2ff;
+    position: relative;
+    z-index: 1;
+}
+@media (max-width: 640px) {
+    #adminVisitorMap {
+        height: 360px !important;
+        min-height: 320px !important;
+    }
+}
+html[data-theme="dark"] #adminVisitorMap {
+    background: #0f1218;
+}
+#adminVisitorMap .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    font-family: inherit !important;
+}
+
+/* Map Card and Frame */
 .cj-va-map-card {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--cj-card-border);
+    background: var(--cj-card-bg);
 }
+
+/* HUD Overlay on Map (Top-Left) */
+.cj-map-hud {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 12px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    pointer-events: auto;
+}
+html[data-theme="dark"] .cj-map-hud {
+    background: rgba(22, 26, 34, 0.94);
+    border-color: rgba(212, 175, 55, 0.35);
+    color: #f3f4f6;
+}
+
+/* Map Action Buttons (Top-Right) */
 .cj-va-map-actions {
     position: absolute;
     top: 14px;
     right: 14px;
     z-index: 1000;
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
+    justify-content: flex-end;
 }
 .cj-va-map-btn {
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(212, 175, 55, 0.4);
-    padding: 5px 11px;
+    padding: 6px 12px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
     color: #1a1204;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .cj-va-map-btn:hover {
     background: #d4af37;
-    color: #fff;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
 }
 html[data-theme="dark"] .cj-va-map-btn {
-    background: rgba(22, 26, 34, 0.92);
+    background: rgba(22, 26, 34, 0.94);
     color: #f0d78c;
     border-color: rgba(212, 175, 55, 0.3);
 }
+html[data-theme="dark"] .cj-va-map-btn:hover {
+    background: #d4af37;
+    color: #111827;
+}
 
-/* Leaflet Custom Radar Marker */
-.cj-map-radar-pin {
-    width: 14px;
-    height: 14px;
+/* Quick City Flight Pills Bar */
+.cj-city-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--cj-card-sub);
+    border: 1px solid var(--cj-card-border);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cj-text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.cj-city-pill:hover {
+    border-color: #d4af37;
+    color: #d4af37;
+    background: var(--cj-gold-light);
+    transform: translateY(-1px);
+}
+.cj-city-pill .pill-badge {
+    background: rgba(212, 175, 55, 0.2);
+    color: #b8972c;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+/* ChandraKala HQ Crown Marker */
+.cj-hq-marker-wrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cj-hq-halo {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px dashed #d4af37;
+    animation: cjHQRotate 10s linear infinite;
+    pointer-events: none;
+}
+.cj-hq-core {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fef08a 0%, #d4af37 60%, #b8972c 100%);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1204;
+    font-size: 12px;
+    z-index: 2;
+    animation: cjHQBob 2.8s ease-in-out infinite;
+}
+.cj-hq-tag {
+    position: absolute;
+    top: -24px;
+    background: #111827;
+    color: #fef08a;
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid #d4af37;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+@keyframes cjHQRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes cjHQBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Visitor Pin Animated Radar Markers */
+.cj-visitor-pin-wrap {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.cj-visitor-pin-core {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #d4af37;
     border: 2px solid #ffffff;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
     position: relative;
+    z-index: 2;
+    transition: transform 0.2s ease;
 }
-.cj-map-radar-pin.is-live {
+.cj-visitor-pin-wrap:hover .cj-visitor-pin-core {
+    transform: scale(1.4);
+}
+.cj-visitor-pin-wrap.is-live .cj-visitor-pin-core {
     background: #10b981;
-    box-shadow: 0 0 14px rgba(16, 185, 129, 0.9);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 1);
 }
-.cj-map-radar-pin.is-live::after {
-    content: '';
+.cj-radar-wave {
     position: absolute;
-    top: -6px; left: -6px; right: -6px; bottom: -6px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 2px solid #10b981;
-    animation: cjRadarPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    animation: cjRadarWave 2.2s cubic-bezier(0.25, 0, 0.45, 1) infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+.cj-radar-wave.wave-2 {
+    animation-delay: 1.1s;
+}
+@keyframes cjRadarWave {
+    0% { transform: scale(0.4); opacity: 0.95; }
+    100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Animated Traffic Beams Connecting Visitors to Showroom HQ */
+.cj-traffic-beam {
+    stroke-dasharray: 6, 8;
+    animation: cjBeamFlow 1.6s linear infinite;
+}
+.cj-traffic-beam.is-live {
+    animation-duration: 1.1s;
+}
+@keyframes cjBeamFlow {
+    from { stroke-dashoffset: 28; }
+    to { stroke-dashoffset: 0; }
+}
+
+/* Custom Popup Card Styling */
+.cj-leaflet-popup .leaflet-popup-content-wrapper {
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    padding: 0 !important;
+}
+html[data-theme="dark"] .cj-leaflet-popup .leaflet-popup-content-wrapper {
+    background: rgba(22, 26, 34, 0.96) !important;
+    border-color: rgba(212, 175, 55, 0.4) !important;
+    color: #f3f4f6 !important;
+}
+.cj-leaflet-popup .leaflet-popup-content {
+    margin: 12px 14px !important;
+    font-family: inherit !important;
+}
+.cj-leaflet-popup .leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.96) !important;
+}
+html[data-theme="dark"] .cj-leaflet-popup .leaflet-popup-tip {
+    background: rgba(22, 26, 34, 0.96) !important;
 }
 </style>
 
@@ -664,7 +894,93 @@ html[data-theme="dark"] .cj-va-map-btn {
         </div>
     </div>
 
-    <!-- 4. Charts Row: Traffic Trend & Top Cities -->
+    <!-- 4. Hero Interactive Visitor Radar Map (Front & Center Experience) -->
+    <div class="cj-va-card p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+                <h2 class="text-base sm:text-lg font-bold font-serif m-0 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+                    <i class="fas fa-satellite-dish text-amber-500 animate-pulse"></i> Live Audience Radar &amp; Visitor Map
+                </h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">
+                    Real-time visual map tracking where customers are watching from. Animated radar pulses indicate active sessions, and light-beams trace traffic flow to ChandraKala Showroom HQ.
+                </p>
+            </div>
+            <div class="text-xs font-semibold text-gray-500 flex items-center gap-3 self-start sm:self-auto flex-wrap">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Active (Last 10m)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Past Visitors</span>
+                <span class="flex items-center gap-1.5"><span class="text-amber-500">👑</span> Showroom HQ</span>
+            </div>
+        </div>
+
+        <div class="cj-va-map-card">
+            <!-- Floating Heads-Up Display (HUD) -->
+            <div class="cj-map-hud">
+                <div class="flex items-center gap-2">
+                    <span class="cj-va-radar-dot"></span>
+                    <span class="font-bold text-xs tracking-wider text-amber-900 dark:text-amber-300">LIVE TRAFFIC RADAR</span>
+                </div>
+                <div class="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                    <strong><?= count($mapPoints) ?></strong> Geotagged Visitors &middot; <strong><?= (int)$activeNow ?></strong> Active Now
+                </div>
+            </div>
+
+            <!-- Quick Flight & Camera Controls -->
+            <div class="cj-va-map-actions">
+                <button type="button" class="cj-va-map-btn" id="cjZoomShowroom" title="Fly to Flagship Showroom HQ">
+                    <i class="fas fa-crown text-amber-500"></i> Showroom HQ
+                </button>
+                <button type="button" class="cj-va-map-btn" id="cjZoomGujarat" title="Focus on Gujarat Audience">
+                    <i class="fas fa-map-marker-alt text-amber-600"></i> Gujarat
+                </button>
+                <button type="button" class="cj-va-map-btn" id="cjZoomIndia" title="View Pan-India Visitors">
+                    <i class="fas fa-globe-asia text-blue-500"></i> All India
+                </button>
+                <button type="button" class="cj-va-map-btn" id="cjZoomFit" title="Fit All Visitor Pins">
+                    <i class="fas fa-expand text-emerald-600"></i> Fit All
+                </button>
+                <button type="button" class="cj-va-map-btn" id="cjToggleBeams" title="Toggle Animated Traffic Beams">
+                    <i class="fas fa-wave-square text-amber-500"></i> Flow Beams
+                </button>
+            </div>
+
+            <!-- Map Container -->
+            <div id="adminVisitorMap" aria-label="Interactive Visitor Locations Map"></div>
+        </div>
+
+        <!-- Quick City Flight Chips -->
+        <div class="flex items-center gap-2 flex-wrap pt-3.5 mt-2 border-t border-gray-100 dark:border-gray-800">
+            <span class="font-bold text-gray-500 text-[11px] uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                <i class="fas fa-paper-plane text-amber-500"></i> Quick Fly:
+            </span>
+            <button type="button" class="cj-city-pill" data-lat="24.0314" data-lng="73.0464" data-city="Showroom HQ (Khedbrahma)">
+                <span>👑 Showroom HQ</span>
+            </button>
+            <?php foreach ($mapCityChips as $chip): ?>
+                <button type="button" class="cj-city-pill" data-lat="<?= $chip['lat'] ?>" data-lng="<?= $chip['lng'] ?>" data-city="<?= htmlspecialchars($chip['name']) ?>">
+                    <span><?= htmlspecialchars($chip['name']) ?></span>
+                    <span class="pill-badge"><?= (int)$chip['count'] ?></span>
+                </button>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Raw map points JSON -->
+        <script type="application/json" id="adminVisitorMapData"><?= json_encode(array_map(static function ($p) {
+            $isLive = strtotime((string)$p['last_seen_at']) >= time() - 600;
+            return [
+                'lat' => (float)$p['lat'],
+                'lng' => (float)$p['lng'],
+                'city' => trim((string)($p['geo_city'] ?? '')),
+                'label' => $p['geo_label'] ?: trim(($p['geo_city'] ?? '') . ' ' . ($p['geo_country'] ?? '')),
+                'duration' => (int)$p['duration_seconds'],
+                'pages' => (int)$p['page_count'],
+                'landing' => $p['landing_page'],
+                'when' => date('d M, h:i A', strtotime((string)$p['last_seen_at'])),
+                'live' => $isLive,
+            ];
+        }, $mapPoints), JSON_UNESCAPED_UNICODE) ?></script>
+    </div>
+
+    <!-- 5. Charts Row: Traffic Trend & Top Cities -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- Left: Traffic Velocity Curve (7 Cols) -->
         <div class="lg:col-span-7 cj-va-card p-5 sm:p-6 flex flex-col justify-between">
@@ -866,49 +1182,7 @@ html[data-theme="dark"] .cj-va-map-btn {
         </div>
     </div>
 
-    <!-- 6. Interactive Leaflet Map with Animated Pulse & Quick-Zoom Buttons -->
-    <div class="cj-va-card p-5 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-            <div>
-                <h3 class="text-base font-bold font-serif m-0 flex items-center gap-2">
-                    <i class="fas fa-map-marked-alt text-amber-500"></i> Interactive Visitor Map
-                </h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">
-                    Live GPS &amp; network geolocation pins. Radar pulse marks active visitors.
-                </p>
-            </div>
-            <div class="text-xs font-semibold text-gray-500 flex items-center gap-3">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Active (Last 10m)</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Past Visitors</span>
-            </div>
-        </div>
 
-        <div class="cj-va-map-card">
-            <!-- Quick Zoom Presets -->
-            <div class="cj-va-map-actions">
-                <button type="button" class="cj-va-map-btn" id="cjZoomGujarat">Focus Gujarat</button>
-                <button type="button" class="cj-va-map-btn" id="cjZoomIndia">All India</button>
-                <button type="button" class="cj-va-map-btn" id="cjZoomFit">Fit Pins</button>
-            </div>
-
-            <div id="adminVisitorMap" class="w-full h-[340px] sm:h-[400px]" aria-label="Visitor locations map"></div>
-        </div>
-
-        <!-- Raw map points JSON -->
-        <script type="application/json" id="adminVisitorMapData"><?= json_encode(array_map(static function ($p) {
-            $isLive = strtotime((string)$p['last_seen_at']) >= time() - 600;
-            return [
-                'lat' => (float)$p['lat'],
-                'lng' => (float)$p['lng'],
-                'label' => $p['geo_label'] ?: trim(($p['geo_city'] ?? '') . ' ' . ($p['geo_country'] ?? '')),
-                'duration' => (int)$p['duration_seconds'],
-                'pages' => (int)$p['page_count'],
-                'landing' => $p['landing_page'],
-                'when' => date('d M, h:i A', strtotime((string)$p['last_seen_at'])),
-                'live' => $isLive,
-            ];
-        }, $mapPoints), JSON_UNESCAPED_UNICODE) ?></script>
-    </div>
 
     <!-- 7. Real-Time Visitor Session Journeys (Paginated Log) -->
     <div class="cj-va-card p-5 sm:p-6">
@@ -1068,8 +1342,10 @@ html[data-theme="dark"] .cj-va-map-btn {
 
 </section>
 
-<!-- CDN Assets: Chart.js & Leaflet JS/CSS -->
+<!-- CDN Assets: Leaflet CSS/JS & Chart.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
 (function initVisitorIntelligence() {
@@ -1159,85 +1435,212 @@ html[data-theme="dark"] .cj-va-map-btn {
     }
 
     // -------------------------------------------------------------------------
-    // 2. Interactive Leaflet Map with Radar Pulse & Quick-Zoom Buttons
+    // 2. Interactive Live Visitor Map with Radar Waves, Flow Beams & Flying Camera
     // -------------------------------------------------------------------------
     var mapEl = document.getElementById('adminVisitorMap');
     var mapDataEl = document.getElementById('adminVisitorMapData');
-    if (mapEl && mapDataEl) {
+
+    function initMap() {
+        if (!mapEl || !mapDataEl || typeof L === 'undefined') return;
         window.__CJ_MAP_INITIALIZED__ = true;
 
         var points = [];
         try { points = JSON.parse(mapDataEl.textContent || '[]'); } catch (e) { points = []; }
 
-        function loadLeaflet(cb) {
-            if (window.L) return cb();
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            document.head.appendChild(link);
+        // Setup Leaflet map instance
+        var map = L.map(mapEl, {
+            scrollWheelZoom: false,
+            zoomControl: true
+        }).setView([23.2, 72.8], 7);
 
-            var s = document.createElement('script');
-            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            s.onload = cb;
-            document.body.appendChild(s);
+        // Cartography tile layer (clean CartoDB Voyager or Dark Matter in dark mode)
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var tileUrl = isDark 
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+        L.tileLayer(tileUrl, {
+            maxZoom: 18,
+            attribution: '&copy; CARTO &copy; OpenStreetMap'
+        }).addTo(map);
+
+        // Responsive resize invalidate
+        setTimeout(function () { map.invalidateSize(true); }, 150);
+        setTimeout(function () { map.invalidateSize(true); }, 400);
+        setTimeout(function () { map.invalidateSize(true); }, 1000);
+        window.addEventListener('resize', function () { map.invalidateSize(true); });
+
+        // Showroom HQ Coordinates (Civil Road, Khedbrahma)
+        var hqCoords = [24.0314, 73.0464];
+
+        // 1. ChandraKala Jewellers HQ Crown Pin
+        var hqIcon = L.divIcon({
+            className: 'cj-hq-leaflet-marker',
+            html: '<div class="cj-hq-marker-wrap">' +
+                  '  <div class="cj-hq-halo"></div>' +
+                  '  <div class="cj-hq-core"><i class="fas fa-crown"></i></div>' +
+                  '  <div class="cj-hq-tag">ChandraKala HQ</div>' +
+                  '</div>',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
+        });
+
+        var hqMarker = L.marker(hqCoords, { icon: hqIcon, zIndexOffset: 1000 }).addTo(map);
+        hqMarker.bindPopup(
+            '<div style="font-size:12px;line-height:1.5;">' +
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+            '  <span style="font-size:15px;">👑</span><strong style="color:#b8972c;font-size:14px;font-family:serif;">ChandraKala Jewellers</strong>' +
+            '</div>' +
+            '<div style="color:#6b7280;font-size:11px;">Civil Road, Khedbrahma, Sabarkantha, Gujarat</div>' +
+            '<div style="margin-top:6px;padding:4px 8px;background:rgba(212,175,55,0.15);border-radius:6px;font-size:11px;font-weight:600;color:#92400e;">Flagship Showroom &amp; Experience Studio</div>' +
+            '</div>',
+            { className: 'cj-leaflet-popup' }
+        );
+
+        // 2. Add Visitor Pins & Animated Traffic Flow Beams
+        var visitorMarkers = [];
+        var bounds = [hqCoords];
+        var beamsLayer = L.layerGroup().addTo(map);
+        var showBeams = true;
+
+        points.forEach(function (p) {
+            if (!p.lat || !p.lng) return;
+            var latLng = [p.lat, p.lng];
+            bounds.push(latLng);
+
+            // Custom Animated Pin (Emerald Radar for Live, Gold for Past)
+            var iconHtml = '<div class="cj-visitor-pin-wrap' + (p.live ? ' is-live' : '') + '" title="' + (p.label || 'Visitor') + '">' +
+                           (p.live ? '<div class="cj-radar-wave"></div><div class="cj-radar-wave wave-2"></div>' : '') +
+                           '  <div class="cj-visitor-pin-core"></div>' +
+                           '</div>';
+
+            var vIcon = L.divIcon({
+                className: 'cj-visitor-leaflet-icon',
+                html: iconHtml,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            var vm = L.marker(latLng, { icon: vIcon }).addTo(map);
+            var mins = Math.round((p.duration || 0) / 60);
+
+            vm.bindPopup(
+                '<div style="font-size:12px;line-height:1.45;">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">' +
+                '  <strong style="color:#b8972c;font-size:13px;"><i class="fas fa-map-pin mr-1"></i> ' + (p.label || 'Visitor') + '</strong>' +
+                (p.live ? '  <span style="background:#10b981;color:#fff;font-size:9px;padding:2px 6px;border-radius:999px;font-weight:700;">LIVE</span>' : '') +
+                '</div>' +
+                '<div style="color:#4b5563;font-size:11px;margin-bottom:2px;">' +
+                '  Duration: <strong>' + mins + ' min</strong> · <strong>' + (p.pages || 0) + ' pages viewed</strong>' +
+                '</div>' +
+                '<div style="color:#6b7280;font-size:11px;margin-bottom:2px;">Landed: <code>' + (p.landing || '/') + '</code></div>' +
+                '<div style="color:#9ca3af;font-size:10px;">Last seen: ' + (p.when || 'Recently') + '</div>' +
+                '</div>',
+                { className: 'cj-leaflet-popup' }
+            );
+
+            vm._city = (p.city || p.label || '').toLowerCase();
+            visitorMarkers.push(vm);
+
+            // Animated Laser/Beam flowing from Visitor's location into ChandraKala Showroom HQ
+            if (Math.abs(p.lat - hqCoords[0]) > 0.005 || Math.abs(p.lng - hqCoords[1]) > 0.005) {
+                var beam = L.polyline([latLng, hqCoords], {
+                    color: p.live ? '#10b981' : '#d4af37',
+                    weight: p.live ? 2.5 : 1.5,
+                    opacity: p.live ? 0.8 : 0.45,
+                    dashArray: '6, 8',
+                    className: 'cj-traffic-beam' + (p.live ? ' is-live' : '')
+                });
+                beamsLayer.addLayer(beam);
+            }
+        });
+
+        // Smart Zoom Bounds
+        if (bounds.length > 1) {
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+        } else {
+            map.setView(hqCoords, 10);
         }
 
-        loadLeaflet(function () {
-            var map = L.map(mapEl, { scrollWheelZoom: false }).setView([23.2, 72.8], 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18,
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(map);
+        // Camera Preset Actions
+        var btnShowroom = document.getElementById('cjZoomShowroom');
+        if (btnShowroom) {
+            btnShowroom.addEventListener('click', function () {
+                map.flyTo(hqCoords, 14, { duration: 1.5 });
+                setTimeout(function () { hqMarker.openPopup(); }, 1600);
+            });
+        }
 
-            var markers = [];
-            var bounds = [];
+        var btnGuj = document.getElementById('cjZoomGujarat');
+        if (btnGuj) {
+            btnGuj.addEventListener('click', function () {
+                map.flyTo([22.8, 71.8], 7.5, { duration: 1.3 });
+            });
+        }
 
-            if (!points.length) {
-                // Default Khedbrahma showroom pin
-                var showPin = L.marker([24.0314, 73.0464]).addTo(map);
-                showPin.bindPopup('<strong>✨ ChandraKala Jewellers</strong><br>Civil Road, Khedbrahma, Gujarat<br>Awaiting visitor GPS pins…');
-                map.setView([24.0314, 73.0464], 10);
-            } else {
-                points.forEach(function (p) {
-                    var mins = Math.round((p.duration || 0) / 60);
-                    var iconHtml = '<div class="cj-map-radar-pin' + (p.live ? ' is-live' : '') + '"></div>';
-                    var customIcon = L.divIcon({
-                        className: 'cj-leaflet-radar-wrap',
-                        html: iconHtml,
-                        iconSize: [14, 14],
-                        iconAnchor: [7, 7]
+        var btnInd = document.getElementById('cjZoomIndia');
+        if (btnInd) {
+            btnInd.addEventListener('click', function () {
+                map.flyTo([22.5, 78.5], 5, { duration: 1.3 });
+            });
+        }
+
+        var btnFit = document.getElementById('cjZoomFit');
+        if (btnFit) {
+            btnFit.addEventListener('click', function () {
+                if (bounds.length > 1) {
+                    map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 12, duration: 1.3 });
+                } else {
+                    map.flyTo(hqCoords, 10, { duration: 1.3 });
+                }
+            });
+        }
+
+        var btnBeams = document.getElementById('cjToggleBeams');
+        if (btnBeams) {
+            btnBeams.addEventListener('click', function () {
+                showBeams = !showBeams;
+                if (showBeams) {
+                    map.addLayer(beamsLayer);
+                    btnBeams.classList.remove('opacity-50');
+                } else {
+                    map.removeLayer(beamsLayer);
+                    btnBeams.classList.add('opacity-50');
+                }
+            });
+        }
+
+        // Quick City Flight Chips
+        document.querySelectorAll('.cj-city-pill').forEach(function (pill) {
+            pill.addEventListener('click', function () {
+                var lat = parseFloat(this.getAttribute('data-lat'));
+                var lng = parseFloat(this.getAttribute('data-lng'));
+                var city = (this.getAttribute('data-city') || '').toLowerCase();
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    if (city.indexOf('hq') !== -1 || (Math.abs(lat - hqCoords[0]) < 0.001 && Math.abs(lng - hqCoords[1]) < 0.001)) {
+                        map.flyTo(hqCoords, 14, { duration: 1.5 });
+                        setTimeout(function () { hqMarker.openPopup(); }, 1600);
+                        return;
+                    }
+
+                    map.flyTo([lat, lng], 12, { duration: 1.4 });
+                    var targetMarker = visitorMarkers.find(function (m) {
+                        var pos = m.getLatLng();
+                        return Math.abs(pos.lat - lat) < 0.01 && Math.abs(pos.lng - lng) < 0.01;
                     });
-
-                    var m = L.marker([p.lat, p.lng], { icon: customIcon }).addTo(map);
-                    m.bindPopup(
-                        '<div style="font-family:system-ui,sans-serif;font-size:12px;line-height:1.4;">' +
-                        '<strong style="color:#b8972c;font-size:13px;">' + (p.label || 'Visitor') + '</strong>' +
-                        (p.live ? ' <span style="background:#10b981;color:#fff;font-size:9px;padding:2px 6px;border-radius:999px;font-weight:700;">LIVE</span>' : '') + '<br>' +
-                        '<span>Duration: <strong>' + mins + ' min</strong> · ' + (p.pages || 0) + ' pages</span><br>' +
-                        '<span style="color:#6b7280;font-size:11px;">Landed: ' + (p.landing || '/') + '</span><br>' +
-                        '<span style="color:#9ca3af;font-size:10px;">Last seen: ' + (p.when || 'Just now') + '</span>' +
-                        '</div>'
-                    );
-                    markers.push(m);
-                    bounds.push([p.lat, p.lng]);
-                });
-
-                if (bounds.length === 1) map.setView(bounds[0], 11);
-                else map.fitBounds(bounds, { padding: [35, 35], maxZoom: 12 });
-            }
-
-            // Quick Zoom Presets
-            var btnGuj = document.getElementById('cjZoomGujarat');
-            var btnInd = document.getElementById('cjZoomIndia');
-            var btnFit = document.getElementById('cjZoomFit');
-
-            if (btnGuj) btnGuj.addEventListener('click', function () { map.flyTo([23.2, 72.8], 8, { duration: 1 }); });
-            if (btnInd) btnInd.addEventListener('click', function () { map.flyTo([22.5, 78.9], 5, { duration: 1.2 }); });
-            if (btnFit && bounds.length) btnFit.addEventListener('click', function () { map.fitBounds(bounds, { padding: [35, 35], maxZoom: 12 }); });
-
-            setTimeout(function () { map.invalidateSize(true); }, 250);
-            setTimeout(function () { map.invalidateSize(true); }, 800);
+                    if (targetMarker) {
+                        setTimeout(function () { targetMarker.openPopup(); }, 1500);
+                    }
+                }
+            });
         });
+    }
+
+    if (typeof L !== 'undefined') {
+        initMap();
+    } else {
+        window.addEventListener('load', initMap);
     }
 
     // -------------------------------------------------------------------------
