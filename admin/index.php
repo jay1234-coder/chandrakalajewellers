@@ -34,7 +34,7 @@ $cj_admin_embed = (!empty($_GET['embed']) || !empty($_POST['embed'])
     || (!empty($_SERVER['HTTP_REFERER']) && strpos((string)$_SERVER['HTTP_REFERER'], 'embed=1') !== false));
 $cj_admin_home = $cj_admin_embed ? '/admin/index.php?embed=1' : '/admin/index.php';
 
-$cj_allowed_views = ['overview', 'rates', 'add-item', 'inventory', 'follow-us', 'analytics'];
+$cj_allowed_views = ['overview', 'rates', 'add-item', 'inventory', 'follow-us', 'analytics', 'billing'];
 $cj_raw_view = strtolower(trim((string)($_GET['view'] ?? $_POST['view'] ?? '')));
 if ($cj_raw_view === '') {
     if (isset($_GET['va_page'])) {
@@ -979,6 +979,7 @@ $cjShellViewMeta = [
     'inventory' => ['Stock Inventory', 'Search, edit, toggle sold-out status, and manage favourites'],
     'follow-us' => ['Follow Us & QR Codes', 'Showroom Google review link, Instagram, and printable QR codes'],
     'analytics' => ['Visitor Analytics', 'Live visitor map, session duration, and popular pages'],
+    'billing'   => ['In-Store Billing (POS)', 'Offline GST invoicing, labour repair receipts, customer khata & daily reports'],
 ];
 $cjShellPage     = $adminView;
 $cjShellTitle    = $cjShellViewMeta[$adminView][0] ?? 'Store Overview';
@@ -2062,6 +2063,10 @@ if ($just_logged_in) {
 
         <?php if ($adminView === 'analytics'): ?>
         <?php include dirname(__DIR__) . '/includes/visitor-analytics-admin.php'; ?>
+        <?php endif; ?>
+
+        <?php if ($adminView === 'billing'): ?>
+        <?php include dirname(__DIR__) . '/includes/admin-billing-gateway.php'; ?>
         <?php endif; ?>
 
     <?php include dirname(__DIR__) . '/includes/admin-shell-end.php'; ?>
