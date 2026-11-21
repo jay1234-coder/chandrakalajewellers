@@ -238,6 +238,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'rebuild_sitemap') {
 
 cj_ensure_rates_schema($conn);
 
+// In-Store Billing (POS) Controller (Handles POS Transactions, CSRF & Autocomplete)
+require_once dirname(__DIR__) . '/includes/admin-billing-controller.php';
+
 // Handle Rate Update before any page rendering / fragile queries
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_rates']) || (($_POST['rate_action'] ?? '') === 'update_rates'))) {
     if (!function_exists('cj_validate_csrf') || !cj_validate_csrf()) {
