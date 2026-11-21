@@ -100,13 +100,15 @@
         //----------------------------------------------------------------------
         public static function log($outfile, $err)
         {
-            if (QR_LOG_DIR !== false) {
+            if (defined('QR_LOG_DIR') && QR_LOG_DIR !== false) {
                 if ($err != '') {
-                    if ($outfile !== false) {
-                        file_put_contents(QR_LOG_DIR.basename($outfile).'-errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
-                    } else {
-                        file_put_contents(QR_LOG_DIR.'errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
-                    }
+                    try {
+                        if ($outfile !== false) {
+                            @file_put_contents(QR_LOG_DIR.basename($outfile).'-errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
+                        } else {
+                            @file_put_contents(QR_LOG_DIR.'errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
+                        }
+                    } catch (Throwable $e) {}
                 }    
             }
         }

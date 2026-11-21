@@ -1,4 +1,14 @@
 <?php
+// Start clean output buffer and suppress warnings before headers
+ob_start();
+@ini_set('display_errors', '0');
+error_reporting(0);
+
+// Disable phpqrcode file cache and file logging on read-only serverless filesystems
+if (!defined('QR_CACHEABLE')) define('QR_CACHEABLE', false);
+if (!defined('QR_CACHE_DIR')) define('QR_CACHE_DIR', false);
+if (!defined('QR_LOG_DIR'))   define('QR_LOG_DIR', false);
+
 require_once 'libs/phpqrcode/qrlib.php';
 
 $upi_id = "boim-240403590038@boi";
@@ -43,24 +53,25 @@ if (!$qr) {
 /* 2. Add Premium Center Logo Mask */
 $logoPath = 'assets/logo.png';
 if (file_exists($logoPath)) {
-    $logo = imagecreatefrompng($logoPath);
+    $logo = @imagecreatefrompng($logoPath);
+    if ($logo) {
+        $qrWidth = imagesx($qr);
+        $qrHeight = imagesy($qr);
+        $logoWidth = imagesx($logo);
+        $logoHeight = imagesy($logo);
 
-    $qrWidth = imagesx($qr);
-    $qrHeight = imagesy($qr);
-    $logoWidth = imagesx($logo);
-    $logoHeight = imagesy($logo);
+        $logoQRWidth = (int)round($qrWidth / 4.5);
+        $scale = $logoWidth / max(1, $logoQRWidth);
+        $logoQRHeight = (int)round($logoHeight / max(0.001, $scale));
 
-    $logoQRWidth = $qrWidth / 4.5;
-    $scale = $logoWidth / $logoQRWidth;
-    $logoQRHeight = $logoHeight / $scale;
+        $posX = (int)round(($qrWidth - $logoQRWidth) / 2);
+        $posY = (int)round(($qrHeight - $logoQRHeight) / 2);
 
-    $posX = ($qrWidth - $logoQRWidth) / 2;
-    $posY = ($qrHeight - $logoQRHeight) / 2;
+        $whiteColor = imagecolorallocate($qr, 255, 255, 255);
+        imagefilledrectangle($qr, $posX - 6, $posY - 6, $posX + $logoQRWidth + 6, $posY + $logoQRHeight + 6, $whiteColor);
 
-    $whiteColor = imagecolorallocate($qr, 255, 255, 255);
-    imagefilledrectangle($qr, $posX - 6, $posY - 6, $posX + $logoQRWidth + 6, $posY + $logoQRHeight + 6, $whiteColor);
-
-    imagecopyresampled($qr, $logo, $posX, $posY, 0, 0, $logoQRWidth, $logoQRHeight, $logoWidth, $logoHeight);
+        imagecopyresampled($qr, $logo, $posX, $posY, 0, 0, $logoQRWidth, $logoQRHeight, $logoWidth, $logoHeight);
+    }
 }
 
 /* 3. Setup Widescreen Landscape Screen Dimensions (16:9 Fullscreen) */
@@ -156,6 +167,9 @@ if (file_exists('assets/bhim_logo.png')) {
 }
 
 // 11. Final output execution
+if (ob_get_length()) {
+    ob_clean();
+}
 header("Content-Type: image/png");
 imagepng($card);
 
@@ -171,4 +185,5 @@ if (isset($upiLogo)) {
 if (isset($bhimLogo)) {
     imagedestroy($bhimLogo);
 }
+exit;
 ?>
