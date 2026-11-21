@@ -44,20 +44,28 @@ if (!function_exists('cj_ensure_billing_tables')) {
         $checkRes = @mysqli_query($conn, "SHOW TABLES LIKE 'bills'");
         $billsExist = ($checkRes && mysqli_num_rows($checkRes) > 0);
 
-        // Ensure customer table has required POS columns
+        // Ensure customer table has required POS columns and nullable password_hash
         $custCheck = @mysqli_query($conn, "SHOW TABLES LIKE 'customers'");
         if ($custCheck && mysqli_num_rows($custCheck) > 0) {
             $colsRes = @mysqli_query($conn, "DESCRIBE customers");
             $cols = [];
+            $nullStatus = [];
             if ($colsRes) {
                 while ($c = mysqli_fetch_assoc($colsRes)) {
                     $cols[] = $c['Field'];
+                    $nullStatus[$c['Field']] = $c['Null'] ?? 'YES';
                 }
             }
             if (!in_array('mobile', $cols)) { @mysqli_query($conn, "ALTER TABLE customers ADD COLUMN mobile VARCHAR(20) NULL"); }
             if (!in_array('address', $cols)) { @mysqli_query($conn, "ALTER TABLE customers ADD COLUMN address TEXT NULL"); }
             if (!in_array('gst_no', $cols)) { @mysqli_query($conn, "ALTER TABLE customers ADD COLUMN gst_no VARCHAR(100) NULL"); }
             if (!in_array('pan_no', $cols)) { @mysqli_query($conn, "ALTER TABLE customers ADD COLUMN pan_no VARCHAR(100) NULL"); }
+            if (in_array('password_hash', $cols) && ($nullStatus['password_hash'] ?? '') === 'NO') {
+                @mysqli_query($conn, "ALTER TABLE customers MODIFY COLUMN password_hash VARCHAR(255) NULL DEFAULT NULL");
+            }
+            if (in_array('phone', $cols) && ($nullStatus['phone'] ?? '') === 'NO') {
+                @mysqli_query($conn, "ALTER TABLE customers MODIFY COLUMN phone VARCHAR(20) NULL DEFAULT NULL");
+            }
         }
 
         if ($billsExist) {

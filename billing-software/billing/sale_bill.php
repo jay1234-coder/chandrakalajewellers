@@ -71,11 +71,19 @@ if (isset($_POST['save_bill'])) {
     mysqli_begin_transaction($conn);
 
     try {
-        $cust_check = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id FROM customers WHERE mobile='$mobile' LIMIT 1"));
-        if (!$cust_check && !empty($mobile)) {
-            $insert_cust = mysqli_query($conn, "INSERT INTO customers (name, mobile, address, gst_no, pan_no) VALUES ('$customer_name','$mobile','$address','$gst_no','$pan_no')");
-            if (!$insert_cust) {
-                throw new Exception("Failed to save customer data: " . mysqli_error($conn));
+        // Isolated Customer CRM Sync: never fail or abort bill creation on CRM constraint
+        if (!empty($mobile)) {
+            try {
+                $cust_check = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id FROM customers WHERE mobile='$mobile' OR phone='$mobile' LIMIT 1"));
+                if (!$cust_check) {
+                    $dummyHash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+                    $escaped_hash = mysqli_real_escape_string($conn, $dummyHash);
+                    @mysqli_query($conn, "INSERT INTO customers (name, phone, mobile, address, gst_no, pan_no, password_hash, created_at) VALUES ('$customer_name', '$mobile', '$mobile', '$address', '$gst_no', '$pan_no', '$escaped_hash', NOW())");
+                } else {
+                    @mysqli_query($conn, "UPDATE customers SET name='$customer_name', address='$address', gst_no='$gst_no', pan_no='$pan_no' WHERE mobile='$mobile' OR phone='$mobile'");
+                }
+            } catch (Throwable $custEx) {
+                error_log("Customer sync notice: " . $custEx->getMessage());
             }
         }
 

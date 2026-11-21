@@ -17,10 +17,11 @@ if (!function_exists('cj_ensure_customers_schema')) {
             name VARCHAR(120) NOT NULL,
             phone VARCHAR(20) NOT NULL,
             email VARCHAR(160) NOT NULL DEFAULT '',
-            password_hash VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NULL DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uq_customer_phone (phone)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        @$conn->query("ALTER TABLE customers MODIFY COLUMN password_hash VARCHAR(255) NULL DEFAULT NULL");
     }
 }
 

@@ -175,25 +175,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_sale_bill'])) {
 
     $conn->begin_transaction();
     try {
-        // Sync customer record
+        // Sync customer record (isolated so secondary CRM sync never blocks or aborts bill creation)
         if ($mobile !== '') {
-            $custCheck = $conn->prepare("SELECT id FROM customers WHERE mobile = ? OR phone = ? LIMIT 1");
-            $custCheck->bind_param('ss', $mobile, $mobile);
-            $custCheck->execute();
-            $custRes = $custCheck->get_result();
-            if ($custRes && $custRes->num_rows === 0) {
-                $insCust = $conn->prepare("INSERT INTO customers (name, phone, mobile, address, gst_no, pan_no, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                $insCust->bind_param('ssssss', $customer_name, $mobile, $mobile, $address, $gst_no, $pan_no);
-                $insCust->execute();
-                $insCust->close();
-            } else {
-                // Update customer profile with latest address / GST
-                $updCust = $conn->prepare("UPDATE customers SET name = ?, address = ?, gst_no = ?, pan_no = ? WHERE mobile = ? OR phone = ?");
-                $updCust->bind_param('ssssss', $customer_name, $address, $gst_no, $pan_no, $mobile, $mobile);
-                $updCust->execute();
-                $updCust->close();
+            try {
+                $custCheck = $conn->prepare("SELECT id FROM customers WHERE mobile = ? OR phone = ? LIMIT 1");
+                if ($custCheck) {
+                    $custCheck->bind_param('ss', $mobile, $mobile);
+                    $custCheck->execute();
+                    $custRes = $custCheck->get_result();
+                    if ($custRes && $custRes->num_rows === 0) {
+                        // In-store walk-in POS customer: generate dummy hash so NOT NULL password_hash constraint is satisfied
+                        $dummyHash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+                        $insCust = $conn->prepare("INSERT INTO customers (name, phone, mobile, address, gst_no, pan_no, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                        if ($insCust) {
+                            $insCust->bind_param('sssssss', $customer_name, $mobile, $mobile, $address, $gst_no, $pan_no, $dummyHash);
+                            $insCust->execute();
+                            $insCust->close();
+                        }
+                    } else {
+                        // Update customer profile with latest address / GST
+                        $updCust = $conn->prepare("UPDATE customers SET name = ?, address = ?, gst_no = ?, pan_no = ? WHERE mobile = ? OR phone = ?");
+                        if ($updCust) {
+                            $updCust->bind_param('ssssss', $customer_name, $address, $gst_no, $pan_no, $mobile, $mobile);
+                            $updCust->execute();
+                            $updCust->close();
+                        }
+                    }
+                    $custCheck->close();
+                }
+            } catch (Throwable $custErr) {
+                // Secondary CRM sync error must never fail the sale invoice
+                error_log("Customer CRM sync notice: " . $custErr->getMessage());
             }
-            $custCheck->close();
         }
 
         $saved_bill_id = 0;
@@ -368,6 +381,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_labour_bill'])) 
 
     $conn->begin_transaction();
     try {
+        // Sync customer record (isolated so secondary CRM sync never blocks or aborts labour bill creation)
+        if ($mobile !== '') {
+            try {
+                $custCheck = $conn->prepare("SELECT id FROM customers WHERE mobile = ? OR phone = ? LIMIT 1");
+                if ($custCheck) {
+                    $custCheck->bind_param('ss', $mobile, $mobile);
+                    $custCheck->execute();
+                    $custRes = $custCheck->get_result();
+                    if ($custRes && $custRes->num_rows === 0) {
+                        $dummyHash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+                        $insCust = $conn->prepare("INSERT INTO customers (name, phone, mobile, address, gst_no, pan_no, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                        if ($insCust) {
+                            $insCust->bind_param('sssssss', $customer_name, $mobile, $mobile, $address, $gst_no, $pan_no, $dummyHash);
+                            $insCust->execute();
+                            $insCust->close();
+                        }
+                    } else {
+                        $updCust = $conn->prepare("UPDATE customers SET name = ?, address = ?, gst_no = ?, pan_no = ? WHERE mobile = ? OR phone = ?");
+                        if ($updCust) {
+                            $updCust->bind_param('ssssss', $customer_name, $address, $gst_no, $pan_no, $mobile, $mobile);
+                            $updCust->execute();
+                            $updCust->close();
+                        }
+                    }
+                    $custCheck->close();
+                }
+            } catch (Throwable $custErr) {
+                error_log("Labour bill customer CRM sync notice: " . $custErr->getMessage());
+            }
+        }
+
         if ($is_update) {
             $stmt = $conn->prepare("
                 UPDATE bills SET
