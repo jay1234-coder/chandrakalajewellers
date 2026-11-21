@@ -1,0 +1,35 @@
+name: Vercel Deployment Check - Lint
+
+on:
+  repository_dispatch:
+    types: [vercel.deployment.ready, vercel.deployment.created]
+
+jobs:
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      statuses: write
+    steps:
+      - name: 'notify vercel'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with:
+          name: 'Vercel - chandrakalajewellers: lint'
+
+      - name: Checkout deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.git.sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli, pdo, curl, openssl
+
+      - name: Lint all PHP files
+        run: |
+          echo "Running syntax check on all PHP files..."
+          find . -name "*.php" -not -path "*/node_modules/*" -not -path "*/vendor/*" -exec php -l {} +
