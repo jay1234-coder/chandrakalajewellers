@@ -37,28 +37,8 @@ if(isset($_GET['delete']))
 <link rel="stylesheet" href="../assets/css/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-    body { background: #f5f6fa; margin: 0; font-family: 'Segoe UI', sans-serif; }
-    .container { display: flex; }
-    .sidebar { width: 260px; min-height: 100vh; background: #111827; color: white; }
-    .logo { padding: 25px; text-align: center; border-bottom: 1px solid #333; }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar ul li a { display: block; padding: 16px 25px; color: white; text-decoration: none; }
-    .sidebar ul li a:hover, .sidebar ul li a.active { background: #1f2937; }
-    .sidebar i { margin-right: 10px; }
-    .main { flex: 1; padding: 25px; }
-    
-    .form-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.05); margin-bottom: 25px; }
     .form-inline { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-    .form-inline select, .form-inline input { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fff; }
-    .form-inline select:focus, .form-inline input:focus { border-color: #3b82f6; }
-    .btn-save { background: #111827; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    
-    .table-box { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-    .table-header { padding: 20px; border-bottom: 1px solid #eee; }
-    table { width: 100%; border-collapse: collapse; }
-    table th { background: #f8fafc; text-align: left; padding: 15px; font-weight: 600; color: #444; border-bottom: 2px solid #edf2f7; }
-    table td { padding: 15px; border-top: 1px solid #eee; color: #333; }
-    .btn-delete { color: #ef4444; text-decoration: none; font-weight: 600; }
+    .form-inline select, .form-inline input { flex: 1; min-width: 200px; }
 </style>
 </head>
 <body>

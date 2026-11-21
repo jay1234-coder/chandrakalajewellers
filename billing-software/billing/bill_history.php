@@ -37,14 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if (isset($_GET['action']) && $_GET['action'] === 'live_search') {
     $q = $_GET['search_query'] ?? '';
     
-    // Fix: Secure Live Search via Prepared Statement
+    // Fix: Secure Live Search via Prepared Statement with correlated subquery (immune to ONLY_FULL_GROUP_BY)
     $search_term = "%$q%";
-    $sql = "SELECT b.id, b.bill_no, b.bill_date, b.customer_name, b.mobile, b.bill_type, b.net_amount, b.balance_amount, b.status, COUNT(bi.id) as item_count 
+    $sql = "SELECT b.id, b.bill_no, b.bill_date, b.customer_name, b.mobile, b.bill_type, b.net_amount, b.balance_amount, b.status, 
+                   (SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.id) AS item_count 
             FROM bills b 
-            LEFT JOIN bill_items bi ON b.id = bi.bill_id
             WHERE b.customer_name LIKE ? OR b.mobile LIKE ? OR b.bill_no LIKE ?
-            GROUP BY b.id 
-            ORDER BY b.bill_date ASC, b.id ASC"; // <-- Changed to ASC and removed LIMIT 50 to show all records chronologically
+            ORDER BY b.bill_date ASC, b.id ASC"; // <-- Shows all records chronologically
             
     $stmt_search = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt_search, "sss", $search_term, $search_term, $search_term);

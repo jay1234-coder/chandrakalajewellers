@@ -123,6 +123,8 @@ if ($conn === null || (is_object($conn) && $conn->connect_error) || $connError !
 
 // Set MySQL session timezone to IST
 $conn->query("SET time_zone = '+05:30'");
+// Ensure cloud MySQL instances never fail on strict only_full_group_by
+@$conn->query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 $GLOBALS['conn'] = $conn;
 
 if (!function_exists('cj_get_db')) {

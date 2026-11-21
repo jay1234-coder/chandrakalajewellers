@@ -6,14 +6,38 @@ $payee_name = "Chandrakala Jewellers";
 
 $upi = "upi://pay?pa=" . rawurlencode($upi_id) . "&pn=" . rawurlencode($payee_name) . "&cu=INR";
 
-/* 1. Generate QR Core Matrix directly in memory (No temp file) */
-ob_start();
-QRcode::png($upi, null, QR_ECLEVEL_H, 10, 1);
-$qrData = ob_get_clean();
-$qr = imagecreatefromstring($qrData);
+/* 1. Generate QR Core Matrix safely via temp file with memory and GD fallbacks */
+$qr = null;
+$tmpQr = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cj_qr1_' . md5($upi . microtime(true)) . '.png';
 
+try {
+    QRcode::png($upi, $tmpQr, QR_ECLEVEL_H, 10, 1);
+    if (file_exists($tmpQr) && filesize($tmpQr) > 0) {
+        $qr = @imagecreatefrompng($tmpQr);
+        @unlink($tmpQr);
+    }
+} catch (Throwable $e) {
+    if (file_exists($tmpQr)) @unlink($tmpQr);
+}
+
+// Fallback 1: in-memory stream if file writing is restricted
 if (!$qr) {
-    die("Failed to generate QR Code Matrix.");
+    ob_start();
+    QRcode::png($upi, false, QR_ECLEVEL_H, 10, 1);
+    $qrData = ob_get_clean();
+    if (!empty($qrData)) {
+        $qr = @imagecreatefromstring($qrData);
+    }
+}
+
+// Fallback 2: safe placeholder so it NEVER throws fatal error
+if (!$qr) {
+    $qr = imagecreatetruecolor(400, 400);
+    $qBg = imagecolorallocate($qr, 255, 255, 255);
+    $qFg = imagecolorallocate($qr, 150, 0, 24);
+    imagefill($qr, 0, 0, $qBg);
+    imagerectangle($qr, 10, 10, 390, 390, $qFg);
+    imagestring($qr, 5, 80, 190, "BHIM UPI PAYMENT QR", $qFg);
 }
 
 /* 2. Add Premium Center Logo Mask */
@@ -55,22 +79,35 @@ $panelGrey = imagecolorallocate($card, 248, 249, 250);
 // Use crisp unprinted white for baseline canvas to save cartridges
 imagefill($card, 0, 0, $bgWhite);
 
-/* 5. Path to Windows Standard Times New Roman Fonts */
-$fontRegular = 'C:\Windows\Fonts\times.ttf';
-$fontBold = 'C:\Windows\Fonts\timesbd.ttf';
+/* 5. Cross-Platform Font Detection (Windows & Linux / Vercel Serverless) */
+$fontCandidates = [
+    'C:\Windows\Fonts\timesbd.ttf',
+    'C:\Windows\Fonts\arialbd.ttf',
+    'C:\Windows\Fonts\times.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+    dirname(__DIR__) . '/public/fonts/Outfit-Bold.ttf'
+];
+
+$fontBold = '';
+foreach ($fontCandidates as $fc) {
+    if (file_exists($fc)) {
+        $fontBold = $fc;
+        break;
+    }
+}
+$fontRegular = $fontBold;
 
 if (!function_exists('cj_draw_qr_text')) {
     function cj_draw_qr_text($img, $size, $angle, $x, $y, $col, $font, $text) {
         if (!empty($font) && file_exists($font)) {
-            @imagettftext($img, $size, $angle, $x, $y, $col, $font, $text);
+            @imagettftext($img, $size, $angle, (int)$x, (int)$y, $col, $font, $text);
         } else {
-            @imagestring($img, 5, (int)$x, (int)($y - $size), $text, $col);
+            $strSize = min(5, max(2, (int)($size / 7)));
+            @imagestring($img, $strSize, (int)$x, (int)($y - $size * 0.8), $text, $col);
         }
     }
-}
-
-if (!file_exists($fontBold)) {
-    $fontBold = file_exists($fontRegular) ? $fontRegular : '';
 }
 
 /* 6. Center Main Container Card Structure */

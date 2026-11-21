@@ -82,11 +82,9 @@ $query = "SELECT
             b.id, b.bill_no, b.bill_date, b.customer_name,
             COALESCE(b.gst_no,'') as gst_no,
             b.net_amount, b.cgst, b.sgst,
-            GROUP_CONCAT(DISTINCT bi.hsn_code SEPARATOR ', ') as dynamic_hsn
+            (SELECT GROUP_CONCAT(DISTINCT bi.hsn_code SEPARATOR ', ') FROM bill_items bi WHERE bi.bill_id = b.id) as dynamic_hsn
           FROM bills b
-          LEFT JOIN bill_items bi ON b.id = bi.bill_id
           $sql_cond
-          GROUP BY b.id
           ORDER BY b.bill_date ASC, b.id ASC";
 
 $stmt = $conn->prepare($query);
