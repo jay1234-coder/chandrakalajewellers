@@ -1,18 +1,28 @@
 .git
 .github
+.next/
 node_modules/
 */node_modules/
+backend/
+frontend/
+admin_app/
+tests/
+tools/
+docs/
+database/
+Claude outputs/
+SEO Errors/
+scratch/
+_recovered/
+backup_ui_pre_opt/
 *.sql
 *.sql.zip
 *.zip
+*.pdf
+*.xlsx
+*.csv
+*.log
 if0_38635607_cjdb.sql
 sql.zip
 uploads.zip
 download.zip
-frontend/
-admin_app/
-tests/
-scratch/
-_recovered/
-backup_ui_pre_opt/
-*.log
