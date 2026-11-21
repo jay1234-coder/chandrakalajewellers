@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_sale_bill'])) {
                 WHERE id=?
             ");
             $stmt->bind_param(
-                'sssssssssddddddddddi',
+                'sssssssssdddddddddddi',
                 $bill_no, $bill_date, $customer_name, $mobile, $address, $gst_no, $state_code, $pan_no, $delivery_opt,
                 $gold_rate, $silver_rate, $subtotal, $discount, $cgst, $sgst, $net_amount,
                 $cash_rec, $bank_rec, $old_gold_amt, $balance_amt, $edit_bill_id
@@ -257,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_sale_bill'])) {
                 )
             ");
             $stmt->bind_param(
-                'sssssssssdddddddddd',
+                'sssssssssddddddddddd',
                 $bill_no, $bill_date, $customer_name, $mobile, $address, $gst_no, $state_code, $pan_no, $delivery_opt,
                 $gold_rate, $silver_rate, $subtotal, $discount, $cgst, $sgst, $net_amount,
                 $cash_rec, $bank_rec, $old_gold_amt, $balance_amt
@@ -421,7 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_labour_bill'])) 
                 WHERE id=? AND bill_type='LABOUR'
             ");
             $stmt->bind_param(
-                'ssssssssddddddddddi',
+                'ssssssssdddddddddddi',
                 $bill_no, $bill_date, $customer_name, $mobile, $address, $gst_no, $state_code, $pan_no,
                 $gold_rate, $silver_rate, $gold_credit, $subtotal, $discount, $cgst, $sgst, $net_amount,
                 $cash_rec, $bank_rec, $balance_amt, $edit_bill_id
@@ -448,7 +448,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_labour_bill'])) 
                 )
             ");
             $stmt->bind_param(
-                'ssssssssdddddddddd',
+                'ssssssssddddddddddd',
                 $bill_no, $bill_date, $customer_name, $mobile, $address, $gst_no, $state_code, $pan_no,
                 $gold_rate, $silver_rate, $gold_credit, $subtotal, $discount, $cgst, $sgst, $net_amount,
                 $cash_rec, $bank_rec, $balance_amt
