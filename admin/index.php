@@ -3711,7 +3711,7 @@ if ($just_logged_in) {
         (function initVisitorMap() {
             var el = document.getElementById('adminVisitorMap');
             var dataEl = document.getElementById('adminVisitorMapData');
-            if (!el || !dataEl) return;
+            if (!el || !dataEl || window.__CJ_MAP_INITIALIZED__) return;
             var points = [];
             try { points = JSON.parse(dataEl.textContent || '[]'); } catch (e) { points = []; }
 
