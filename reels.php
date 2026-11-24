@@ -78,22 +78,19 @@ $seo = cj_merge_seo([
     'og_video_type' => 'video/mp4',
     'twitter_card' => $pageVideo !== '' ? 'player' : 'summary_large_image',
     'twitter_player' => $twitterPlayer,
-    'schema' => array_merge(
+    'schema' => [
+        cj_local_business_schema(),
+        cj_breadcrumb_schema([
+            ['name' => 'Home', 'url' => cj_abs_url('index1')],
+            ['name' => 'Jewellery Reels', 'url' => cj_abs_url('reels')],
+        ]),
         [
-            cj_local_business_schema(),
-            cj_breadcrumb_schema([
-                ['name' => 'Home', 'url' => cj_abs_url('index1')],
-                ['name' => 'Jewellery Reels', 'url' => cj_abs_url('reels')],
-            ]),
-            [
-                '@type' => 'ItemList',
-                'name' => 'ChandraKala Jewellers Video Reels',
-                'numberOfItems' => count($cjVideoReels),
-                'itemListElement' => $itemListElements,
-            ],
+            '@type' => 'ItemList',
+            'name' => 'ChandraKala Jewellers Video Reels',
+            'numberOfItems' => count($cjVideoReels),
+            'itemListElement' => $itemListElements,
         ],
-        $videoSchemas
-    ),
+    ],
 ]);
 ?>
 <!DOCTYPE html>

@@ -11,7 +11,7 @@
     // Fast exit for search engine bots, web crawlers, and headless auditors
     // Prevents bots from downloading background media or indexing prefetch assets
     var ua = (navigator.userAgent || '').toLowerCase();
-    if (/bot|google|crawler|spider|bing|yandex|slurp|headless|lighthouse|ptst|mediapartners|facebookexternalhit/i.test(ua)) {
+    if (navigator.webdriver || /bot|google|crawler|spider|bing|yandex|slurp|headless|lighthouse|ptst|mediapartners|facebookexternalhit|search|inspection/i.test(ua)) {
         return;
     }
 
@@ -89,15 +89,9 @@
             return Promise.resolve();
         }
 
+        // Never pollute DOM with <video> or <link rel="preload" as="video"> on non-watch pages.
+        // Google Search Console will flag pages with "Video isn't on a watch page" if video preloads exist.
         if (!('caches' in window)) {
-            // Fallback: Use link rel=preload if Cache API not available
-            try {
-                var link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'video';
-                link.href = videoUrl;
-                document.head.appendChild(link);
-            } catch (e) {}
             return Promise.resolve();
         }
 
@@ -233,29 +227,25 @@
         }, 500);
     }
 
-    // Kick off Phase 1 after page paints
-    if (document.readyState === 'complete') {
-        runWhenIdle(warmupTop2Reels, 1200);
-    } else {
-        window.addEventListener('load', function () {
-            runWhenIdle(warmupTop2Reels, 1200);
-        }, { once: true });
-    }
-
-    // Attach passive scroll listener for Phase 2
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Also trigger immediately if user hovers or touches the "Reels" navigation tab!
+    // Trigger prefetch ONLY when user demonstrates human intent (hovering or touching Reels navigation)
     function onReelsTabIntent() {
         warmupTop2Reels();
         onScrollIdlePreload();
     }
-    document.addEventListener('DOMContentLoaded', function () {
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupIntentListeners);
+    } else {
+        setupIntentListeners();
+    }
+
+    function setupIntentListeners() {
         var reelsLinks = document.querySelectorAll('a[href*="reels"], .app-tab[data-tab="reels"]');
         reelsLinks.forEach(function (el) {
             el.addEventListener('mouseenter', onReelsTabIntent, { passive: true, once: true });
             el.addEventListener('touchstart', onReelsTabIntent, { passive: true, once: true });
+            el.addEventListener('focus', onReelsTabIntent, { passive: true, once: true });
         });
-    });
+    }
 
 })();

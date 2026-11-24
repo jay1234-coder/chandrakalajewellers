@@ -516,16 +516,7 @@ $seo = cj_merge_seo([
     <div class="cj-sc-grid">
         <!-- LEFT: HD Cinema Reel Player + Like / Comment / Order / Share Bar -->
         <div>
-            <div class="cj-sc-player-card" itemscope itemtype="https://schema.org/VideoObject">
-                <meta itemprop="name" content="<?= htmlspecialchars(cj_reel_seo_title($reel), ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="description" content="<?= htmlspecialchars(cj_reel_seo_description($reel), ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="thumbnailUrl" content="<?= htmlspecialchars((string)($reel['poster_thumb'] ?: $scOgImage), ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="contentUrl" content="<?= htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="embedUrl" content="<?= htmlspecialchars($reelShareUrl . '&embed=1', ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="uploadDate" content="<?= htmlspecialchars(cj_format_ist_iso($reel['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="duration" content="<?= htmlspecialchars(cj_reel_iso_duration($reel), ENT_QUOTES, 'UTF-8') ?>">
-                <meta itemprop="inLanguage" content="en-IN">
-
+            <div class="cj-sc-player-card">
                 <video id="cjShowcaseVideo"
                        src="<?= htmlspecialchars((string)$reel['hd_url'], ENT_QUOTES, 'UTF-8') ?>"
                        <?php if (!empty($reel['poster_thumb'])): ?>poster="<?= htmlspecialchars((string)$reel['poster_thumb'], ENT_QUOTES, 'UTF-8') ?>"<?php endif; ?>

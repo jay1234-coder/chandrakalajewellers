@@ -8,6 +8,13 @@
     if (window.__CJ_REELS_PREFETCH_INITIALIZED__) return;
     window.__CJ_REELS_PREFETCH_INITIALIZED__ = true;
 
+    // Fast exit for search engine bots, web crawlers, and headless auditors
+    // Prevents bots from downloading background media or indexing prefetch assets
+    var ua = (navigator.userAgent || '').toLowerCase();
+    if (navigator.webdriver || /bot|google|crawler|spider|bing|yandex|slurp|headless|lighthouse|ptst|mediapartners|facebookexternalhit|search|inspection/i.test(ua)) {
+        return;
+    }
+
     // Do not run inside the dedicated Reels player or Admin panel
     var path = window.location.pathname || '';
     if (path.indexOf('/reels') !== -1 || path.indexOf('/admin') !== -1) {
@@ -82,15 +89,9 @@
             return Promise.resolve();
         }
 
+        // Never pollute DOM with <video> or <link rel="preload" as="video"> on non-watch pages.
+        // Google Search Console will flag pages with "Video isn't on a watch page" if video preloads exist.
         if (!('caches' in window)) {
-            // Fallback: Use link rel=preload if Cache API not available
-            try {
-                var link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'video';
-                link.href = videoUrl;
-                document.head.appendChild(link);
-            } catch (e) {}
             return Promise.resolve();
         }
 
@@ -114,42 +115,12 @@
         }).catch(function () {});
     }
 
-    // Warm GPU hardware decoder by mounting a hidden muted 1x1 video element
-    // This primes the platform's video pipeline (DirectX/Metal/MediaCodec) for frame 0
+    // Video pre-buffering is handled via Cache API (bufferVideoIntoCache).
+    // NEVER append <video> elements to document.body on non-watch pages, as search crawlers
+    // (Googlebot/Bingbot) flag non-video pages with "Video isn't on a watch page".
     function warmGpuDecoder(videoUrl) {
-        if (!videoUrl || document.getElementById('cj-gpu-warmer-' + encodeURIComponent(videoUrl))) return;
-        try {
-            var v = document.createElement('video');
-            v.id = 'cj-gpu-warmer-' + encodeURIComponent(videoUrl);
-            v.muted = true;
-            v.setAttribute('muted', '');
-            v.playsInline = true;
-            v.setAttribute('playsinline', '');
-            v.setAttribute('webkit-playsinline', '');
-            v.preload = 'auto';
-            v.style.position = 'fixed';
-            v.style.width = '1px';
-            v.style.height = '1px';
-            v.style.opacity = '0.001';
-            v.style.pointerEvents = 'none';
-            v.style.bottom = '0';
-            v.style.right = '0';
-            v.style.transform = 'translate3d(0,0,0)';
-            v.src = videoUrl;
-            document.body.appendChild(v);
-
-            // Once the first frame is decoded into GPU memory, pause and clean up
-            var cleanup = function () {
-                v.removeEventListener('loadeddata', cleanup);
-                v.removeEventListener('canplay', cleanup);
-                v.removeEventListener('error', cleanup);
-                try { v.pause(); } catch (e) {}
-            };
-            v.addEventListener('loadeddata', cleanup, { once: true });
-            v.addEventListener('canplay', cleanup, { once: true });
-            v.addEventListener('error', cleanup, { once: true });
-            try { v.load(); } catch (e) {}
-        } catch (e) {}
+        // Safe no-op: byte prefetching via Cache API is already complete without polluting the DOM.
+        return;
     }
 
     // Phase 1: Immediate Site-Open Warmup (Load top 2 reels)
@@ -256,29 +227,25 @@
         }, 500);
     }
 
-    // Kick off Phase 1 after page paints
-    if (document.readyState === 'complete') {
-        runWhenIdle(warmupTop2Reels, 1200);
-    } else {
-        window.addEventListener('load', function () {
-            runWhenIdle(warmupTop2Reels, 1200);
-        }, { once: true });
-    }
-
-    // Attach passive scroll listener for Phase 2
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Also trigger immediately if user hovers or touches the "Reels" navigation tab!
+    // Trigger prefetch ONLY when user demonstrates human intent (hovering or touching Reels navigation)
     function onReelsTabIntent() {
         warmupTop2Reels();
         onScrollIdlePreload();
     }
-    document.addEventListener('DOMContentLoaded', function () {
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupIntentListeners);
+    } else {
+        setupIntentListeners();
+    }
+
+    function setupIntentListeners() {
         var reelsLinks = document.querySelectorAll('a[href*="reels"], .app-tab[data-tab="reels"]');
         reelsLinks.forEach(function (el) {
             el.addEventListener('mouseenter', onReelsTabIntent, { passive: true, once: true });
             el.addEventListener('touchstart', onReelsTabIntent, { passive: true, once: true });
+            el.addEventListener('focus', onReelsTabIntent, { passive: true, once: true });
         });
-    });
+    }
 
 })();
