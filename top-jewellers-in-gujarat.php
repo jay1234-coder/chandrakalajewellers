@@ -416,6 +416,54 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
         </p>
     </section>
 
+    <!-- Value & Making Charges Comparison -->
+    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
+            Direct Artisan Value: Save ₹5,000 to ₹15,000 Per Tola Across Gujarat
+        </h2>
+        <p style="color:var(--text-secondary,#4b5563);line-height:1.6;margin-bottom:1.25rem;">
+            How ChandraKala Jewellers direct goldsmith workshop model compares to commercial shopping mall chains in Ahmedabad, Surat, and Vadodara:
+        </p>
+        <div style="overflow-x:auto;">
+            <table class="rate-card-table" style="width:100%;font-size:0.92rem;">
+                <thead>
+                    <tr>
+                        <th>Comparison Metric</th>
+                        <th>ChandraKala Jewellers</th>
+                        <th>Corporate Chain Stores</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Making Charges</strong></td>
+                        <td style="color:#059669;font-weight:700;">6% – 9% (Direct Artisan)</td>
+                        <td style="color:#dc2626;font-weight:600;">18% – 25% (High Markup)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>BIS Hallmark &amp; HUID</strong></td>
+                        <td>100% Guaranteed 6-Digit HUID (BIS Care App Verifiable)</td>
+                        <td>Standard Hallmark</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Weight Calculation</strong></td>
+                        <td>Exact digital weight scale verified on live video call</td>
+                        <td>Fixed showroom invoice</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Old Gold Exchange</strong></td>
+                        <td style="color:#059669;font-weight:700;">100% Value at Live Market Board Rate</td>
+                        <td>Melting / wastage deductions apply</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average Savings on Bridal Set (50g)</strong></td>
+                        <td style="color:#059669;font-weight:800;font-size:1.05rem;">Save ₹25,000 – ₹45,000+</td>
+                        <td>Higher overhead costs passed to buyer</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- Geographic Coverage Across Gujarat -->
     <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">

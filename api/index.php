@@ -87,6 +87,11 @@ if ($path === 'sitemap.xml') {
     require $rootDir . '/sitemap.php';
     exit;
 }
+if ($path === 'feed-products.xml' || $path === 'google-shopping.xml' || $path === 'feed-products') {
+    chdir($rootDir);
+    require $rootDir . '/feed-products.php';
+    exit;
+}
 if ($path === 'llms.txt' || $path === '.well-known/llms.txt' || $path === 'llms-full.txt' || $path === '.well-known/llms-full.txt') {
     if (strpos($path, 'llms-full.txt') !== false) {
         $_GET['full'] = '1';
