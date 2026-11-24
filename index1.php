@@ -40,8 +40,8 @@ if (!function_exists('get_metal_name')) {
 $activePage = 'home';
 require_once 'includes/seo.php';
 $seo = cj_merge_seo([
-    'title' => 'ChandraKala Jewellers | 916 Gold, Silver & Live Rates in Khedbrahma',
-    'description' => 'ChandraKala Jewellers, Khedbrahma: Shop 916 gold, pure silver & 925 sterling silver with live daily IST rates & 138+ custom designs. Call +91 9427080359.',
+    'title' => 'ChandraKala Jewellers | Top Ranking Jewellery in Gujarat — 916 BIS Gold, Silver & Live Rates',
+    'description' => 'ChandraKala Jewellers, Gujarat: Shop 100% BIS 916 hallmarked gold, pure silver & 925 sterling silver with live daily IST rates, custom bridal sets & doorstep insured delivery across Gujarat. WhatsApp +91 9427080359.',
     'canonical' => cj_abs_url('index1'),
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [
@@ -254,6 +254,46 @@ if (!empty($cjReelsList)):
                 <strong>Local</strong>
                 <span>Khedbrahma</span>
             </div>
+        </div>
+    </div>
+</section>
+
+<section id="gujarat-delivery" class="reveal cj-lazy-section" style="margin: 48px 0; background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(26,26,26,0.6) 100%); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 36px 28px;">
+    <div style="max-width: 860px; margin: 0 auto; text-align: center;">
+        <span style="display:inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--primary-gold-dark, #b8860b); background: rgba(212,175,55,0.15); padding: 5px 14px; border-radius: 999px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.35);">
+            Statewide Gujarat Service
+        </span>
+        <h2 style="font-family: 'Cinzel', serif; font-size: clamp(22px, 3.5vw, 32px); color: var(--text-primary, #fff); margin-bottom: 12px;">
+            Top Ranking Jewellery Destination in Gujarat
+        </h2>
+        <p style="font-size: 14.5px; line-height: 1.65; color: var(--text-secondary, #cbd5e1); margin-bottom: 24px;">
+            From Ahmedabad and Surat to Vadodara, Rajkot, and Sabarkantha — experience 100% BIS 916 HUID hallmarked gold, pure silver ornaments, and live bullion rate calculations delivered securely to your doorstep across Gujarat.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 26px; text-align: left;">
+            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
+                <div style="font-size: 20px; margin-bottom: 6px;">🛡️</div>
+                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">100% Insured Delivery</strong>
+                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Tamper-proof insured transit across all 33 districts of Gujarat.</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
+                <div style="font-size: 20px; margin-bottom: 6px;">📱</div>
+                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">Live Video Concierge</strong>
+                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Inspect weight, hallmarks & details on live WhatsApp video call.</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
+                <div style="font-size: 20px; margin-bottom: 6px;">⚖️</div>
+                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">Direct Artisan Pricing</strong>
+                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Transparent making charges from 6% with zero corporate markups.</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
+                <div style="font-size: 20px; margin-bottom: 6px;">🔍</div>
+                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">BIS Care Verifiable</strong>
+                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Verify 6-digit HUID code instantly on Govt BIS mobile app.</span>
+            </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
+            <a href="top-jewellers-in-gujarat" class="btn" style="background: linear-gradient(135deg, #d4af37, #aa820a); color: #0a0b0e; font-weight: 700;">Explore Gujarat Jewellery Guide &rarr;</a>
+            <a href="https://wa.me/919427080359?text=Hello%20ChandraKala%20Jewellers%2C%20I%20am%20interested%20in%20ordering%20jewellery%20in%20Gujarat" class="btn btn-outline" target="_blank" rel="noopener">Book WhatsApp Video Tour</a>
         </div>
     </div>
 </section>

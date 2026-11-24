@@ -2,7 +2,7 @@
     <div class="footer-container">
         <div class="footer-section">
             <h3>ChandraKala Jewellers</h3>
-            <p>Family-owned gold &amp; silver jewellers in Khedbrahma, Sabarkantha. 916 gold, silver, custom designs &amp; WhatsApp orders.</p>
+            <p>Family-owned gold &amp; silver jewellery house in Gujarat. 100% BIS 916 hallmarked gold, pure silver, live IST rates &amp; insured delivery across all 33 districts of Gujarat.</p>
         </div>
         <div class="footer-section">
             <h3>Quick Links</h3>

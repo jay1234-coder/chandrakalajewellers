@@ -31,7 +31,7 @@ $gujaratFaqs = [
     ],
     [
         'q' => 'Can I buy certified gold & silver jewellery online with doorstep delivery across Gujarat?',
-        'a' => 'Yes. Customers across Gujarat (including Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar, Sabarkantha, and North Gujarat) can browse our 60+ ready stock items and 138+ custom catalogue designs online, place orders with secure online checkout, or request insured delivery via direct WhatsApp video concierge at +91 9427080359.',
+        'a' => 'Yes. Customers across Gujarat (including Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar, Bhavnagar, Jamnagar, Junagadh, Sabarkantha, and all 33 districts) can browse our 60+ ready stock items and 138+ custom catalogue designs online, place orders with secure online checkout, or request insured delivery via direct WhatsApp video concierge at +91 9427080359.',
     ],
     [
         'q' => 'How does ChandraKala Jewellers ensure transparent daily gold rates in Gujarat?',
@@ -40,6 +40,22 @@ $gujaratFaqs = [
     [
         'q' => 'What traditional Gujarati jewellery designs are available?',
         'a' => 'We specialize in authentic Gujarati bridal and festive jewellery including 22K Gold Dokiya, Tanmaniya, Mangalsutra, Patala & Pichodi bangles, Kundan necklace sets, Hathpan, Pokhraj rings, Silver Kandora, and heavy Gents silver kadas.',
+    ],
+    [
+        'q' => 'How can I verify BIS Hallmark and HUID before purchasing?',
+        'a' => 'Every gold ornament at ChandraKala Jewellers features a laser-engraved 6-digit alphanumeric HUID code along with the BIS hallmark triangle stamp. You can input this HUID code directly into the government\'s official BIS Care App on Android or iOS to verify exact purity, assaying laboratory, and certification date instantly.',
+    ],
+    [
+        'q' => 'How do your making charges compare to corporate chain jewellers across Gujarat?',
+        'a' => 'As an artisan-first family jewellery house with direct workshops, ChandraKala offers making charges starting from 6% to 9%, compared to corporate jewellery chains in Ahmedabad, Surat, and Vadodara where making charges typically range between 18% and 25%. This saves our customers substantial money on every purchase.',
+    ],
+    [
+        'q' => 'Can I schedule a live video call showroom inspection from Ahmedabad, Surat, or Rajkot?',
+        'a' => 'Yes! We offer a complimentary WhatsApp Video Showroom Tour (+91 9427080359). Our jewellers will display any piece under high-definition lighting, demonstrate weight on certified digital scales, show hallmark engravings, and explain custom modifications in Gujarati or Hindi.',
+    ],
+    [
+        'q' => 'What is your gold exchange and old gold buyback policy?',
+        'a' => 'We offer full transparency for old gold exchange and buybacks. Your gold is tested and weighed digitally in front of you (or on video call), valued at prevailing market board rates, with zero unfair wastage cuts or hidden melting fees.',
     ],
     [
         'q' => 'Where is ChandraKala Jewellers showroom located in Gujarat?',

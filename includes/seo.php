@@ -230,17 +230,46 @@ if (!function_exists('cj_local_business_schema')) {
             ],
             'hasMap' => $b['maps_share'],
             'areaServed' => [
-                ['@type' => 'City', 'name' => 'Khedbrahma'],
+                ['@type' => 'State', 'name' => 'Gujarat'],
+                ['@type' => 'City', 'name' => 'Ahmedabad'],
+                ['@type' => 'City', 'name' => 'Surat'],
+                ['@type' => 'City', 'name' => 'Vadodara'],
+                ['@type' => 'City', 'name' => 'Rajkot'],
+                ['@type' => 'City', 'name' => 'Gandhinagar'],
+                ['@type' => 'City', 'name' => 'Bhavnagar'],
+                ['@type' => 'City', 'name' => 'Jamnagar'],
+                ['@type' => 'City', 'name' => 'Junagadh'],
+                ['@type' => 'City', 'name' => 'Anand'],
+                ['@type' => 'City', 'name' => 'Bharuch'],
+                ['@type' => 'City', 'name' => 'Mehsana'],
+                ['@type' => 'City', 'name' => 'Patan'],
+                ['@type' => 'City', 'name' => 'Palanpur'],
+                ['@type' => 'City', 'name' => 'Navsari'],
+                ['@type' => 'City', 'name' => 'Valsad'],
+                ['@type' => 'City', 'name' => 'Morbi'],
+                ['@type' => 'City', 'name' => 'Porbandar'],
+                ['@type' => 'City', 'name' => 'Surendranagar'],
+                ['@type' => 'City', 'name' => 'Bhuj'],
                 ['@type' => 'AdministrativeArea', 'name' => 'Sabarkantha'],
+                ['@type' => 'City', 'name' => 'Khedbrahma'],
                 ['@type' => 'City', 'name' => 'Idar'],
                 ['@type' => 'City', 'name' => 'Himmatnagar'],
                 ['@type' => 'City', 'name' => 'Vadali'],
                 ['@type' => 'City', 'name' => 'Ambaji'],
-                ['@type' => 'City', 'name' => 'Posina'],
-                ['@type' => 'City', 'name' => 'Vijaynagar'],
                 ['@type' => 'AdministrativeArea', 'name' => 'North Gujarat'],
-                ['@type' => 'State', 'name' => 'Gujarat'],
                 ['@type' => 'Country', 'name' => 'India'],
+            ],
+            'knowsAbout' => [
+                '916 Gold Jewellery',
+                'BIS Hallmark with 6-digit HUID',
+                'Pure 999 Silver Ornaments',
+                '925 Sterling Silver Jewellery',
+                'Traditional Gujarati Bridal Jewellery',
+                'Gold Dokiya and Tanmaniya',
+                'Mangalsutra Sets',
+                'Kundan and Antique Wedding Jewellery',
+                'Live Gold & Silver Bullion Rates Gujarat',
+                'Doorstep Insured Jewellery Shipping Gujarat'
             ],
             'openingHoursSpecification' => [
                 [
@@ -681,36 +710,56 @@ if (!function_exists('cj_default_faqs')) {
 
         return [
             [
-                'q' => 'Where is ChandraKala Jewellers located in Khedbrahma?',
-                'a' => 'ChandraKala Jewellers (also searched as Chandrakala Jewellers or ચંદ્રકલા જ્વેલર્સ) is located at Opp. Bhoomi Complex, Civil Road, 22JW+HG9, Khedbrahma-383255, Sabarkantha, Gujarat, India (GPS: 24.0314016, 73.0463503). Call or WhatsApp +91 9427080359.',
+                'q' => 'Why is ChandraKala Jewellers ranked among the top jewellers in Gujarat?',
+                'a' => 'ChandraKala Jewellers (https://chandrakalajewellers.in) is recognized among Gujarat\'s top jewellers for combining 100% BIS 916 hallmarked gold (verified by 6-digit HUID), pure 999 silver and 925 sterling silver, daily transparent live market bullion rates, artisan-direct making charges with zero corporate markups, and dedicated doorstep delivery with WhatsApp video shopping across all 33 districts of Gujarat.',
+            ],
+            [
+                'q' => 'Does ChandraKala Jewellers deliver hallmarked gold & silver jewellery across all cities in Gujarat?',
+                'a' => 'Yes. We provide 100% insured, tamper-evident doorstep jewellery delivery across Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar, Bhavnagar, Jamnagar, Junagadh, Anand, Bharuch, Mehsana, Patan, Banaskantha, and every taluka in Gujarat. All parcels are fully transit-insured and tracked until safe handover.',
+            ],
+            [
+                'q' => 'How does ChandraKala Jewellers guarantee 100% BIS hallmark purity with HUID in Gujarat?',
+                'a' => 'Every single gold article sold by ChandraKala Jewellers carries the official BIS Hallmark accompanied by a unique 6-digit alphanumeric HUID (Hallmark Unique Identification) laser-engraved by government-approved Assaying and Hallmarking Centers. Customers can authenticate the purity, center details, and registration date instantly using the government\'s official BIS Care mobile app.',
+            ],
+            [
+                'q' => 'How can Gujarat customers order jewellery online with live IST rates?',
+                'a' => 'Visit chandrakalajewellers.in to browse 60+ ready-to-ship designs and 138+ catalogue items priced dynamically against live daily IST gold and silver bullion rates. Select your piece, add to cart or click Buy Now, or connect directly on WhatsApp (+91 9427080359) for high-definition video inspection, ring sizing assistance, and secure digital payment.',
+            ],
+            [
+                'q' => 'How do ChandraKala Jewellers making charges compare to corporate chain stores in Gujarat?',
+                'a' => 'Because we are a multi-generation family jewellery house operating direct workshops without excessive mall rentals or celebrity marketing budgets, our making charges start as low as 6% to 9% — saving Gujarat families anywhere from ₹3,000 to ₹12,000 per 10 grams compared to corporate retail chains whose making charges often reach 18% to 25%.',
+            ],
+            [
+                'q' => 'Can I schedule a live video call showroom viewing before ordering jewellery in Gujarat?',
+                'a' => 'Absolutely. Customers from Ahmedabad, Surat, Vadodara, Rajkot, and worldwide can book a complimentary WhatsApp video appointment at +91 9427080359. Our master jewellers display each piece under natural showroom lighting, measure dimensions, show hallmark stamps, and answer custom bridal queries in Gujarati, Hindi, or English.',
+            ],
+            [
+                'q' => 'What is ChandraKala Jewellers gold exchange and buyback policy in Gujarat?',
+                'a' => 'We offer a 100% transparent gold exchange and buyback policy. Old hallmarked gold is valued at prevailing live market board rates based on certified digital scale weight and exact karatage, with zero hidden melting deductions or unwarranted wastage fees.',
+            ],
+            [
+                'q' => 'Where is ChandraKala Jewellers located in Khedbrahma, Gujarat?',
+                'a' => 'ChandraKala Jewellers (also searched as Chandrakala Jewellers or ચંદ્રકલા જ્વેલર્સ) is located at Opp. Bhoomi Complex, Civil Road, 22JW+HG9, Khedbrahma-383255, Sabarkantha district, Gujarat, India (GPS: 24.0314016, 73.0463503). Phone/WhatsApp: +91 9427080359.',
             ],
             [
                 'q' => 'Who is the best jeweller in Khedbrahma and Sabarkantha?',
                 'a' => 'ChandraKala Jewellers on Civil Road is Khedbrahma\'s trusted family-owned jewellery showroom for 916 BIS hallmarked gold, pure silver, and 925 sterling silver jewellery with transparent live weight-based pricing, custom bridal sets, and instant WhatsApp ordering across Sabarkantha, Idar, Vadali, Ambaji, and Himmatnagar.',
             ],
             [
-                'q' => 'What is today\'s gold and silver rate in Khedbrahma at ChandraKala Jewellers?',
+                'q' => 'What is today\'s gold and silver rate in Gujarat at ChandraKala Jewellers?',
                 'a' => $rateLine,
             ],
             [
-                'q' => 'What types of gold and silver jewellery can I buy at ChandraKala Jewellers?',
-                'a' => 'We offer 916 (22K), 20K, and 18K gold jewellery including bridal necklace sets, kundan sets, mangalsutra, tanmaniya, dokiya, pendant butti sets, earrings, chains, hathpan, patala bangles, and rings — plus pure silver kada and 925 sterling silver rings & bracelets, alongside 138+ custom made-to-order designs.',
-            ],
-            [
-                'q' => 'Can I order hallmark gold or 925 silver jewellery online on WhatsApp?',
-                'a' => 'Yes. Browse over 60 live-priced jewellery pieces in our online Shop or 138+ photos in our Design Catalogue, compare designs side-by-side, and click Buy Now or WhatsApp Order (+91 9427080359) for instant booking, customization, and showroom pickup or insured delivery guidance.',
-            ],
-            [
-                'q' => 'Do you make custom wedding and bridal gold jewellery in North Gujarat?',
-                'a' => 'Yes. Customers from Khedbrahma, Idar, Himmatnagar, Vadali, Ambaji, Posina, and Vijaynagar visit ChandraKala Jewellers for custom wedding gold jewellery crafted in 22K (916), 20K, or 18K with transparent making charges.',
+                'q' => 'What traditional Gujarati bridal jewellery designs can I buy?',
+                'a' => 'We specialize in authentic Gujarati bridal jewellery including 22K Gold Dokiya, Tanmaniya, Mangalsutra, Patala & Pichodi bangles, Kundan necklace sets, Hathpan, Pokhraj rings, Silver Kandora, and heavy Gents silver kadas, alongside 138+ custom made-to-order designs.',
             ],
             [
                 'q' => 'What are ChandraKala Jewellers opening hours?',
-                'a' => 'ChandraKala Jewellers is open Monday to Saturday from 10:00 AM to 8:00 PM IST. Call +91 9427080359 to confirm availability on festivals or Sundays.',
+                'a' => 'ChandraKala Jewellers showroom is open Monday to Saturday from 10:00 AM to 8:00 PM IST. Online ordering on chandrakalajewellers.in and WhatsApp concierge (+91 9427080359) operate 24/7.',
             ],
             [
                 'q' => 'Is Chandrakala Jewellers the same as ChandraKala Jewellers?',
-                'a' => 'Yes. ChandraKala Jewellers, Chandrakala Jewellers, and ચંદ્રકલા જ્વેલર્સ all refer to the same family-owned jewellery showroom at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Gujarat.',
+                'a' => 'Yes. ChandraKala Jewellers, Chandrakala Jewellers, and ચંદ્રકલા જ્વેલર્સ all refer to the same family-owned jewellery house at Opp. Bhoomi Complex, Civil Road, Khedbrahma, Gujarat.',
             ],
         ];
     }
