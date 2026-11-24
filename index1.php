@@ -20,7 +20,11 @@ if ($conn->connect_error) {
 $standard_rates = cj_get_standard_rates($conn);
 $manual_rates = cj_get_manual_rates($conn);
 
-$items = $conn->query("SELECT * FROM jewellery_items ORDER BY is_favourite DESC, id DESC LIMIT 6");
+// Show 8 random products from inventory on initial load and refresh
+$items = $conn->query("SELECT * FROM jewellery_items WHERE COALESCE(is_sold_out, 0) = 0 ORDER BY RAND() LIMIT 8");
+if (!$items || $items->num_rows === 0) {
+    $items = $conn->query("SELECT * FROM jewellery_items ORDER BY is_sold_out ASC, RAND() LIMIT 8");
+}
 
 if (!function_exists('get_metal_name')) {
     function get_metal_name($metal) {
@@ -113,9 +117,17 @@ $seo = cj_merge_seo([
 </section>
 
 <section id="shop" class="reveal">
-    <h2 class="section-heading">Hot Favourite Items</h2>
-    <p class="section-sub">Handpicked pieces loved by our customers.</p>
-    <div class="product-grid">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;">
+        <div>
+            <h2 class="section-heading" style="margin:0;text-align:left;">Hot Favourite Items</h2>
+            <p class="section-sub" style="margin:4px 0 0;text-align:left;">Handpicked pieces continuously shuffled from our inventory.</p>
+        </div>
+        <button type="button" id="cjShuffleProductsBtn" class="cj-shuffle-btn" onclick="shuffleHomeProducts()" title="Shuffle random products from inventory">
+            <svg class="cj-shuffle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+            <span>Shuffle Pieces</span>
+        </button>
+    </div>
+    <div class="product-grid cj-grid-crossfade" id="homeProductGrid">
     <?php
     if ($items) {
         $delay = 0;
@@ -184,19 +196,33 @@ $seo = cj_merge_seo([
 </section>
 
 <?php
-$cjReelsList = cj_get_ranked_reels($conn, 7, true, 'top');
+$allActiveReels = cj_get_ranked_reels($conn, 30, true, 'top');
+if (!empty($allActiveReels)) {
+    shuffle($allActiveReels);
+    $cjReelsList = array_slice($allActiveReels, 0, min(7, count($allActiveReels)));
+} else {
+    $cjReelsList = [];
+}
 if (!empty($cjReelsList)):
     $cjReelsContext = 'home';
 ?>
 <section id="reels-showcase" class="hot-favourites-section reveal cj-lazy-section" style="margin-top:42px;margin-bottom:44px;">
-    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:18px;">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px;">
         <div>
             <p style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--primary-gold-dark);margin:0 0 4px;">Live Showroom Cinema</p>
             <h2 class="section-heading" style="margin:0;text-align:left;">Sparkle in Motion</h2>
         </div>
-        <a href="/reels" style="font-size:13px;font-weight:700;color:var(--primary-gold-dark);text-decoration:none;">Explore All Reels &rarr;</a>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button type="button" id="cjShuffleReelsBtn" class="cj-shuffle-btn" onclick="shuffleHomeReels()" title="Shuffle video reels showcase">
+                <svg class="cj-shuffle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                <span>Shuffle Reels</span>
+            </button>
+            <a href="/reels" style="font-size:13px;font-weight:700;color:var(--primary-gold-dark);text-decoration:none;">Explore All Reels &rarr;</a>
+        </div>
     </div>
-    <?php include __DIR__ . '/includes/reels-bento.php'; ?>
+    <div id="homeReelsContainer" class="cj-grid-crossfade">
+        <?php include __DIR__ . '/includes/reels-bento.php'; ?>
+    </div>
     <div class="back-btn-container" style="margin-top:20px;">
         <a href="/reels" class="btn btn-secondary">Watch Full Reels Showcase &rarr;</a>
     </div>
@@ -318,6 +344,106 @@ if (!empty($cjReelsList)):
         <?php endforeach; ?>
     </div>
 </section>
+
+<style>
+.cj-shuffle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-gold-dark, #b8860b);
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    user-select: none;
+}
+.cj-shuffle-btn:hover {
+    background: rgba(212, 175, 55, 0.18);
+    border-color: rgba(212, 175, 55, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+}
+.cj-shuffle-btn:active {
+    transform: translateY(0);
+}
+.cj-shuffle-btn.is-shuffling .cj-shuffle-icon {
+    animation: cjSpin 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes cjSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.cj-grid-crossfade {
+    transition: opacity 0.22s ease;
+}
+.cj-grid-crossfade.is-fading {
+    opacity: 0.15;
+}
+</style>
+<script>
+function shuffleHomeProducts() {
+    var btn = document.getElementById('cjShuffleProductsBtn');
+    var grid = document.getElementById('homeProductGrid');
+    if (!grid || (btn && btn.classList.contains('is-shuffling'))) return;
+    if (btn) btn.classList.add('is-shuffling');
+    grid.classList.add('is-fading');
+
+    fetch('/api/shuffle-products')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.ok && data.html) {
+                grid.innerHTML = data.html;
+            }
+        })
+        .catch(function(err) {
+            console.error('Product shuffle error:', err);
+        })
+        .finally(function() {
+            setTimeout(function() {
+                grid.classList.remove('is-fading');
+                if (btn) btn.classList.remove('is-shuffling');
+            }, 180);
+        });
+}
+
+function shuffleHomeReels() {
+    var btn = document.getElementById('cjShuffleReelsBtn');
+    var container = document.getElementById('homeReelsContainer');
+    if (!container || (btn && btn.classList.contains('is-shuffling'))) return;
+    if (btn) btn.classList.add('is-shuffling');
+    container.classList.add('is-fading');
+
+    fetch('/api/shuffle-reels')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.ok && data.html) {
+                var bento = container.querySelector('.cj-reels-bento');
+                if (bento) {
+                    bento.innerHTML = data.html;
+                } else {
+                    container.innerHTML = '<div class="cj-reels-bento">' + data.html + '</div>';
+                }
+                if (typeof window.CJReelsInit === 'function') {
+                    window.CJReelsInit();
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('Reels shuffle error:', err);
+        })
+        .finally(function() {
+            setTimeout(function() {
+                container.classList.remove('is-fading');
+                if (btn) btn.classList.remove('is-shuffling');
+            }, 180);
+        });
+}
+</script>
 
 </main>
 

@@ -51,6 +51,19 @@ while (strpos($path, 'admin/admin/') === 0) {
     $path = substr($path, 6);
 }
 
+// Canonicalize billing-software paths (handle space, %20, underscore)
+$decodedPath = rawurldecode($path);
+if (preg_match('#^billing[\s\-_]software(?:/(.*))?$#i', $decodedPath, $bm)) {
+    $subPath = $bm[1] ?? '';
+    $canonicalUrl = '/billing-software' . ($subPath !== '' ? '/' . $subPath : '');
+    $query = parse_url($rawUri, PHP_URL_QUERY);
+    if (!empty($query)) {
+        $canonicalUrl .= '?' . $query;
+    }
+    header('Location: ' . $canonicalUrl, true, 301);
+    exit;
+}
+
 $rootDir = dirname(__DIR__);
 
 if ($path === 'manifest.webmanifest' || $path === 'admin/manifest.webmanifest' || $path === 'site.webmanifest') {
@@ -104,29 +117,34 @@ if ($path !== '') {
         exit;
     }
 
-    $staticFile = $rootDir . '/' . $path;
-    if (is_file($staticFile)) {
-        $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));
-        $mimes = [
-            'css' => 'text/css',
-            'js' => 'application/javascript',
-            'json' => 'application/json',
-            'webmanifest' => 'application/manifest+json',
-            'svg' => 'image/svg+xml',
-            'png' => 'image/png',
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'ico' => 'image/x-icon',
-            'webp' => 'image/webp',
-            'pdf' => 'application/pdf',
-            'txt' => 'text/plain',
-            'xml' => 'application/xml',
-        ];
-        if (isset($mimes[$ext])) {
-            header('Content-Type: ' . $mimes[$ext]);
-            header('Content-Length: ' . filesize($staticFile));
-            readfile($staticFile);
-            exit;
+    $staticCandidates = [
+        $rootDir . '/' . $path,
+        $rootDir . '/public/' . $path,
+    ];
+    foreach ($staticCandidates as $staticFile) {
+        if (is_file($staticFile)) {
+            $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));
+            $mimes = [
+                'css' => 'text/css',
+                'js' => 'application/javascript',
+                'json' => 'application/json',
+                'webmanifest' => 'application/manifest+json',
+                'svg' => 'image/svg+xml',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'ico' => 'image/x-icon',
+                'webp' => 'image/webp',
+                'pdf' => 'application/pdf',
+                'txt' => 'text/plain',
+                'xml' => 'application/xml',
+            ];
+            if (isset($mimes[$ext])) {
+                header('Content-Type: ' . $mimes[$ext]);
+                header('Content-Length: ' . filesize($staticFile));
+                readfile($staticFile);
+                exit;
+            }
         }
     }
 }

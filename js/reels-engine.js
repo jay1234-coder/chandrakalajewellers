@@ -156,6 +156,7 @@
         initTiles();
     }
 
-    // Export helper for Showcase page
+    // Export helpers for dynamic page & showcase
     window.CJReelsTrack = sendTrack;
+    window.CJReelsInit = initTiles;
 })();

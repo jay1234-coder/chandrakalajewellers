@@ -13,7 +13,7 @@
     { "src": "^/sw\\.js$", "dest": "/sw.js" },
     { "src": "^/(css|js|images|icons|fonts)/(.*)", "dest": "/$1/$2" },
     { "src": "^/admin/(css|js|images)/(.*)", "dest": "/admin/$1/$2" },
-    { "src": "^/billing-software/(assets|uploads)/(.*)", "dest": "/billing-software/$1/$2" },
+    { "src": "^/billing(?:-|%20|\\s|_)?software/(assets|uploads)/(.*)", "dest": "/billing-software/$1/$2" },
     { "src": "^/favicon\\.(ico|png|svg)$", "dest": "/favicon.$1" },
     { "src": "^/(admin/)?(manifest|site)\\.(webmanifest|json)$", "dest": "/api/index.php" },
     { "src": "^/(.*)$", "dest": "/api/index.php" }
