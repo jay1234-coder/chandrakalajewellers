@@ -279,6 +279,10 @@ if (strpos($path, 'api/') === 0) {
 }
 
 // 5. Direct PHP files in root (e.g. gallery, product, cart, checkout)
+if ($path === 'mcx' || $path === 'mcx.php' || $path === 'rc' || $path === 'rc.php') {
+    cj_dispatch_script($rootDir . '/mcx.php');
+}
+
 $directFile = $rootDir . '/' . $path;
 if (is_file($directFile)) {
     cj_dispatch_script($directFile);

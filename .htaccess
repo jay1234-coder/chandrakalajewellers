@@ -67,6 +67,8 @@ RewriteRule ^secret/?$ secret.php [L,NC]
 RewriteRule ^admin/?$ /admin/index.php [R=302,L]
 RewriteRule ^admin/admin.*$ /admin/index.php [R=302,L]
 RewriteRule ^Catalogue/?$ Catalogue.php [L,NC]
+RewriteRule ^mcx/?$ mcx.php [L,NC]
+RewriteRule ^rc/?$ mcx.php [L,NC]
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^(.*?)/?$ $1.php [L]
