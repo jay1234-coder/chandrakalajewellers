@@ -258,42 +258,231 @@ if (!empty($cjReelsList)):
     </div>
 </section>
 
-<section id="gujarat-delivery" class="reveal cj-lazy-section" style="margin: 48px 0; background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(26,26,26,0.6) 100%); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 36px 28px;">
-    <div style="max-width: 860px; margin: 0 auto; text-align: center;">
-        <span style="display:inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--primary-gold-dark, #b8860b); background: rgba(212,175,55,0.15); padding: 5px 14px; border-radius: 999px; margin-bottom: 12px; border: 1px solid rgba(212,175,55,0.35);">
+<style>
+/* Gujarat Statewide Showcase Section */
+.gujarat-delivery-section {
+    margin: 48px 0;
+    padding: 44px 28px;
+    background: linear-gradient(145deg, #ffffff 0%, #fffdf6 100%);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -10px rgba(212, 175, 55, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+html[data-theme="dark"] .gujarat-delivery-section {
+    background: linear-gradient(145deg, #161a22 0%, #1a202c 100%);
+    border-color: rgba(240, 215, 140, 0.22);
+    box-shadow: 0 12px 36px -12px rgba(0, 0, 0, 0.6);
+}
+.gujarat-delivery-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6), transparent);
+}
+.gujarat-delivery-inner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.gujarat-delivery-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary-gold-dark, #b8972c);
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+}
+html[data-theme="dark"] .gujarat-delivery-badge {
+    color: var(--primary-gold, #f0d78c);
+    background: rgba(240, 215, 140, 0.12);
+    border-color: rgba(240, 215, 140, 0.3);
+}
+.gujarat-delivery-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(22px, 3.2vw, 32px);
+    font-weight: 700;
+    color: var(--text-primary, #111827);
+    margin: 0 0 12px;
+    line-height: 1.3;
+}
+.gujarat-delivery-sub {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-secondary, #4b5563);
+    max-width: 740px;
+    margin: 0 auto 28px;
+}
+.gujarat-delivery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+.gujarat-feature-card {
+    background: #ffffff;
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 14px;
+    padding: 20px 18px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+}
+html[data-theme="dark"] .gujarat-feature-card {
+    background: #181d28;
+    border-color: rgba(240, 215, 140, 0.16);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.gujarat-feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(212, 175, 55, 0.14);
+    border-color: rgba(212, 175, 55, 0.45);
+}
+html[data-theme="dark"] .gujarat-feature-card:hover {
+    border-color: rgba(240, 215, 140, 0.4);
+    box-shadow: 0 8px 22px rgba(240, 215, 140, 0.16);
+}
+.gujarat-feature-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(212, 175, 55, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+.gujarat-feature-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-primary, #111827);
+    margin-bottom: 6px;
+    display: block;
+}
+.gujarat-feature-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary, #4b5563);
+    display: block;
+}
+.gujarat-delivery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+}
+.gujarat-delivery-actions .btn-guide {
+    background: linear-gradient(135deg, #d4af37 0%, #b8972c 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 26px;
+    border-radius: 30px;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: inline-block;
+}
+.gujarat-delivery-actions .btn-guide:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.45);
+}
+.gujarat-delivery-actions .btn-whatsapp-tour {
+    background: transparent;
+    color: var(--primary-gold-dark, #b8972c);
+    border: 1.5px solid var(--primary-gold, #d4af37);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 24px;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+.gujarat-delivery-actions .btn-whatsapp-tour:hover {
+    background: rgba(212, 175, 55, 0.1);
+    transform: translateY(-2px);
+}
+html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
+    color: var(--primary-gold, #f0d78c);
+    border-color: rgba(240, 215, 140, 0.5);
+}
+@media (max-width: 680px) {
+    .gujarat-delivery-section {
+        padding: 32px 18px;
+        margin: 36px 0;
+    }
+    .gujarat-delivery-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .gujarat-feature-card {
+        padding: 16px 14px;
+    }
+    .gujarat-delivery-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .gujarat-delivery-actions a {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+}
+</style>
+
+<section id="gujarat-delivery" class="reveal cj-lazy-section gujarat-delivery-section">
+    <div class="gujarat-delivery-inner">
+        <span class="gujarat-delivery-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
             Statewide Gujarat Service
         </span>
-        <h2 style="font-family: 'Cinzel', serif; font-size: clamp(22px, 3.5vw, 32px); color: var(--text-primary, #fff); margin-bottom: 12px;">
+        <h2 class="gujarat-delivery-title">
             Top Ranking Jewellery Destination in Gujarat
         </h2>
-        <p style="font-size: 14.5px; line-height: 1.65; color: var(--text-secondary, #cbd5e1); margin-bottom: 24px;">
+        <p class="gujarat-delivery-sub">
             From Ahmedabad and Surat to Vadodara, Rajkot, and Sabarkantha — experience 100% BIS 916 HUID hallmarked gold, pure silver ornaments, and live bullion rate calculations delivered securely to your doorstep across Gujarat.
         </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 26px; text-align: left;">
-            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
-                <div style="font-size: 20px; margin-bottom: 6px;">🛡️</div>
-                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">100% Insured Delivery</strong>
-                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Tamper-proof insured transit across all 33 districts of Gujarat.</span>
+        <div class="gujarat-delivery-grid">
+            <div class="gujarat-feature-card">
+                <div class="gujarat-feature-icon">🛡️</div>
+                <strong class="gujarat-feature-title">100% Insured Delivery</strong>
+                <span class="gujarat-feature-desc">Tamper-proof insured transit across all 33 districts of Gujarat.</span>
             </div>
-            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
-                <div style="font-size: 20px; margin-bottom: 6px;">📱</div>
-                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">Live Video Concierge</strong>
-                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Inspect weight, hallmarks & details on live WhatsApp video call.</span>
+            <div class="gujarat-feature-card">
+                <div class="gujarat-feature-icon">📱</div>
+                <strong class="gujarat-feature-title">Live Video Concierge</strong>
+                <span class="gujarat-feature-desc">Inspect weight, hallmarks & details on live WhatsApp video call.</span>
             </div>
-            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
-                <div style="font-size: 20px; margin-bottom: 6px;">⚖️</div>
-                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">Direct Artisan Pricing</strong>
-                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Transparent making charges from 6% with zero corporate markups.</span>
+            <div class="gujarat-feature-card">
+                <div class="gujarat-feature-icon">⚖️</div>
+                <strong class="gujarat-feature-title">Direct Artisan Pricing</strong>
+                <span class="gujarat-feature-desc">Transparent making charges from 6% with zero corporate markups.</span>
             </div>
-            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;">
-                <div style="font-size: 20px; margin-bottom: 6px;">🔍</div>
-                <strong style="color: var(--primary-gold-light, #fef08a); font-size: 14px; display: block; margin-bottom: 4px;">BIS Care Verifiable</strong>
-                <span style="font-size: 12.5px; color: #94a3b8; line-height: 1.4; display: block;">Verify 6-digit HUID code instantly on Govt BIS mobile app.</span>
+            <div class="gujarat-feature-card">
+                <div class="gujarat-feature-icon">🔍</div>
+                <strong class="gujarat-feature-title">BIS Care Verifiable</strong>
+                <span class="gujarat-feature-desc">Verify 6-digit HUID code instantly on Govt BIS mobile app.</span>
             </div>
         </div>
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-            <a href="top-jewellers-in-gujarat" class="btn" style="background: linear-gradient(135deg, #d4af37, #aa820a); color: #0a0b0e; font-weight: 700;">Explore Gujarat Jewellery Guide &rarr;</a>
-            <a href="https://wa.me/919427080359?text=Hello%20ChandraKala%20Jewellers%2C%20I%20am%20interested%20in%20ordering%20jewellery%20in%20Gujarat" class="btn btn-outline" target="_blank" rel="noopener">Book WhatsApp Video Tour</a>
+        <div class="gujarat-delivery-actions">
+            <a href="top-jewellers-in-gujarat" class="btn-guide">Explore Gujarat Jewellery Guide &rarr;</a>
+            <a href="https://wa.me/919427080359?text=Hello%20ChandraKala%20Jewellers%2C%20I%20am%20interested%20in%20ordering%20jewellery%20in%20Gujarat" class="btn-whatsapp-tour" target="_blank" rel="noopener">Book WhatsApp Video Tour</a>
         </div>
     </div>
 </section>
