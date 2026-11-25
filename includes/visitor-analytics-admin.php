@@ -511,6 +511,9 @@ html[data-theme="dark"] {
 html[data-theme="dark"] #adminVisitorMap {
     background: #0f1218;
 }
+html[data-theme="dark"] #adminVisitorMap .leaflet-tile {
+    filter: brightness(0.68) invert(100%) contrast(1.3) hue-rotate(185deg) saturate(0.45);
+}
 #adminVisitorMap .leaflet-container {
     width: 100% !important;
     height: 100% !important;
@@ -1453,16 +1456,11 @@ html[data-theme="dark"] .cj-leaflet-popup .leaflet-popup-tip {
             zoomControl: true
         }).setView([23.2, 72.8], 7);
 
-        // Cartography tile layer powered by CARTO (Voyager for Light, Dark Matter for Dark)
-        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        var tileUrl = isDark 
-            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-        L.tileLayer(tileUrl, {
-            subdomains: 'abcd',
+        // Free standard OpenStreetMap tile layer (100% free, no API key required)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            subdomains: 'abc',
             maxZoom: 19,
-            attribution: '&copy; <a href="https://carto.com/" target="_blank" rel="noopener">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
         }).addTo(map);
 
         // Responsive resize invalidate
