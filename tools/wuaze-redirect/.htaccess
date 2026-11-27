@@ -1,0 +1,21 @@
+# ========================================================
+# ChandraKala Jewellers — Permanent 301 Domain Migration
+# Host on: chandrakalajewellers.wuaze.com (htdocs/.htaccess)
+# ========================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Exclude index.html if you want visitors to see the redirection banner
+    # RewriteCond %{REQUEST_URI} !^/index\.html$
+
+    # 301 Permanent Redirect all traffic to the official domain
+    RewriteCond %{HTTP_HOST} ^(www\.)?chandrakalajewellers\.wuaze\.com$ [NC]
+    RewriteRule ^(.*)$ https://www.chandrakalajewellers.in/$1 [R=301,L]
+</IfModule>
+
+# Fallback redirect if mod_rewrite is disabled
+<IfModule !mod_rewrite.c>
+    Redirect 301 / https://www.chandrakalajewellers.in/
+</IfModule>

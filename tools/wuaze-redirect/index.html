@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChandraKala Jewellers — We Have Moved to chandrakalajewellers.in</title>
+    
+    <!-- SEO & Domain Migration Signals -->
+    <meta name="robots" content="noindex, follow">
+    <link rel="canonical" href="https://www.chandrakalajewellers.in/">
+    <meta http-equiv="refresh" content="3;url=https://www.chandrakalajewellers.in/">
+    
+    <!-- Open Graph / Meta -->
+    <meta property="og:title" content="ChandraKala Jewellers — Official Website Moved">
+    <meta property="og:description" content="Please visit our official online showroom and live gold/silver rate portal at chandrakalajewellers.in.">
+    <meta property="og:url" content="https://www.chandrakalajewellers.in/">
+    <meta name="theme-color" content="#0a0b0e">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-base: #0a0b0e;
+            --bg-card: rgba(18, 20, 26, 0.88);
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --gold-dark: #aa820a;
+            --gold-gradient: linear-gradient(135deg, #f5d77f 0%, #d4af37 50%, #aa820a 100%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-gold: rgba(212, 175, 55, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient luxury background glow */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(10, 11, 14, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(170, 130, 10, 0.08) 0%, rgba(10, 11, 14, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .redirect-card {
+            position: relative;
+            z-index: 1;
+            max-width: 540px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 44px 36px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
+                        0 0 40px rgba(212, 175, 55, 0.08);
+            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Brand Monogram Badge */
+        .brand-badge {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1f232b, #12141a);
+            border: 1.5px solid var(--gold-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 24px rgba(212, 175, 55, 0.25),
+                        inset 0 0 12px rgba(212, 175, 55, 0.15);
+            position: relative;
+        }
+
+        .brand-badge svg {
+            width: 38px;
+            height: 38px;
+            color: var(--gold-light);
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 18px;
+        }
+
+        .pill-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+        p.desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Domain Highlight Box */
+        .domain-box {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px dashed rgba(212, 175, 55, 0.45);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .domain-box .old-text {
+            font-size: 12px;
+            color: #64748b;
+            text-decoration: line-through;
+        }
+
+        .domain-box .arrow-icon {
+            color: var(--gold-primary);
+            font-weight: bold;
+        }
+
+        .domain-box .new-domain {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gold-light);
+            letter-spacing: 0.02em;
+        }
+
+        /* Action CTA Button */
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #0a0b0e;
+            background: var(--gold-gradient);
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(212, 175, 55, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px -4px rgba(212, 175, 55, 0.5);
+            filter: brightness(1.08);
+        }
+
+        .cta-btn:active {
+            transform: translateY(0);
+        }
+
+        .cta-btn svg {
+            transition: transform 0.2s ease;
+        }
+
+        .cta-btn:hover svg {
+            transform: translateX(4px);
+        }
+
+        /* Countdown & Control */
+        .countdown-row {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .countdown-num {
+            display: inline-block;
+            min-width: 20px;
+            font-weight: 700;
+            color: var(--gold-light);
+        }
+
+        .pause-btn {
+            background: none;
+            border: none;
+            color: var(--gold-primary);
+            font-size: 12px;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 2px 6px;
+            margin-left: 6px;
+        }
+
+        .pause-btn:hover {
+            color: var(--gold-light);
+        }
+
+        /* Quick Links Footer */
+        .quick-links {
+            margin-top: 26px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .quick-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .quick-links a:hover {
+            color: var(--gold-light);
+        }
+
+        @media (max-width: 480px) {
+            .redirect-card {
+                padding: 32px 22px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .domain-box {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="redirect-card">
+        <!-- Logo / Monogram -->
+        <div class="brand-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        </div>
+
+        <div class="pill-badge">
+            <span class="dot"></span>
+            Official Store Notice
+        </div>
+
+        <h1>ChandraKala Jewellers</h1>
+        <div class="brand-sub">Khedbrahma &bull; Gujarat</div>
+
+        <p class="desc">
+            We have officially upgraded our web home to provide live 916 gold &amp; silver rates, online jewellery shopping, and instant billing services.
+        </p>
+
+        <!-- Old vs New Domain -->
+        <div class="domain-box">
+            <span class="old-text">chandrakalajewellers.wuaze.com</span>
+            <span class="arrow-icon">&rarr;</span>
+            <span class="new-domain" id="destDomainDisplay">chandrakalajewellers.in</span>
+        </div>
+
+        <!-- Direct CTA -->
+        <a id="redirectCta" href="https://www.chandrakalajewellers.in/" class="cta-btn">
+            <span>Visit Official Website</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </a>
+
+        <!-- Live Countdown -->
+        <div class="countdown-row" id="countdownRow">
+            <span>Redirecting automatically in</span>
+            <span class="countdown-num" id="countdownText">3</span>
+            <span>seconds...</span>
+            <button type="button" class="pause-btn" id="cancelBtn" onclick="togglePause()">Pause</button>
+        </div>
+
+        <!-- Quick Jump Section -->
+        <nav class="quick-links" aria-label="Explore direct sections">
+            <a href="https://www.chandrakalajewellers.in/gold-rate-khedbrahma">Live Gold Rates</a>
+            <span>&bull;</span>
+            <a href="https://www.chandrakalajewellers.in/gallery">Jewellery Collection</a>
+            <span>&bull;</span>
+            <a href="https://www.chandrakalajewellers.in/Catalogue">Catalogue</a>
+            <span>&bull;</span>
+            <a href="https://www.chandrakalajewellers.in/contact">Store Contact</a>
+        </nav>
+    </main>
+
+    <script>
+        (function() {
+            var TARGET_BASE = 'https://www.chandrakalajewellers.in';
+
+            // Smart path preservation: Map old subpages to new official URLs
+            var currentPath = window.location.pathname || '';
+            var currentSearch = window.location.search || '';
+            var targetPath = '/';
+
+            // Normalize path (strip leading slash, trailing .php)
+            var clean = currentPath.replace(/^\/+/, '').replace(/\.php$/i, '').toLowerCase();
+
+            if (clean === 'gallery') {
+                targetPath = '/gallery';
+            } else if (clean === 'catalogue') {
+                targetPath = '/Catalogue';
+            } else if (clean === 'product') {
+                targetPath = '/product' + currentSearch;
+            } else if (clean === 'buynow') {
+                targetPath = '/buynow' + currentSearch;
+            } else if (clean === 'cart') {
+                targetPath = '/cart';
+            } else if (clean === 'checkout') {
+                targetPath = '/checkout';
+            } else if (clean === 'about') {
+                targetPath = '/about';
+            } else if (clean === 'contact') {
+                targetPath = '/contact';
+            } else if (clean === 'blog' || clean === 'blog-post') {
+                targetPath = clean === 'blog' ? '/blog' : '/blog-post' + currentSearch;
+            } else if (clean.indexOf('admin') === 0) {
+                targetPath = '/admin';
+            } else if (clean.indexOf('billing') === 0) {
+                targetPath = '/billing-software';
+            }
+
+            var finalUrl = TARGET_BASE + targetPath;
+
+            // Update CTA button and display
+            var cta = document.getElementById('redirectCta');
+            if (cta) cta.href = finalUrl;
+
+            // Countdown timer
+            var remaining = 3;
+            var countdownEl = document.getElementById('countdownText');
+            var cancelBtn = document.getElementById('cancelBtn');
+            var timerId = null;
+            var isPaused = false;
+
+            function tick() {
+                if (isPaused) return;
+                remaining--;
+                if (countdownEl) countdownEl.textContent = remaining;
+                if (remaining <= 0) {
+                    clearInterval(timerId);
+                    window.location.replace(finalUrl);
+                }
+            }
+
+            timerId = setInterval(tick, 1000);
+
+            window.togglePause = function() {
+                isPaused = !isPaused;
+                if (cancelBtn) {
+                    cancelBtn.textContent = isPaused ? 'Resume' : 'Pause';
+                }
+                if (!isPaused && remaining <= 0) {
+                    window.location.replace(finalUrl);
+                }
+            };
+        })();
+    </script>
+</body>
+</html>
