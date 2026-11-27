@@ -34,6 +34,7 @@ if (!function_exists('cj_build_sitemap_xml')) {
             ['loc' => cj_abs_url('gold-rate-khedbrahma'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.98'],
             ['loc' => cj_abs_url('jewellers-in-khedbrahma'), 'lastmod' => $nowIso, 'changefreq' => 'weekly', 'priority' => '0.98'],
             ['loc' => cj_abs_url('top-jewellers-in-gujarat'), 'lastmod' => $nowIso, 'changefreq' => 'weekly', 'priority' => '0.98'],
+            ['loc' => cj_abs_url('mcx'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.90'],
             ['loc' => cj_abs_url('gallery'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.95'],
             ['loc' => cj_abs_url('gallery?metal_type=gold'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.92'],
             ['loc' => cj_abs_url('gallery?metal_type=silver'), 'lastmod' => $rateLastMod, 'changefreq' => 'daily', 'priority' => '0.90'],
@@ -323,7 +324,7 @@ if (!function_exists('cj_ping_search_engines')) {
     /**
      * Ping Google and Bing sitemap gateways.
      */
-    function cj_ping_search_engines(string $sitemapUrl = 'https://chandrakalajewellers.in/sitemap.xml'): array
+    function cj_ping_search_engines(string $sitemapUrl = 'https://www.chandrakalajewellers.in/sitemap.xml'): array
     {
         $results = [];
         if (!function_exists('curl_init')) {
@@ -377,7 +378,7 @@ if (!function_exists('cj_auto_ping_indexnow')) {
         @file_put_contents($lockFile, (string)time());
 
         $indexNowKey = 'b7e4c91a2f8d4e6ab3c5d0e9f1a2b3c4';
-        $host = 'chandrakalajewellers.in';
+        $host = function_exists('cj_site_host') ? cj_site_host() : 'www.chandrakalajewellers.in';
         $keyLocation = 'https://' . $host . '/' . $indexNowKey . '.txt';
 
         $baseUrls = [
@@ -385,12 +386,14 @@ if (!function_exists('cj_auto_ping_indexnow')) {
             'https://' . $host . '/gold-rate-khedbrahma',
             'https://' . $host . '/jewellers-in-khedbrahma',
             'https://' . $host . '/top-jewellers-in-gujarat',
+            'https://' . $host . '/mcx',
             'https://' . $host . '/gallery',
             'https://' . $host . '/Catalogue',
             'https://' . $host . '/reels',
             'https://' . $host . '/llms.txt',
             'https://' . $host . '/llms-full.txt',
             'https://' . $host . '/sitemap.xml',
+            'https://' . $host . '/sitemap-videos.xml',
         ];
         $urls = array_values(array_unique(array_merge($baseUrls, $extraUrls)));
 

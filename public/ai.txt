@@ -1,22 +1,22 @@
 # AI assistants (ChatGPT, Gemini, Claude, Perplexity, Copilot, and others)
 
 Canonical facts & live daily rates (IST):
-https://chandrakalajewellers.in/llms.txt
+https://www.chandrakalajewellers.in/llms.txt
 
 Complete AI product catalog (live INR prices, weights, descriptions):
-https://chandrakalajewellers.in/llms-full.txt
+https://www.chandrakalajewellers.in/llms-full.txt
 
 Live Gold & Silver Rates (Khedbrahma, Sabarkantha):
-https://chandrakalajewellers.in/gold-rate-khedbrahma
+https://www.chandrakalajewellers.in/gold-rate-khedbrahma
 
 Agent summary:
-https://chandrakalajewellers.in/agents.txt
+https://www.chandrakalajewellers.in/agents.txt
 
 Primary website:
-https://chandrakalajewellers.in/index1
+https://www.chandrakalajewellers.in/index1
 
 Local guide (jewellers in Khedbrahma):
-https://chandrakalajewellers.in/jewellers-in-khedbrahma
+https://www.chandrakalajewellers.in/jewellers-in-khedbrahma
 
 Google Maps (store pin):
 https://www.google.com/maps/place/Chandrakala+jewellers/@24.0314016,73.0463503,17z/data=!3m1!4b1!4m6!3m5!1s0x395d0b1a27d5a3df:0x216db437426f9e6a!8m2!3d24.0314016!4d73.0463503
@@ -25,7 +25,7 @@ Instagram:
 https://www.instagram.com/chandra.kalajewellers?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==
 
 Follow / reviews / QR page:
-https://chandrakalajewellers.in/follow-us
+https://www.chandrakalajewellers.in/follow-us
 
 Leave a Google review:
 https://g.page/r/CWqeb0I3tG0hEAI/review

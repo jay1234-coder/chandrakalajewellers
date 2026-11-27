@@ -22,7 +22,7 @@ function copyRecursive(src, dest) {
 }
 
 // Copy static directories
-const staticDirs = ['css', 'js', 'images'];
+const staticDirs = ['css', 'js', 'images', 'uploads'];
 for (const dir of staticDirs) {
   const src = path.join(rootDir, dir);
   const dest = path.join(publicDir, dir);
@@ -39,6 +39,8 @@ const staticFiles = [
   'manifest.webmanifest',
   'site.webmanifest',
   'robots.txt',
+  'sitemap.xml',
+  'sitemap-videos.xml',
   'llms.txt',
   'llms-full.txt',
   'ai.txt',

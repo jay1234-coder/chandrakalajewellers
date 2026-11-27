@@ -16,7 +16,13 @@ ini_set('log_errors', '1');
 // Get product ID
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) {
-    die("Invalid product ID.");
+    http_response_code(404);
+    if (file_exists(__DIR__ . '/404.php')) {
+        include __DIR__ . '/404.php';
+    } else {
+        echo "404 - Product Not Found";
+    }
+    exit;
 }
 
 $standard_rates = cj_get_standard_rates($conn);
@@ -25,7 +31,13 @@ $manual_rates = cj_get_manual_rates($conn);
 // Fetch product
 $productQuery = $conn->query("SELECT * FROM jewellery_items WHERE id = $id");
 if (!$productQuery || $productQuery->num_rows === 0) {
-    die("Product not found.");
+    http_response_code(404);
+    if (file_exists(__DIR__ . '/404.php')) {
+        include __DIR__ . '/404.php';
+    } else {
+        echo "404 - Product Not Found";
+    }
+    exit;
 }
 $product = $productQuery->fetch_assoc();
 

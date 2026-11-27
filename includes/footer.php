@@ -15,6 +15,7 @@
                 <li><a href="jewellers-in-khedbrahma">Jewellers in Khedbrahma</a></li>
                 <li><a href="gold-rate-khedbrahma">Gold Rate Khedbrahma</a></li>
                 <li><a href="top-jewellers-in-gujarat">Top Jewellers in Gujarat</a></li>
+                <li><a href="mcx">MCX Gold Calculator</a></li>
                 <li><a href="follow-us">Follow Us &amp; Reviews</a></li>
                 <?php if (function_exists('cj_feature') && cj_feature('feat_customer_accounts')): ?>
                 <li><a href="account">My account</a></li>

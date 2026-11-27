@@ -126,6 +126,7 @@ echo "- [Home & Live Daily Rates]({$host}/index1)\n";
 echo "- [Gold Rate Today in Khedbrahma]({$host}/gold-rate-khedbrahma)\n";
 echo "- [Jewellers in Khedbrahma — Local Guide]({$host}/jewellers-in-khedbrahma)\n";
 echo "- [Top Jewellers in Gujarat — Premier 916 Hallmark Store]({$host}/top-jewellers-in-gujarat)\n";
+echo "- [MCX Gold Rate Calculator — Live Bullion Purity & GST Tool]({$host}/mcx)\n";
 echo "- [Shop All Jewellery]({$host}/gallery)\n";
 echo "- [Shop 916 Gold Jewellery]({$host}/gallery?metal_type=gold)\n";
 echo "- [Shop All Silver Jewellery]({$host}/gallery?metal_type=silver)\n";

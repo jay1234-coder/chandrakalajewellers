@@ -148,7 +148,7 @@ if ($is_ajax) {
     exit;
 }
 
-$catalogueCanonical = $targetItemId > 0 ? cj_abs_url('Catalogue?id=' . $targetItemId) : cj_abs_url('Catalogue');
+$catalogueCanonical = ($targetItemId > 0 && $targetProduct) ? cj_abs_url('Catalogue?id=' . $targetItemId) : cj_abs_url('Catalogue');
 $catalogueTitle = $targetProduct 
     ? ('Custom Jewellery Design #' . (int)$targetProduct['id'] . ' | ChandraKala Jewellers Khedbrahma') 
     : 'Custom Gold & Silver Jewellery Design Catalogue | ChandraKala Jewellers';

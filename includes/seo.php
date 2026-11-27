@@ -9,9 +9,9 @@ if (!defined('CJ_SEO_LOADED')) {
 }
 
 if (!function_exists('cj_site_host')) {
-    /** Canonical production host (never www / never old wuaze staging). */
+    /** Canonical production host (matching primary www domain on Vercel to prevent 308 redirect loops). */
     function cj_site_host() {
-        return 'chandrakalajewellers.in';
+        return 'www.chandrakalajewellers.in';
     }
 }
 
@@ -37,7 +37,7 @@ if (!function_exists('cj_base_url')) {
         $rawHost = preg_replace('/:\d+$/', '', $rawHost);
         $isLocal = cj_is_local_host($rawHost);
 
-        // Production SEO: always apex https://chandrakalajewellers.in (strip www / old domains)
+        // Production SEO: always primary https://www.chandrakalajewellers.in (prevent redirect loops)
         if ($isLocal) {
             $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
                 || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)

@@ -22,13 +22,25 @@ cj_expire_reservations($conn);
 // Validate and get product ID
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) {
-    die("Invalid Product.");
+    http_response_code(404);
+    if (file_exists(__DIR__ . '/404.php')) {
+        include __DIR__ . '/404.php';
+    } else {
+        echo "404 - Product Not Found";
+    }
+    exit;
 }
 
 // Fetch product details
 $product = $conn->query("SELECT * FROM jewellery_items WHERE id = $id")->fetch_assoc();
 if (!$product) {
-    die("Product not found.");
+    http_response_code(404);
+    if (file_exists(__DIR__ . '/404.php')) {
+        include __DIR__ . '/404.php';
+    } else {
+        echo "404 - Product Not Found";
+    }
+    exit;
 }
 
 $extras = cj_product_extra_images($conn, $id);

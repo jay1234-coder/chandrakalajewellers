@@ -87,6 +87,11 @@ if ($path === 'sitemap.xml') {
     require $rootDir . '/sitemap.php';
     exit;
 }
+if ($path === 'sitemap-videos.xml' || $path === 'video-sitemap.xml') {
+    chdir($rootDir);
+    require $rootDir . '/sitemap-videos.php';
+    exit;
+}
 if ($path === 'feed-products.xml' || $path === 'google-shopping.xml' || $path === 'feed-products') {
     chdir($rootDir);
     require $rootDir . '/feed-products.php';
