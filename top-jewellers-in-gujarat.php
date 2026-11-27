@@ -12,8 +12,13 @@ require_once __DIR__ . '/includes/seo.php';
 $b = cj_business_info();
 $standard_rates = isset($conn) && $conn instanceof mysqli ? cj_get_standard_rates($conn) : [];
 
-$gold1g = (float)($standard_rates['gold_rate'] ?? 0);
-$gold10g = $gold1g * 10;
+$gold24k_1g = (float)($standard_rates['gold_rate'] ?? 0);
+$gold24k_10g = $gold24k_1g * 10;
+// 22K (916) jewellery rate: 24K pure rate multiplied by 0.9166
+$gold22k_1g = $gold24k_1g * 0.9166;
+$gold22k_10g = $gold22k_1g * 10;
+$gold1g = $gold22k_1g;
+$gold10g = $gold22k_10g;
 $silver1g = (float)($standard_rates['silver_rate'] ?? 0);
 $silver1kg = $silver1g * 1000;
 $silver925g = (float)($standard_rates['silver_925_rate'] ?? 0);
@@ -377,16 +382,21 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
                 </tr>
             </thead>
             <tbody>
-                <?php if ($gold1g > 0): ?>
+                <?php if ($gold24k_1g > 0): ?>
+                <tr>
+                    <td><strong>24K Pure Gold (Per 10 Grams)</strong></td>
+                    <td>999 Fine Bullion Rate</td>
+                    <td class="rate-gold-num">₹<?= number_format($gold24k_10g, 0) ?></td>
+                </tr>
                 <tr>
                     <td><strong>22K Gold (Per 1 Gram)</strong></td>
-                    <td>916 BIS Hallmark (91.6% Pure)</td>
-                    <td class="rate-gold-num">₹<?= number_format($gold1g, 0) ?></td>
+                    <td>916 BIS Hallmark (22K)</td>
+                    <td class="rate-gold-num">₹<?= number_format($gold22k_1g, 0) ?></td>
                 </tr>
                 <tr>
                     <td><strong>22K Gold (Per 10 Grams / Tola)</strong></td>
-                    <td>Standard 1 Tola Gujarat Rate</td>
-                    <td class="rate-gold-num">₹<?= number_format($gold10g, 0) ?></td>
+                    <td>Standard 1 Tola Gujarat 916 Rate</td>
+                    <td class="rate-gold-num">₹<?= number_format($gold22k_10g, 0) ?></td>
                 </tr>
                 <?php endif; ?>
                 <?php if ($silver1g > 0): ?>
