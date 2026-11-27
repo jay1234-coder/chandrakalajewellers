@@ -31,6 +31,7 @@ if (isset($conn) && $conn instanceof mysqli && !$conn->connect_error) {
     $items = $conn->query("SELECT * FROM jewellery_items WHERE COALESCE(is_sold_out, 0) = 0 ORDER BY id DESC");
 }
 
+ob_start();
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 ?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
@@ -86,3 +87,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     ?>
 </channel>
 </rss>
+<?php
+echo str_replace(
+    'https://www.chandrakalajewellers.in',
+    'https://chandrakalajewellers.in',
+    ob_get_clean()
+);

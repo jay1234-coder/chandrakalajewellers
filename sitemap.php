@@ -12,7 +12,11 @@ require_once __DIR__ . '/includes/indexnow-helper.php';
 header('Content-Type: application/xml; charset=UTF-8');
 header('Cache-Control: public, max-age=180, stale-while-revalidate=360');
 
-$xml = cj_build_sitemap_xml($conn);
+$xml = str_replace(
+    'https://www.chandrakalajewellers.in',
+    'https://chandrakalajewellers.in',
+    cj_build_sitemap_xml($conn)
+);
 
 // Also sync physical file to disk if directory/file is writable
 $targetFile = __DIR__ . '/sitemap.xml';
