@@ -472,7 +472,7 @@ html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
             <div class="gujarat-feature-card">
                 <div class="gujarat-feature-icon">⚖️</div>
                 <strong class="gujarat-feature-title">Direct Artisan Pricing</strong>
-                <span class="gujarat-feature-desc">Transparent making charges from 6% with zero corporate markups.</span>
+                <span class="gujarat-feature-desc">Transparent making charges based on design and craftsmanship with zero hidden fees.</span>
             </div>
             <div class="gujarat-feature-card">
                 <div class="gujarat-feature-icon">🔍</div>

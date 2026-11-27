@@ -46,16 +46,16 @@ $gujaratFaqs = [
         'a' => 'Every gold ornament at ChandraKala Jewellers features a laser-engraved 6-digit alphanumeric HUID code along with the BIS hallmark triangle stamp. You can input this HUID code directly into the government\'s official BIS Care App on Android or iOS to verify exact purity, assaying laboratory, and certification date instantly.',
     ],
     [
-        'q' => 'How do your making charges compare to corporate chain jewellers across Gujarat?',
-        'a' => 'As an artisan-first family jewellery house with direct workshops, ChandraKala offers making charges starting from 6% to 9%, compared to corporate jewellery chains in Ahmedabad, Surat, and Vadodara where making charges typically range between 18% and 25%. This saves our customers substantial money on every purchase.',
+        'q' => 'How are making charges calculated at ChandraKala Jewellers?',
+        'a' => 'At ChandraKala Jewellers, making charges are determined honestly and transparently based on the intricate craftsmanship, design complexity, and metal weight of each ornament. As an artisan-led family jewellery showroom with our own workshop, we provide clear itemized billing with zero hidden fees.',
     ],
     [
         'q' => 'Can I schedule a live video call showroom inspection from Ahmedabad, Surat, or Rajkot?',
         'a' => 'Yes! We offer a complimentary WhatsApp Video Showroom Tour (+91 9427080359). Our jewellers will display any piece under high-definition lighting, demonstrate weight on certified digital scales, show hallmark engravings, and explain custom modifications in Gujarati or Hindi.',
     ],
     [
-        'q' => 'What is your gold exchange and old gold buyback policy?',
-        'a' => 'We offer full transparency for old gold exchange and buybacks. Your gold is tested and weighed digitally in front of you (or on video call), valued at prevailing market board rates, with zero unfair wastage cuts or hidden melting fees.',
+        'q' => 'What is your gold exchange policy?',
+        'a' => 'We offer complete transparency for gold exchange. Your gold is tested and weighed digitally in front of you (or on video call), with clear calculations based on verified purity and prevailing market board rates.',
     ],
     [
         'q' => 'Where is ChandraKala Jewellers showroom located in Gujarat?',
@@ -416,28 +416,28 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
         </p>
     </section>
 
-    <!-- Value & Making Charges Comparison -->
+    <!-- Craftsmanship & Quality Standards -->
     <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
-            Direct Artisan Value: Save ₹5,000 to ₹15,000 Per Tola Across Gujarat
+            Direct Workshop Craftsmanship &amp; Showroom Standards
         </h2>
         <p style="color:var(--text-secondary,#4b5563);line-height:1.6;margin-bottom:1.25rem;">
-            How ChandraKala Jewellers direct goldsmith workshop model compares to commercial shopping mall chains in Ahmedabad, Surat, and Vadodara:
+            How ChandraKala Jewellers direct goldsmith workshop model ensures transparency, hallmark trust, and personal service:
         </p>
         <div style="overflow-x:auto;">
             <table class="rate-card-table" style="width:100%;font-size:0.92rem;">
                 <thead>
                     <tr>
-                        <th>Comparison Metric</th>
+                        <th>Quality &amp; Service Metric</th>
                         <th>ChandraKala Jewellers</th>
-                        <th>Corporate Chain Stores</th>
+                        <th>Corporate Retail Chains</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><strong>Making Charges</strong></td>
-                        <td style="color:#059669;font-weight:700;">6% – 9% (Direct Artisan)</td>
-                        <td style="color:#dc2626;font-weight:600;">18% – 25% (High Markup)</td>
+                        <td style="color:#059669;font-weight:700;">Direct artisan pricing based on design complexity</td>
+                        <td style="color:var(--text-secondary,#4b5563);font-weight:600;">Standard retail catalogue rates with showroom overheads</td>
                     </tr>
                     <tr>
                         <td><strong>BIS Hallmark &amp; HUID</strong></td>
@@ -445,19 +445,19 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
                         <td>Standard Hallmark</td>
                     </tr>
                     <tr>
-                        <td><strong>Weight Calculation</strong></td>
+                        <td><strong>Weight &amp; Purity Verification</strong></td>
                         <td>Exact digital weight scale verified on live video call</td>
-                        <td>Fixed showroom invoice</td>
+                        <td>Counter billing scales</td>
                     </tr>
                     <tr>
-                        <td><strong>Old Gold Exchange</strong></td>
-                        <td style="color:#059669;font-weight:700;">100% Value at Live Market Board Rate</td>
-                        <td>Melting / wastage deductions apply</td>
+                        <td><strong>Old Gold Valuation</strong></td>
+                        <td style="color:#059669;font-weight:700;">Transparent testing &amp; live market board rate valuation</td>
+                        <td>Varies by chain policy</td>
                     </tr>
                     <tr>
-                        <td><strong>Average Savings on Bridal Set (50g)</strong></td>
-                        <td style="color:#059669;font-weight:800;font-size:1.05rem;">Save ₹25,000 – ₹45,000+</td>
-                        <td>Higher overhead costs passed to buyer</td>
+                        <td><strong>Customer Consultation</strong></td>
+                        <td style="color:#059669;font-weight:700;">Direct consultation with experienced family jewellers</td>
+                        <td>Sales floor representatives</td>
                     </tr>
                 </tbody>
             </table>

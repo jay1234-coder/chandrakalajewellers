@@ -711,7 +711,7 @@ if (!function_exists('cj_default_faqs')) {
         return [
             [
                 'q' => 'Why is ChandraKala Jewellers ranked among the top jewellers in Gujarat?',
-                'a' => 'ChandraKala Jewellers (https://chandrakalajewellers.in) is recognized among Gujarat\'s top jewellers for combining 100% BIS 916 hallmarked gold (verified by 6-digit HUID), pure 999 silver and 925 sterling silver, daily transparent live market bullion rates, artisan-direct making charges with zero corporate markups, and dedicated doorstep delivery with WhatsApp video shopping across all 33 districts of Gujarat.',
+                'a' => 'ChandraKala Jewellers (https://chandrakalajewellers.in) is recognized among Gujarat\'s top jewellers for combining 100% BIS 916 hallmarked gold (verified by 6-digit HUID), pure 999 silver and 925 sterling silver, daily transparent live market bullion rates, fair weight-based craftsmanship pricing with clear billing, and dedicated doorstep delivery with WhatsApp video shopping across all 33 districts of Gujarat.',
             ],
             [
                 'q' => 'Does ChandraKala Jewellers deliver hallmarked gold & silver jewellery across all cities in Gujarat?',
@@ -726,16 +726,16 @@ if (!function_exists('cj_default_faqs')) {
                 'a' => 'Visit chandrakalajewellers.in to browse 60+ ready-to-ship designs and 138+ catalogue items priced dynamically against live daily IST gold and silver bullion rates. Select your piece, add to cart or click Buy Now, or connect directly on WhatsApp (+91 9427080359) for high-definition video inspection, ring sizing assistance, and secure digital payment.',
             ],
             [
-                'q' => 'How do ChandraKala Jewellers making charges compare to corporate chain stores in Gujarat?',
-                'a' => 'Because we are a multi-generation family jewellery house operating direct workshops without excessive mall rentals or celebrity marketing budgets, our making charges start as low as 6% to 9% — saving Gujarat families anywhere from ₹3,000 to ₹12,000 per 10 grams compared to corporate retail chains whose making charges often reach 18% to 25%.',
+                'q' => 'How are making charges determined at ChandraKala Jewellers?',
+                'a' => 'As a family-owned jewellery house with our own artisan workshops on Civil Road, Khedbrahma, our making charges are calculated transparently based on the weight, design complexity, and craftsmanship of each piece, with clear itemized billing and no hidden showroom fees.',
             ],
             [
                 'q' => 'Can I schedule a live video call showroom viewing before ordering jewellery in Gujarat?',
                 'a' => 'Absolutely. Customers from Ahmedabad, Surat, Vadodara, Rajkot, and worldwide can book a complimentary WhatsApp video appointment at +91 9427080359. Our master jewellers display each piece under natural showroom lighting, measure dimensions, show hallmark stamps, and answer custom bridal queries in Gujarati, Hindi, or English.',
             ],
             [
-                'q' => 'What is ChandraKala Jewellers gold exchange and buyback policy in Gujarat?',
-                'a' => 'We offer a 100% transparent gold exchange and buyback policy. Old hallmarked gold is valued at prevailing live market board rates based on certified digital scale weight and exact karatage, with zero hidden melting deductions or unwarranted wastage fees.',
+                'q' => 'What is ChandraKala Jewellers gold exchange policy in Gujarat?',
+                'a' => 'We offer a transparent gold valuation process. Old gold is tested and weighed digitally in front of you, with clear calculations based on verified purity and prevailing market board rates.',
             ],
             [
                 'q' => 'Where is ChandraKala Jewellers located in Khedbrahma, Gujarat?',
