@@ -1,11 +1,27 @@
 {
   "version": 2,
+  "framework": null,
   "outputDirectory": "public",
   "regions": ["sin1"],
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.8.0",
-      "includeFiles": "{*.php,*.txt,sw.js,admin/**,config/**,includes/**,api/**,billing-software/**,rc/**}",
+      "includeFiles": "{*.php,*.txt,*.xml,sw.js,admin/**,config/**,includes/**,api/**,billing-software/**,rc/**}",
+      "excludeFiles": [
+        "node_modules/**",
+        "now.json",
+        ".nowignore",
+        "vercel.json",
+        ".vercelignore",
+        "public/uploads/**",
+        "uploads/**",
+        "catalogue/**",
+        ".next/**",
+        "frontend/**",
+        "backend/**",
+        "admin_app/**",
+        "src/**"
+      ],
       "maxDuration": 15
     }
   },
