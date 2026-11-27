@@ -339,7 +339,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
             <div class="pillar-card">
                 <span class="pillar-icon">🏛️</span>
                 <h3>100% BIS 916 Hallmark (HUID)</h3>
-                <p>Every gold piece is certified with government-approved 6-digit alphanumeric HUID hallmarking, ensuring guaranteed 22K (91.6%) purity and lifetime value buyback.</p>
+                <p>Every gold piece is certified with government-approved 6-digit alphanumeric HUID hallmarking, ensuring guaranteed 22K (91.6%) purity and verified authentication.</p>
             </div>
             <div class="pillar-card">
                 <span class="pillar-icon">📈</span>
