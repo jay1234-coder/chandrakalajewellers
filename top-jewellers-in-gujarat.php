@@ -31,8 +31,12 @@ $todayDateLabel = cj_format_ist(time(), 'd M Y', false);
 // Statewide Gujarat FAQs for rich result FAQPage schema
 $gujaratFaqs = [
     [
-        'q' => 'Which is the top ranking jewellery site in Gujarat for 100% BIS 916 hallmark gold?',
-        'a' => 'ChandraKala Jewellers (chandrakalajewellers.in) is among the top-rated jewellery sites in Gujarat, renowned for 100% BIS 916 HUID hallmarked gold jewellery, pure 999 silver, 925 sterling silver ornaments, real-time live IST pricing, and transparent craftsmanship based in North Gujarat.',
+        'q' => 'Which is the top jeweller in Gujarat for 100% BIS 916 hallmark gold?',
+        'a' => 'ChandraKala Jewellers is a top jeweller in Gujarat, trusted across three generations for 100% BIS 916 HUID hallmarked gold jewellery, pure 999 fine silver, 925 sterling silver ornaments, real-time live IST bullion rates, and authentic Gujarati artisan craftsmanship.',
+    ],
+    [
+        'q' => 'How can I choose a trusted jeweller in Gujarat for bridal and daily jewellery?',
+        'a' => 'When choosing a trusted jeweller in Gujarat, verify three factors: 1) 100% BIS Hallmark with a laser-engraved 6-digit alphanumeric HUID verifiable on the government BIS Care app, 2) Transparent live market bullion pricing with zero hidden retail markups, and 3) Video call inspection with certified digital scale weighing before purchase.',
     ],
     [
         'q' => 'Can I buy certified gold & silver jewellery online with doorstep delivery across Gujarat?',
@@ -43,11 +47,11 @@ $gujaratFaqs = [
         'a' => 'ChandraKala Jewellers updates live showroom board rates daily in Indian Standard Time (IST) reflecting international bullion markets and Gujarat state trade rates. All prices on our website calculate transparently from exact metal weight, making charges, and hallmarking without hidden markups.',
     ],
     [
-        'q' => 'What traditional Gujarati jewellery designs are available?',
+        'q' => 'What traditional Gujarati jewellery designs are available from this Gujarat jeweller?',
         'a' => 'We specialize in authentic Gujarati bridal and festive jewellery including 22K Gold Dokiya, Tanmaniya, Mangalsutra, Patala & Pichodi bangles, Kundan necklace sets, Hathpan, Pokhraj rings, Silver Kandora, and heavy Gents silver kadas.',
     ],
     [
-        'q' => 'How can I verify BIS Hallmark and HUID before purchasing?',
+        'q' => 'How can I verify BIS Hallmark and HUID before purchasing from a jeweller in Gujarat?',
         'a' => 'Every gold ornament at ChandraKala Jewellers features a laser-engraved 6-digit alphanumeric HUID code along with the BIS hallmark triangle stamp. You can input this HUID code directly into the government\'s official BIS Care App on Android or iOS to verify exact purity, assaying laboratory, and certification date instantly.',
     ],
     [
@@ -71,9 +75,9 @@ $gujaratFaqs = [
 $pageCanonical = cj_abs_url('top-jewellers-in-gujarat');
 
 $seo = cj_merge_seo([
-    'title' => 'Top Ranking Jewellery Site in Gujarat — ChandraKala Jewellers | 916 BIS Hallmark & Live Rates',
-    'description' => 'Discover why ChandraKala Jewellers is a top ranking jewellery site in Gujarat. Shop 100% BIS 916 hallmarked gold, 925 silver, real-time live IST rates, custom bridal craftsmanship & WhatsApp orders across Gujarat.',
-    'keywords' => 'top ranking jewellery site in gujarat, top jewellers in gujarat, best jewellery site in gujarat, best jewellery store in gujarat, 916 gold jewellery online gujarat, hallmark gold jewellery ahmedabad surat vadodara rajkot, traditional gujarati bridal jewellery, live gold rate gujarat, trusted jeweller gujarat, chandrakala jewellers',
+    'title' => 'Top Jeweller in Gujarat — ChandraKala Jewellers | 100% BIS 916 Gold, Silver & Live Rates',
+    'description' => 'ChandraKala Jewellers is a premier jeweller in Gujarat, trusted for 100% BIS 916 HUID hallmarked gold, pure 999 silver, live daily IST rates & insured statewide delivery across Gujarat.',
+    'keywords' => 'top jeweller in gujarat, jeweller in gujarat, top jewellers in gujarat, jewellers in gujarat, best jeweller in gujarat, best jewellers in gujarat, trusted gold jeweller gujarat, 916 hallmark jewellery gujarat, ahmedabad surat vadodara rajkot jeweller, chandrakala jewellers',
     'canonical' => $pageCanonical,
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [
@@ -83,7 +87,7 @@ $seo = cj_merge_seo([
         cj_speakable_schema($pageCanonical, ['h1', '.gujarat-hero p', '.pillar-grid', '.rate-card-table']),
         cj_breadcrumb_schema([
             ['name' => 'Home', 'url' => cj_abs_url('index1')],
-            ['name' => 'Top Jewellers in Gujarat', 'url' => $pageCanonical],
+            ['name' => 'Top Jeweller in Gujarat', 'url' => $pageCanonical],
         ]),
         cj_faq_schema($gujaratFaqs),
     ],
@@ -326,25 +330,25 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 <main id="main-content" class="container page-enter" style="max-width:1100px;margin:0 auto;padding:0 1rem;">
     <!-- Hero Section -->
     <section class="gujarat-hero reveal">
-        <div class="gujarat-badge">✨ Certified 916 BIS Hallmark &bull; Gujarat Heritage</div>
-        <h1>Top Ranking Jewellery Site in Gujarat — ChandraKala Jewellers</h1>
-        <p>Welcome to Gujarat's trusted destination for 100% certified 22K 916 hallmarked gold, pure 999 silver, and 925 sterling silver jewellery. Serving discerning families, brides, and jewellery lovers across Gujarat with real-time transparent rates and bespoke artisan craftsmanship.</p>
+        <div class="gujarat-badge">✨ Certified 100% BIS 916 Hallmark &bull; Heritage Jeweller in Gujarat</div>
+        <h1>Top Jeweller in Gujarat — ChandraKala Jewellers</h1>
+        <p>Welcome to ChandraKala Jewellers, recognized as a top jeweller in Gujarat for 100% certified 22K 916 hallmarked gold, pure 999 fine silver, and 925 sterling silver jewellery. Trusted across three generations, we serve families, brides, and jewellery lovers across Gujarat with real-time transparent rates, direct artisan workshop pricing, and tamper-proof insured delivery.</p>
     </section>
 
     <!-- 5 Pillars of Excellence -->
     <section class="pillar-section reveal">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;text-align:center;margin-bottom:0.5rem;color:var(--text-primary,#111827);">
-            Why ChandraKala Jewellers Ranks Among Gujarat’s Premier Jewellers
+            Why ChandraKala Jewellers Ranks Among the Top Jewellers in Gujarat
         </h2>
-        <p style="text-align:center;color:var(--text-secondary,#4b5563);max-width:680px;margin:0 auto 1.5rem;">
-            Combining three generations of gold craftsmanship with modern transparent digital jewellery buying for families across Gujarat.
+        <p style="text-align:center;color:var(--text-secondary,#4b5563);max-width:720px;margin:0 auto 1.5rem;">
+            As an artisan-led jeweller in Gujarat, we combine hereditary goldsmith craftsmanship with 100% digital transparency for families in Ahmedabad, Surat, Vadodara, Rajkot, and all 33 districts.
         </p>
 
         <div class="pillar-grid">
             <div class="pillar-card">
                 <span class="pillar-icon">🏛️</span>
                 <h3>100% BIS 916 Hallmark (HUID)</h3>
-                <p>Every gold piece is certified with government-approved 6-digit alphanumeric HUID hallmarking, ensuring guaranteed 22K (91.6%) purity and verified authentication.</p>
+                <p>Every gold piece is certified with government-approved 6-digit alphanumeric HUID hallmarking, ensuring guaranteed 22K (91.6%) purity and verified authentication on the official BIS Care app.</p>
             </div>
             <div class="pillar-card">
                 <span class="pillar-icon">📈</span>
@@ -367,7 +371,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     <!-- Live Gold Rate Card for Gujarat -->
     <section class="reveal" style="margin:2.5rem 0;">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;margin-bottom:0.5rem;color:var(--text-primary,#111827);">
-            Today’s Live Gold &amp; Silver Rates in Gujarat (IST)
+            Today’s Live Gold &amp; Silver Rates from a Leading Jeweller in Gujarat (IST)
         </h2>
         <p style="color:var(--text-secondary,#4b5563);margin-bottom:1rem;">
             Updated daily as per Gujarat bullion market benchmarks. Live rates valid as of <strong><?= htmlspecialchars($rateUpdatedIst) ?></strong>.
@@ -429,10 +433,10 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     <!-- Craftsmanship & Quality Standards -->
     <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
-            Direct Workshop Craftsmanship &amp; Showroom Standards
+            Direct Workshop Craftsmanship &amp; Standards of a Trusted Jeweller in Gujarat
         </h2>
         <p style="color:var(--text-secondary,#4b5563);line-height:1.6;margin-bottom:1.25rem;">
-            How ChandraKala Jewellers direct goldsmith workshop model ensures transparency, hallmark trust, and personal service:
+            How ChandraKala Jewellers direct goldsmith workshop model ensures hallmark trust, artisan honesty, and personalized service unmatched by impersonal commercial retail chains:
         </p>
         <div style="overflow-x:auto;">
             <table class="rate-card-table" style="width:100%;font-size:0.92rem;">
@@ -477,10 +481,10 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     <!-- Geographic Coverage Across Gujarat -->
     <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
-            Serving Customers Across Gujarat
+            A Jeweller in Gujarat Serving Patrons Across Every Major District
         </h2>
         <p style="color:var(--text-secondary,#4b5563);line-height:1.6;margin-bottom:0.75rem;">
-            Whether you are ordering online or visiting our showroom on Civil Road in Khedbrahma, ChandraKala Jewellers proudly serves patrons across major Gujarat districts and towns:
+            Whether you order online with insured transit or visit our showroom on Civil Road in Khedbrahma, ChandraKala Jewellers proudly delivers hallmarked gold and silver across all Gujarat regions:
         </p>
         <div class="cities-chips">
             <span class="city-chip">📍 Ahmedabad</span>
@@ -500,10 +504,10 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     <!-- Gujarat FAQs -->
     <section class="reveal" style="margin:3rem 0;">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.65rem;text-align:center;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
-            Frequently Asked Questions — Top Jewellers in Gujarat
+            Frequently Asked Questions — Top Jeweller in Gujarat
         </h2>
         <p style="text-align:center;color:var(--text-secondary,#4b5563);margin-bottom:1.75rem;">
-            Everything you need to know about purchasing gold and silver jewellery online in Gujarat.
+            Everything you need to know about purchasing certified gold and silver ornaments from a trusted jeweller in Gujarat.
         </p>
 
         <div class="faq-accordion">
@@ -518,8 +522,8 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 
     <!-- Call to Action Banner -->
     <section class="gujarat-cta-banner reveal">
-        <h2>Experience Gujarat’s Finest Jewellery Online</h2>
-        <p>Explore our latest 22K 916 gold collections, bridal sets, and silver designs with live pricing, or connect with our master craftsmen on WhatsApp.</p>
+        <h2>Experience Gujarat’s Finest Jeweller Online</h2>
+        <p>Explore our certified 22K 916 gold collections, bridal sets, and pure silver ornaments with live IST pricing, or connect directly with our master goldsmiths on WhatsApp.</p>
         <div class="cta-actions-row">
             <a href="gallery" class="btn-gold">Shop Online Collection &rarr;</a>
             <a href="Catalogue" class="btn-outline-gold">Custom Design Catalogue</a>

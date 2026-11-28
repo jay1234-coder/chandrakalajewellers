@@ -40,8 +40,8 @@ if (!function_exists('get_metal_name')) {
 $activePage = 'home';
 require_once 'includes/seo.php';
 $seo = cj_merge_seo([
-    'title' => 'ChandraKala Jewellers | Top Ranking Jewellery in Gujarat — 916 BIS Gold, Silver & Live Rates',
-    'description' => 'ChandraKala Jewellers, Gujarat: Shop 100% BIS 916 hallmarked gold, pure silver & 925 sterling silver with live daily IST rates, custom bridal sets & doorstep insured delivery across Gujarat. WhatsApp +91 9427080359.',
+    'title' => 'ChandraKala Jewellers | Top Jeweller in Gujarat — 916 BIS Gold, Silver & Live Rates',
+    'description' => 'ChandraKala Jewellers is a premier jeweller in Gujarat offering 100% BIS 916 hallmarked gold, pure silver & 925 sterling silver with live daily IST rates, custom bridal sets & doorstep insured delivery across Gujarat. WhatsApp +91 9427080359.',
     'canonical' => cj_abs_url('index1'),
     'modified_iso' => cj_format_ist_iso($standard_rates['updated_at'] ?? null),
     'schema' => [
@@ -453,10 +453,10 @@ html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
             Statewide Gujarat Service
         </span>
         <h2 class="gujarat-delivery-title">
-            Top Ranking Jewellery Destination in Gujarat
+            Top Jeweller in Gujarat — Statewide Doorstep Delivery
         </h2>
         <p class="gujarat-delivery-sub">
-            From Ahmedabad and Surat to Vadodara, Rajkot, and Sabarkantha — experience 100% BIS 916 HUID hallmarked gold, pure silver ornaments, and live bullion rate calculations delivered securely to your doorstep across Gujarat.
+            Recognized as a leading jeweller in Gujarat serving Ahmedabad, Surat, Vadodara, Rajkot, and Sabarkantha — experience 100% BIS 916 HUID hallmarked gold, pure silver ornaments, and live bullion rate calculations delivered securely to your doorstep across Gujarat.
         </p>
         <div class="gujarat-delivery-grid">
             <div class="gujarat-feature-card">
@@ -481,7 +481,7 @@ html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
             </div>
         </div>
         <div class="gujarat-delivery-actions">
-            <a href="top-jewellers-in-gujarat" class="btn-guide">Explore Gujarat Jewellery Guide &rarr;</a>
+            <a href="top-jewellers-in-gujarat" class="btn-guide">Top Jeweller in Gujarat Guide &rarr;</a>
             <a href="https://wa.me/919427080359?text=Hello%20ChandraKala%20Jewellers%2C%20I%20am%20interested%20in%20ordering%20jewellery%20in%20Gujarat" class="btn-whatsapp-tour" target="_blank" rel="noopener">Book WhatsApp Video Tour</a>
         </div>
     </div>

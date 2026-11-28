@@ -19,6 +19,7 @@ coordinates: 24.0314016, 73.0463503
 llms: https://www.chandrakalajewellers.in/llms.txt
 llms_full: https://www.chandrakalajewellers.in/llms-full.txt
 gold_rate_live: https://www.chandrakalajewellers.in/gold-rate-khedbrahma
+top_jeweller_gujarat: https://www.chandrakalajewellers.in/top-jewellers-in-gujarat
 ai: https://www.chandrakalajewellers.in/ai.txt
 sitemap: https://www.chandrakalajewellers.in/sitemap.xml
 
