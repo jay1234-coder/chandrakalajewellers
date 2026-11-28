@@ -229,6 +229,43 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-primary, #1f2937);
+    transition: all 0.2s ease;
+}
+.city-chip:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+}
+
+/* ── Ornament Showcase Grid ── */
+.ornament-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+}
+.ornament-card {
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: all 0.25s ease;
+}
+.ornament-card:hover {
+    border-color: rgba(212, 175, 55, 0.55);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.12);
+}
+.ornament-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    color: var(--text-primary, #111827);
+    margin-bottom: 0.4rem;
+}
+.ornament-card p {
+    font-size: 0.88rem;
+    color: var(--text-secondary, #4b5563);
+    line-height: 1.55;
+    margin: 0;
 }
 
 /* ── FAQ Section ── */
@@ -430,6 +467,47 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
         </p>
     </section>
 
+    <!-- Traditional Gujarati Ornaments Showcase -->
+    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
+            Traditional Gujarati Bridal &amp; Festive Ornaments (ગુજરાતી પરંપરાગત ઘરેણાં)
+        </h2>
+        <p style="color:var(--text-secondary,#4b5563);line-height:1.6;margin-bottom:1.25rem;">
+            As an authentic jeweller in Gujarat, ChandraKala Jewellers preserves hereditary goldsmith traditions, crafting cultural ornaments revered in Gujarati weddings, baby showers (Shrimant), and festivals:
+        </p>
+
+        <div class="ornament-grid">
+            <div class="ornament-card">
+                <h4>Dokiya &amp; Tanmaniya (ડોકિયા)</h4>
+                <p>Signature 22K gold Dokiya and Mangalsutra designs with fine filigree, meenakari accents, and auspicious black beads for Gujarati brides.</p>
+            </div>
+            <div class="ornament-card">
+                <h4>Patala &amp; Pichodi (પાટલા અને પીછોડી)</h4>
+                <p>Authentic Gujarati solid gold wedding bangles handcrafted in pair sets, featuring embossed floral and royal geometric motifs.</p>
+            </div>
+            <div class="ornament-card">
+                <h4>Rani Haar &amp; Chandan Haar</h4>
+                <p>Grand multi-layered 22K bridal gold necklaces, exquisitely styled with peacock emblems and heritage temple craftsmanship.</p>
+            </div>
+            <div class="ornament-card">
+                <h4>Kundan Butti &amp; Jhumki</h4>
+                <p>Antique matte-finish and Kundan earrings adorned with certified freshwater pearls, matching bridal ensembles seamlessly.</p>
+            </div>
+            <div class="ornament-card">
+                <h4>Silver Kandora (ચાંદી કંદોરો)</h4>
+                <p>Traditional chandi waist belts intricately designed with delicate ghunghroo bells and antique filigree links for festive occasions.</p>
+            </div>
+            <div class="ornament-card">
+                <h4>Gents Silver Kada (જેન્ટ્સ કડા)</h4>
+                <p>Heavyweight 925 and 999 fine silver kadas for gentlemen, featuring lion-head (Sher-mukh), chisel carved, and solid royal styles.</p>
+            </div>
+        </div>
+
+        <p style="margin-top:1rem;font-size:0.92rem;color:var(--text-secondary,#4b5563);">
+            Browse designs: <a href="gallery?metal_type=gold" style="color:#d4af37;font-weight:700;">22K Gold Collection &rarr;</a> | <a href="gallery?metal_type=silver" style="color:#d4af37;font-weight:700;">Silver Ornaments &rarr;</a> | <a href="Catalogue" style="color:#d4af37;font-weight:700;">138+ Custom Design Catalogue &rarr;</a>
+        </p>
+    </section>
+
     <!-- Craftsmanship & Quality Standards -->
     <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
@@ -493,11 +571,11 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
             <span class="city-chip">📍 Rajkot</span>
             <span class="city-chip">📍 Gandhinagar</span>
             <span class="city-chip">📍 Bhavnagar</span>
-            <span class="city-chip">📍 Sabarkantha (Himmatnagar &amp; Idar)</span>
+            <a href="jewellers-in-sabarkantha" class="city-chip" style="text-decoration:none;font-weight:700;color:#926c15;">📍 Sabarkantha District (Himatnagar &amp; Idar) &rarr;</a>
             <span class="city-chip">📍 Banaskantha (Palanpur &amp; Ambaji)</span>
             <span class="city-chip">📍 Mehsana</span>
             <span class="city-chip">📍 Patan</span>
-            <span class="city-chip">📍 Khedbrahma (Showroom HQ)</span>
+            <a href="jewellers-in-khedbrahma" class="city-chip" style="text-decoration:none;font-weight:700;color:#926c15;">📍 Khedbrahma (Showroom HQ) &rarr;</a>
         </div>
     </section>
 

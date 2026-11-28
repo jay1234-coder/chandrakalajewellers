@@ -56,7 +56,7 @@ $seo = cj_merge_seo([
         <a class="btn btn-secondary" href="contact" style="margin-left:8px;">Contact page</a></p>
 
         <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;margin:1.75rem 0 0.75rem;">Serving Sabarkantha &amp; Statewide Gujarat</h2>
-        <p>Customers visit us from Khedbrahma town, surrounding villages, Idar, and Himmatnagar. Beyond North Gujarat, ChandraKala Jewellers is recognized as a leading <a href="top-jewellers-in-gujarat" style="color:#d4af37;font-weight:700;">top jeweller in Gujarat</a>, delivering certified 100% BIS 916 hallmarked ornaments with insured transit across Ahmedabad, Surat, Vadodara, Rajkot, and all 33 districts.</p>
+        <p>Customers visit us from Khedbrahma town, surrounding villages, and across the district as a trusted <a href="jewellers-in-sabarkantha" style="color:#d4af37;font-weight:700;">jeweller in Sabarkantha</a> (serving Himatnagar, Idar, Vadali, and Vijaynagar). Beyond North Gujarat, ChandraKala Jewellers is recognized as a leading <a href="top-jewellers-in-gujarat" style="color:#d4af37;font-weight:700;">top jeweller in Gujarat</a>, delivering certified 100% BIS 916 hallmarked ornaments with insured transit across Ahmedabad, Surat, Vadodara, Rajkot, and all 33 districts.</p>
 
         <h2 style="font-family:'Playfair Display',serif;font-size:1.4rem;margin:1.75rem 0 0.75rem;">How to buy</h2>
         <ol style="padding-left:1.2rem;">

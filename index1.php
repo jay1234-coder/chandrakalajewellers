@@ -482,6 +482,7 @@ html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
         </div>
         <div class="gujarat-delivery-actions">
             <a href="top-jewellers-in-gujarat" class="btn-guide">Top Jeweller in Gujarat Guide &rarr;</a>
+            <a href="jewellers-in-sabarkantha" class="btn-guide" style="background:rgba(212,175,55,0.12);color:var(--text-primary,#111);border:1px solid rgba(212,175,55,0.35);">Sabarkantha Hub &rarr;</a>
             <a href="https://wa.me/919427080359?text=Hello%20ChandraKala%20Jewellers%2C%20I%20am%20interested%20in%20ordering%20jewellery%20in%20Gujarat" class="btn-whatsapp-tour" target="_blank" rel="noopener">Book WhatsApp Video Tour</a>
         </div>
     </div>
