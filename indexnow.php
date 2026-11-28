@@ -26,7 +26,10 @@ if (!$allowed) {
 
 $urls = [
     'https://' . $host . '/index1',
+    'https://' . $host . '/top-jewellers-in-gujarat',
+    'https://' . $host . '/jewellers-in-sabarkantha',
     'https://' . $host . '/jewellers-in-khedbrahma',
+    'https://' . $host . '/mcx',
     'https://' . $host . '/gold-rate-khedbrahma',
     'https://' . $host . '/about',
     'https://' . $host . '/gallery',
