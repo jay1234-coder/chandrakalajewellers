@@ -181,13 +181,13 @@ html[data-theme="dark"] .app-tab.is-reels-new .app-tab-label {
     align-items: center;
     gap: 5px;
     padding: 6px 13px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fff3c4 0%, #e5be54 50%, #c49222 100%);
+    border-radius: 6px;
+    background: #d4af37;
     color: #1a1204;
     font-size: 11.5px;
-    font-weight: 800;
+    font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .cj-reels-announce-close {
     position: absolute;
@@ -255,7 +255,7 @@ html[data-theme="dark"] .app-tab.is-reels-new .app-tab-label {
         </svg>
     </div>
     <div class="cj-reels-announce-body">
-        <span class="cj-reels-announce-eyebrow">✨ New Feature Live</span>
+        <span class="cj-reels-announce-eyebrow">New Feature Live</span>
         <p class="cj-reels-announce-title">New Jewellery Reels Section!</p>
         <p class="cj-reels-announce-sub">Check out our brand-new Reels — live 916 gold &amp; bridal sparkle in motion.</p>
         <div class="cj-reels-announce-actions">

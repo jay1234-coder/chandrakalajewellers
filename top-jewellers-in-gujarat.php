@@ -110,20 +110,19 @@ $seo = cj_merge_seo([
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(212, 175, 55, 0.05) 100%);
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    color: #926c15;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    color: var(--primary-gold-dark, #926c15);
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
     margin-bottom: 1.25rem;
 }
 html[data-theme="dark"] .gujarat-badge {
     color: #fde68a;
-    border-color: rgba(253, 230, 138, 0.35);
+    border-color: rgba(253, 230, 138, 0.25);
 }
 .gujarat-hero h1 {
     font-family: 'Playfair Display', Georgia, serif;
@@ -153,26 +152,44 @@ html[data-theme="dark"] .gujarat-badge {
 .pillar-card {
     background: var(--surface, #ffffff);
     border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 16px;
+    border-radius: 10px;
     padding: 1.75rem 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, border-color 0.2s ease;
     display: flex;
     flex-direction: column;
 }
 .pillar-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(212, 175, 55, 0.14);
+    transform: translateY(-1px);
     border-color: rgba(212, 175, 55, 0.5);
 }
-.pillar-icon {
-    font-size: 2rem;
-    margin-bottom: 0.85rem;
-    display: inline-block;
+.pillar-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: rgba(212, 175, 55, 0.1);
+    color: #926c15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+html[data-theme="dark"] .pillar-icon-box {
+    color: #fde68a;
+    background: rgba(253, 230, 138, 0.12);
 }
 .pillar-card h3 {
     font-family: 'Playfair Display', serif;
-    font-size: 1.25rem;
+    font-size: 1.22rem;
+    color: var(--text-primary, #111827);
+    margin-bottom: 0.5rem;
+}
+.pillar-card p {
+    font-size: 0.92rem;
+    color: var(--text-secondary, #4b5563);
+    line-height: 1.6;
+    margin: 0;
+}
     color: var(--text-primary, #111827);
     margin-bottom: 0.5rem;
 }
@@ -222,18 +239,28 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     margin-top: 1rem;
 }
 .city-chip {
-    background: rgba(212, 175, 55, 0.08);
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(212, 175, 55, 0.06);
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 0.84rem;
+    font-weight: 500;
     color: var(--text-primary, #1f2937);
     transition: all 0.2s ease;
 }
 .city-chip:hover {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.15);
+    border-color: rgba(212, 175, 55, 0.5);
+}
+.city-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #d4af37;
+    display: inline-block;
 }
 
 /* ── Ornament Showcase Grid ── */
@@ -334,29 +361,29 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 .btn-gold {
     background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
     color: #0b0c10 !important;
-    font-weight: 800;
-    padding: 12px 26px;
-    border-radius: 999px;
+    font-weight: 700;
+    padding: 11px 22px;
+    border-radius: 6px;
     text-decoration: none;
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(212, 175, 55, 0.45);
+    transform: translateY(-1px);
+    opacity: 0.95;
 }
 .btn-outline-gold {
     background: transparent;
-    border: 1.5px solid rgba(212, 175, 55, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.6);
     color: #fde68a !important;
-    font-weight: 700;
-    padding: 12px 24px;
-    border-radius: 999px;
+    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 6px;
     text-decoration: none;
     transition: all 0.2s;
 }
 .btn-outline-gold:hover {
-    background: rgba(212, 175, 55, 0.15);
+    background: rgba(212, 175, 55, 0.12);
     border-color: #fde68a;
 }
 </style>
@@ -367,7 +394,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 <main id="main-content" class="container page-enter" style="max-width:1100px;margin:0 auto;padding:0 1rem;">
     <!-- Hero Section -->
     <section class="gujarat-hero reveal">
-        <div class="gujarat-badge">✨ Certified 100% BIS 916 Hallmark &bull; Heritage Jeweller in Gujarat</div>
+        <div class="gujarat-badge">Certified 100% BIS 916 HUID &bull; Heritage Jeweller in Gujarat</div>
         <h1>Top Jeweller in Gujarat — ChandraKala Jewellers</h1>
         <p>Welcome to ChandraKala Jewellers, recognized as a top jeweller in Gujarat for 100% certified 22K 916 hallmarked gold, pure 999 fine silver, and 925 sterling silver jewellery. Trusted across three generations, we serve families, brides, and jewellery lovers across Gujarat with real-time transparent rates, direct artisan workshop pricing, and tamper-proof insured delivery.</p>
     </section>
@@ -383,22 +410,30 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 
         <div class="pillar-grid">
             <div class="pillar-card">
-                <span class="pillar-icon">🏛️</span>
+                <div class="pillar-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4.5v6.5c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6.5L12 2z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
                 <h3>100% BIS 916 Hallmark (HUID)</h3>
                 <p>Every gold piece is certified with government-approved 6-digit alphanumeric HUID hallmarking, ensuring guaranteed 22K (91.6%) purity and verified authentication on the official BIS Care app.</p>
             </div>
             <div class="pillar-card">
-                <span class="pillar-icon">📈</span>
+                <div class="pillar-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>
+                </div>
                 <h3>Live Transparent Daily Rates</h3>
                 <p>No arbitrary retail markups. Real-time Indian Standard Time (IST) live gold and silver rates displayed transparently on every product with exact weight breakdowns.</p>
             </div>
             <div class="pillar-card">
-                <span class="pillar-icon">👑</span>
+                <div class="pillar-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
                 <h3>Traditional Gujarati Bridal Art</h3>
                 <p>Handcrafted Dokiya, Mangalsutra, Patala &amp; Pichodi bangles, Kundan sets, Hathpan, and heavy Silver Kadas crafted by hereditary Gujarati goldsmiths.</p>
             </div>
             <div class="pillar-card">
-                <span class="pillar-icon">🚚</span>
+                <div class="pillar-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
                 <h3>Statewide Insured Delivery</h3>
                 <p>Enjoy secure insured delivery and personalized WhatsApp video shopping across Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar, and North Gujarat.</p>
             </div>
@@ -557,7 +592,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     </section>
 
     <!-- Geographic Coverage Across Gujarat -->
-    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
+    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:12px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
             A Jeweller in Gujarat Serving Patrons Across Every Major District
         </h2>
@@ -565,17 +600,17 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
             Whether you order online with insured transit or visit our showroom on Civil Road in Khedbrahma, ChandraKala Jewellers proudly delivers hallmarked gold and silver across all Gujarat regions:
         </p>
         <div class="cities-chips">
-            <span class="city-chip">📍 Ahmedabad</span>
-            <span class="city-chip">📍 Surat</span>
-            <span class="city-chip">📍 Vadodara</span>
-            <span class="city-chip">📍 Rajkot</span>
-            <span class="city-chip">📍 Gandhinagar</span>
-            <span class="city-chip">📍 Bhavnagar</span>
-            <a href="jewellers-in-sabarkantha" class="city-chip" style="text-decoration:none;font-weight:700;color:#926c15;">📍 Sabarkantha District (Himatnagar &amp; Idar) &rarr;</a>
-            <span class="city-chip">📍 Banaskantha (Palanpur &amp; Ambaji)</span>
-            <span class="city-chip">📍 Mehsana</span>
-            <span class="city-chip">📍 Patan</span>
-            <a href="jewellers-in-khedbrahma" class="city-chip" style="text-decoration:none;font-weight:700;color:#926c15;">📍 Khedbrahma (Showroom HQ) &rarr;</a>
+            <span class="city-chip"><span class="city-dot"></span>Ahmedabad</span>
+            <span class="city-chip"><span class="city-dot"></span>Surat</span>
+            <span class="city-chip"><span class="city-dot"></span>Vadodara</span>
+            <span class="city-chip"><span class="city-dot"></span>Rajkot</span>
+            <span class="city-chip"><span class="city-dot"></span>Gandhinagar</span>
+            <span class="city-chip"><span class="city-dot"></span>Bhavnagar</span>
+            <a href="jewellers-in-sabarkantha" class="city-chip" style="text-decoration:none;font-weight:600;color:#926c15;"><span class="city-dot"></span>Sabarkantha District (Himatnagar &amp; Idar) &rarr;</a>
+            <span class="city-chip"><span class="city-dot"></span>Banaskantha (Palanpur &amp; Ambaji)</span>
+            <span class="city-chip"><span class="city-dot"></span>Mehsana</span>
+            <span class="city-chip"><span class="city-dot"></span>Patan</span>
+            <a href="jewellers-in-khedbrahma" class="city-chip" style="text-decoration:none;font-weight:600;color:#926c15;"><span class="city-dot"></span>Khedbrahma (Showroom HQ) &rarr;</a>
         </div>
     </section>
 

@@ -65,15 +65,14 @@ $seo = cj_merge_seo([
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--primary-gold-dark, #b8972c);
-    background: rgba(212, 175, 55, 0.12);
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    padding: 6px 16px;
-    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    padding: 4px 12px;
+    border-radius: 4px;
     margin-bottom: 12px;
 }
 html[data-theme="dark"] .mcx-badge {
@@ -232,31 +231,31 @@ html[data-theme="dark"] .calc-input[readonly] {
     margin: 22px 0 10px;
 }
 .btn-calc {
-    padding: 13px 20px;
+    padding: 11px 18px;
     background: linear-gradient(135deg, #d4af37 0%, #b8972c 100%);
     color: #ffffff;
     border: none;
-    border-radius: 30px;
-    font-size: 15px;
-    font-weight: 700;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.2s ease, transform 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
 }
 .btn-calc:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.45);
+    transform: translateY(-1px);
+    opacity: 0.95;
 }
 .btn-reset {
-    padding: 13px 20px;
+    padding: 11px 18px;
     background: transparent;
     color: var(--text-secondary);
-    border: 1.5px solid var(--border-color);
-    border-radius: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -341,8 +340,8 @@ html[data-theme="dark"] .result-group.final-value .calc-input {
 
 <main class="container">
     <div class="mcx-hero reveal">
-        <span class="mcx-badge">⚡ Real-Time Bullion Conversion</span>
-        <h1>Gold MCX Rate Calculator ✨</h1>
+        <span class="mcx-badge">Real-Time Bullion Conversion</span>
+        <h1>Gold MCX Rate Calculator</h1>
         <p>Convert MCX gold futures rate to physical gold rate with custom purity division (0.996 / 0.995), 3% GST, standard delivery, and dynamic brokerage.</p>
         <?php if ($gold10g > 0): ?>
             <p style="font-size: 13px; color: var(--primary-gold-dark); font-weight: 600;">

@@ -405,10 +405,6 @@ $seo = cj_merge_seo([
             <div class="price-badge">
                 <?php if ($final_price > 0): ?>
                     <span class="price-current">₹<?= number_format($final_price, 0) ?></span>
-                    <?php if ($is_discounted): ?>
-                        <span class="price-old">₹<?= number_format($rounded_auto_price, 0) ?></span>
-                        <span class="discount-badge">Special Rate</span>
-                    <?php endif; ?>
                 <?php else: ?>
                     <span class="price-current">Price not available</span>
                 <?php endif; ?>

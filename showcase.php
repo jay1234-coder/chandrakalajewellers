@@ -31,13 +31,13 @@ if ($reel && isset($_GET['embed']) && $_GET['embed'] === '1') {
 <style>
   html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#07080c; display:flex; align-items:center; justify-content:center; }
   video { width:100%; height:100%; object-fit:contain; background:#07080c; }
-  .cj-embed-badge { position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.72); color:#fde68a; font-family:system-ui,-apple-system,sans-serif; font-size:11px; font-weight:700; padding:6px 12px; border-radius:999px; text-decoration:none; border:1px solid rgba(212,175,55,0.4); display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px); }
+  .cj-embed-badge { position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.72); color:#fde68a; font-family:system-ui,-apple-system,sans-serif; font-size:11px; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; border:1px solid rgba(212,175,55,0.4); display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px); }
   .cj-embed-badge:hover { background:rgba(212,175,55,0.25); color:#fff; }
 </style>
 </head>
 <body>
 <a href="<?= $embedSiteUrl ?>" target="_blank" rel="noopener" class="cj-embed-badge" title="Open in ChandraKala Jewellers">
-  <span>✨ ChandraKala Jewellers</span>
+  <span>ChandraKala Jewellers</span>
 </a>
 <video src="<?= $embedVideoUrl ?>" poster="<?= $embedPosterUrl ?>" autoplay muted loop playsinline controls></video>
 </body>
@@ -376,10 +376,10 @@ $seo = cj_merge_seo([
     align-items: center;
     justify-content: center;
     gap: 7px;
-    padding: 12px 14px;
-    border-radius: 14px;
+    padding: 11px 14px;
+    border-radius: 8px;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
@@ -396,7 +396,7 @@ $seo = cj_merge_seo([
 }
 .cj-sc-rate-box {
     padding: 11px 10px;
-    border-radius: 14px;
+    border-radius: 8px;
     background: var(--bg-light);
     border: 1px solid var(--border-color);
     text-align: center;
@@ -425,15 +425,21 @@ $seo = cj_merge_seo([
     .cj-sc-trust-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .cj-sc-trust-item {
-    padding: 12px 10px;
-    border-radius: 14px;
+    padding: 10px 8px;
+    border-radius: 8px;
     background: var(--bg-light);
     border: 1px solid var(--border-color);
     text-align: center;
     font-size: 11px;
     font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
-.cj-sc-trust-item span { display: block; font-size: 18px; margin-bottom: 4px; }
+.cj-sc-trust-item svg {
+    color: var(--primary-gold-dark, #b8972c);
+}
 
 .cj-sc-form-grid {
     display: grid;
@@ -602,18 +608,18 @@ $seo = cj_merge_seo([
                     ChandraKala Jewellers, Khedbrahma
                 </h1>
                 <p style="margin:0;font-size:13px;color:var(--text-secondary);">
-                    📍 Opp. Bhoomi Complex, Civil Road, Khedbrahma, Sabarkantha, Gujarat 383255 · <strong>BIS 916 Hallmarked Gold &amp; 925 Silver</strong>
+                    Opp. Bhoomi Complex, Civil Road, Khedbrahma, Sabarkantha, Gujarat 383255 &bull; <strong>BIS 916 Hallmarked Gold &amp; 925 Silver</strong>
                 </p>
 
                 <div class="cj-sc-contact-btns">
                     <a href="<?= htmlspecialchars($waOrderUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="cj-sc-cbtn is-wa" data-track-cta="whatsapp">
-                        💬 Order on WhatsApp
+                        Order on WhatsApp &rarr;
                     </a>
                     <a href="tel:+919427080359" class="cj-sc-cbtn is-call" data-track-cta="call">
-                        📞 Call +91 94270 80359
+                        Call Showroom
                     </a>
                     <a href="<?= htmlspecialchars(cj_business_info()['maps_directions'] ?? 'https://www.google.com/maps/dir/?api=1&destination=Chandrakala+jewellers,+22JW%2BHG9,+Khedbrahma,+Gujarat+383255&destination_place_id=0x395d0b1a27d5a3df:0x216db437426f9e6a', ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="cj-sc-cbtn is-map" data-track-cta="directions">
-                        🗺️ Get Directions
+                        Get Directions
                     </a>
                 </div>
             </section>
@@ -645,10 +651,10 @@ $seo = cj_merge_seo([
                     <?php endif; ?>
                 </div>
                 <div class="cj-sc-trust-grid" style="margin-top:14px;">
-                    <div class="cj-sc-trust-item"><span>🏅</span>BIS 916 HUID</div>
-                    <div class="cj-sc-trust-item"><span>⚖️</span>Zero Hidden Charges</div>
-                    <div class="cj-sc-trust-item"><span>♻️</span>100% Gold Exchange</div>
-                    <div class="cj-sc-trust-item"><span>✨</span>Custom Karigar Order</div>
+                    <div class="cj-sc-trust-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>BIS 916 HUID</div>
+                    <div class="cj-sc-trust-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/></svg>Zero Hidden Fees</div>
+                    <div class="cj-sc-trust-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>100% Gold Exchange</div>
+                    <div class="cj-sc-trust-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Custom Karigar Order</div>
                 </div>
             </section>
 
@@ -796,7 +802,7 @@ $seo = cj_merge_seo([
                 <div id="cjOrderStatus" style="font-size:12.5px;font-weight:600;"></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
                     <button type="submit" class="btn" style="flex:1;">Confirm Order Inquiry</button>
-                    <a href="<?= htmlspecialchars($waOrderUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="cj-sc-cbtn is-wa" style="padding:10px 14px;" data-track-cta="whatsapp">💬 Direct WhatsApp</a>
+                    <a href="<?= htmlspecialchars($waOrderUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="cj-sc-cbtn is-wa" style="padding:10px 14px;" data-track-cta="whatsapp">Direct WhatsApp &rarr;</a>
                 </div>
             </form>
         </div>

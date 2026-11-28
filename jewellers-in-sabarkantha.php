@@ -99,20 +99,20 @@ $seo = cj_merge_seo([
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(212, 175, 55, 0.05) 100%);
-    border: 1px solid rgba(212, 175, 55, 0.45);
+    background: rgba(146, 108, 21, 0.08);
+    border: 1px solid rgba(146, 108, 21, 0.25);
     color: #926c15;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
     margin-bottom: 1.25rem;
 }
 html[data-theme="dark"] .sabarkantha-badge {
     color: #fde68a;
-    border-color: rgba(253, 230, 138, 0.35);
+    background: rgba(253, 230, 138, 0.08);
+    border-color: rgba(253, 230, 138, 0.25);
 }
 .sabarkantha-hero h1 {
     font-family: 'Playfair Display', Georgia, serif;
@@ -139,26 +139,38 @@ html[data-theme="dark"] .sabarkantha-badge {
 .district-card {
     background: var(--surface, #ffffff);
     border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 16px;
-    padding: 1.75rem 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     display: flex;
     flex-direction: column;
 }
 .district-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(212, 175, 55, 0.14);
-    border-color: rgba(212, 175, 55, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.06);
+    border-color: rgba(212, 175, 55, 0.4);
 }
-.district-icon {
-    font-size: 2rem;
-    margin-bottom: 0.85rem;
-    display: inline-block;
+.district-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: #926c15;
+}
+html[data-theme="dark"] .district-icon-box {
+    background: rgba(253, 230, 138, 0.08);
+    border-color: rgba(253, 230, 138, 0.2);
+    color: #fde68a;
 }
 .district-card h3 {
     font-family: 'Playfair Display', serif;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     color: var(--text-primary, #111827);
     margin-bottom: 0.5rem;
 }
@@ -174,9 +186,9 @@ html[data-theme="dark"] .sabarkantha-badge {
     width: 100%;
     border-collapse: collapse;
     background: var(--surface, #ffffff);
-    border-radius: 14px;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     border: 1px solid var(--border-color, #e5e7eb);
     margin: 1.5rem 0;
 }
@@ -187,14 +199,14 @@ html[data-theme="dark"] .sabarkantha-badge {
     font-size: 0.95rem;
 }
 .rate-card-table th {
-    background: rgba(212, 175, 55, 0.12);
+    background: rgba(212, 175, 55, 0.08);
     font-weight: 700;
     color: var(--text-primary, #111827);
 }
 .rate-card-table td.rate-gold-num {
-    font-weight: 800;
+    font-weight: 700;
     color: #926c15;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     color: #fde68a;
@@ -204,17 +216,33 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 .towns-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     margin-top: 1rem;
 }
 .town-chip {
-    background: rgba(212, 175, 55, 0.08);
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 999px;
-    padding: 7px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 6px;
+    padding: 7px 14px;
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-primary, #1f2937);
+    transition: all 0.2s ease;
+}
+.town-chip:hover {
+    border-color: rgba(212, 175, 55, 0.4);
+    background: rgba(212, 175, 55, 0.04);
+}
+.city-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d4af37;
+    display: inline-block;
+    flex-shrink: 0;
 }
 
 /* ── Ornament Showcase Grid ── */
@@ -227,14 +255,14 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 .ornament-card {
     background: var(--surface, #ffffff);
     border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 14px;
+    border-radius: 10px;
     padding: 1.5rem;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
 }
 .ornament-card:hover {
-    border-color: rgba(212, 175, 55, 0.55);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.12);
+    border-color: rgba(212, 175, 55, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.06);
 }
 .ornament-card h4 {
     font-family: 'Playfair Display', serif;
@@ -256,16 +284,16 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 .faq-item {
     background: var(--surface, #ffffff);
     border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 12px;
+    border-radius: 8px;
     margin-bottom: 0.85rem;
     overflow: hidden;
     transition: border-color 0.2s ease;
 }
 .faq-item summary {
     font-family: 'Playfair Display', serif;
-    font-size: 1.08rem;
-    font-weight: 700;
-    padding: 1.1rem 1.4rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
     cursor: pointer;
     color: var(--text-primary, #111827);
     display: flex;
@@ -276,19 +304,19 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     display: none;
 }
 .faq-item p {
-    padding: 0 1.4rem 1.25rem;
+    padding: 0 1.25rem 1.15rem;
     color: var(--text-secondary, #4b5563);
-    line-height: 1.7;
+    line-height: 1.65;
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
 }
 
 /* ── CTA Banner ── */
 .sabarkantha-cta-banner {
     background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-    border: 1px solid rgba(212, 175, 55, 0.35);
-    border-radius: 20px;
-    padding: 2.75rem 1.5rem;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
     text-align: center;
     color: #ffffff;
     margin: 3.5rem 0 2rem;
@@ -313,31 +341,31 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     gap: 12px;
 }
 .btn-gold {
-    background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+    background: #d4af37;
     color: #0b0c10 !important;
-    font-weight: 800;
-    padding: 12px 26px;
-    border-radius: 999px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 6px;
     text-decoration: none;
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s, transform 0.15s;
 }
 .btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(212, 175, 55, 0.45);
+    background: #c59f27;
+    transform: translateY(-1px);
 }
 .btn-outline-gold {
     background: transparent;
-    border: 1.5px solid rgba(212, 175, 55, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.6);
     color: #fde68a !important;
-    font-weight: 700;
-    padding: 12px 24px;
-    border-radius: 999px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 6px;
     text-decoration: none;
     transition: all 0.2s;
 }
 .btn-outline-gold:hover {
-    background: rgba(212, 175, 55, 0.15);
+    background: rgba(212, 175, 55, 0.12);
     border-color: #fde68a;
 }
 </style>
@@ -348,7 +376,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 <main id="main-content" class="container page-enter" style="max-width:1100px;margin:0 auto;padding:0 1rem;">
     <!-- Hero Section -->
     <section class="sabarkantha-hero reveal">
-        <div class="sabarkantha-badge">✨ Certified 100% BIS 916 Hallmark &bull; Sabarkantha District</div>
+        <div class="sabarkantha-badge">Certified 100% BIS 916 HUID &bull; Sabarkantha District</div>
         <h1>Jewellers in Sabarkantha — ChandraKala Jewellers</h1>
         <p>Looking for the best jewellers in Sabarkantha? Welcome to ChandraKala Jewellers, the trusted 3-generation jewellery destination serving families across <strong>Himatnagar, Idar, Khedbrahma, Vadali, and all talukas of Sabarkantha district</strong>. Discover certified 100% BIS 916 HUID hallmarked gold ornaments, pure 999 silver, Italian 925 sterling silver, and live daily IST bullion rates with direct artisan workshop honesty.</p>
     </section>
@@ -364,22 +392,30 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
 
         <div class="district-grid">
             <div class="district-card">
-                <span class="district-icon">🏛️</span>
+                <div class="district-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
                 <h3>100% BIS 916 HUID Certified</h3>
                 <p>Every gold piece is stamped with the government-approved 6-digit alphanumeric HUID code, instantly verifiable on the official BIS Care app for guaranteed 22K (91.6%) purity.</p>
             </div>
             <div class="district-card">
-                <span class="district-icon">📈</span>
+                <div class="district-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                </div>
                 <h3>Live Sabarkantha Daily Rates</h3>
                 <p>Fair, transparent daily market rates in Indian Standard Time (IST) reflecting pure 24K bullion and 22K jewellery rates without arbitrary retail margins.</p>
             </div>
             <div class="district-card">
-                <span class="district-icon">👑</span>
+                <div class="district-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
                 <h3>Traditional Gujarati Ornaments</h3>
                 <p>Specialized bridal sets, Dokiya, Patala, Pichodi, Kundan Butti, Silver Kandora, and heavy Gents kadas crafted by hereditary goldsmiths.</p>
             </div>
             <div class="district-card">
-                <span class="district-icon">📹</span>
+                <div class="district-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                </div>
                 <h3>WhatsApp Video Tour &amp; Delivery</h3>
                 <p>Inspect any jewellery on a live WhatsApp video call (+91 9427080359) with certified digital scale weighing, or enjoy insured doorstep delivery across Sabarkantha.</p>
             </div>
@@ -490,7 +526,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     </section>
 
     <!-- Geographic Coverage Across Sabarkantha District -->
-    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
+    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:12px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
             Serving Every Taluka &amp; Major Town Across Sabarkantha District
         </h2>
@@ -498,15 +534,15 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
             Our showroom on Civil Road in Khedbrahma welcomes customers travelling along State Highway 9 / National Highway corridors, while our WhatsApp video concierge provides direct doorstep access across:
         </p>
         <div class="towns-chips">
-            <span class="town-chip">📍 Himatnagar (District HQ)</span>
-            <span class="town-chip">📍 Idar</span>
-            <span class="town-chip">📍 Khedbrahma (Showroom HQ)</span>
-            <span class="town-chip">📍 Vadali</span>
-            <span class="town-chip">📍 Vijaynagar</span>
-            <span class="town-chip">📍 Prantij</span>
-            <span class="town-chip">📍 Talod</span>
-            <span class="town-chip">📍 Poshina</span>
-            <span class="town-chip">📍 Shamlaji</span>
+            <span class="town-chip"><span class="city-dot"></span>Himatnagar (District HQ)</span>
+            <span class="town-chip"><span class="city-dot"></span>Idar</span>
+            <span class="town-chip"><span class="city-dot"></span>Khedbrahma (Showroom HQ)</span>
+            <span class="town-chip"><span class="city-dot"></span>Vadali</span>
+            <span class="town-chip"><span class="city-dot"></span>Vijaynagar</span>
+            <span class="town-chip"><span class="city-dot"></span>Prantij</span>
+            <span class="town-chip"><span class="city-dot"></span>Talod</span>
+            <span class="town-chip"><span class="city-dot"></span>Poshina</span>
+            <span class="town-chip"><span class="city-dot"></span>Shamlaji</span>
         </div>
         <p style="margin-top:1.25rem;font-size:0.92rem;color:var(--text-secondary,#4b5563);line-height:1.6;">
             Looking beyond Sabarkantha? ChandraKala Jewellers is celebrated as a leading <a href="top-jewellers-in-gujarat" style="color:#d4af37;font-weight:700;">top jeweller in Gujarat</a>, serving customers across Ahmedabad, Surat, Vadodara, Rajkot, and all 33 districts. You can also explore our dedicated <a href="jewellers-in-khedbrahma" style="color:#d4af37;font-weight:700;">Khedbrahma Jewellery Showroom Guide</a>.
@@ -514,7 +550,7 @@ html[data-theme="dark"] .rate-card-table td.rate-gold-num {
     </section>
 
     <!-- Direct Artisan Workshop Transparency -->
-    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:16px;border:1px solid var(--border-color,#e5e7eb);">
+    <section class="reveal" style="margin:2.5rem 0;background:var(--surface,#fff);padding:1.75rem;border-radius:12px;border:1px solid var(--border-color,#e5e7eb);">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text-primary,#111827);margin-bottom:0.5rem;">
             Direct Workshop Honesty vs Corporate Retail Chains in Sabarkantha
         </h2>

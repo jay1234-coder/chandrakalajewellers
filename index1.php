@@ -69,7 +69,6 @@ $seo = cj_merge_seo([
 <main class="container">
 
 <div class="app-greeting" id="app-greeting" aria-live="polite">
-    <div class="app-greeting-sparkles" aria-hidden="true"><span></span><span></span><span></span></div>
     <p class="app-greeting-eyebrow" id="greeting-eyebrow">Welcome</p>
     <h2 id="greeting-title">Namaste</h2>
     <p id="greeting-sub">Explore gold &amp; silver jewellery crafted in Khedbrahma.</p>
@@ -460,22 +459,30 @@ html[data-theme="dark"] .gujarat-delivery-actions .btn-whatsapp-tour {
         </p>
         <div class="gujarat-delivery-grid">
             <div class="gujarat-feature-card">
-                <div class="gujarat-feature-icon">🛡️</div>
+                <div class="gujarat-feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
                 <strong class="gujarat-feature-title">100% Insured Delivery</strong>
                 <span class="gujarat-feature-desc">Tamper-proof insured transit across all 33 districts of Gujarat.</span>
             </div>
             <div class="gujarat-feature-card">
-                <div class="gujarat-feature-icon">📱</div>
+                <div class="gujarat-feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                </div>
                 <strong class="gujarat-feature-title">Live Video Concierge</strong>
                 <span class="gujarat-feature-desc">Inspect weight, hallmarks & details on live WhatsApp video call.</span>
             </div>
             <div class="gujarat-feature-card">
-                <div class="gujarat-feature-icon">⚖️</div>
+                <div class="gujarat-feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                </div>
                 <strong class="gujarat-feature-title">Direct Artisan Pricing</strong>
                 <span class="gujarat-feature-desc">Transparent making charges based on design and craftsmanship with zero hidden fees.</span>
             </div>
             <div class="gujarat-feature-card">
-                <div class="gujarat-feature-icon">🔍</div>
+                <div class="gujarat-feature-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
                 <strong class="gujarat-feature-title">BIS Care Verifiable</strong>
                 <span class="gujarat-feature-desc">Verify 6-digit HUID code instantly on Govt BIS mobile app.</span>
             </div>
